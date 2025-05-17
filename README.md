@@ -76,7 +76,7 @@ File Browser 是一个简洁的、网页端的文件管理软件，允许用户�
 
 感谢所有使用到的第三方工具，感谢他们的作者。
 
-##3 项目构建所引用的依赖包
+### 项目构建所引用的依赖包
 
 - <a href="https://github.com/expressjs/express" target="_blank">Express.js</a> - MIT License
 - <a href="https://github.com/facebook/react" target="_blank">React</a> - MIT License
