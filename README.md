@@ -86,7 +86,7 @@ File Browser 是一个简洁的、网页端的文件管理软件，允许用户�
 - <a href="https://github.com/fengyuanchen/viewerjs" target="_blank">Viewer.js</a> - MIT License
 - <a href="https://github.com/videojs/video.js" target="_blank">Video.js</a> - Apache License Version 2.0
 
-其他依赖包，请参考项目代码仓库中的 package.json 文件。
+其他依赖包，请参考项目代码仓库中的 package.json 文件，并遵守他们的许可增。
 
 感谢所有使用到的依赖包，感谢他们的作者。
 
