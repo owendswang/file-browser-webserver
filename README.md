@@ -60,7 +60,9 @@ File Browser 是一个简洁的、网页端的文件管理软件，允许用户�
 
    项目仓库中包含 docker-compose.yml 文件，可以参考。
 
-## 引用的第三方工具
+## 特别鸣谢
+
+### 引用的第三方工具
 
 本项目使用了以下第三方工具：
 
@@ -74,7 +76,7 @@ File Browser 是一个简洁的、网页端的文件管理软件，允许用户�
 
 感谢所有使用到的第三方工具，感谢他们的作者。
 
-## 项目构建所引用的依赖包
+##3 项目构建所引用的依赖包
 
 - <a href="https://github.com/expressjs/express" target="_blank">Express.js</a> - MIT License
 - <a href="https://github.com/facebook/react" target="_blank">React</a> - MIT License
@@ -95,5 +97,3 @@ File Browser 是一个简洁的、网页端的文件管理软件，允许用户�
 ## 支持
 
 如果您遇到任何问题，请在 Issues 中提交问题。
-
-### 使用说明
