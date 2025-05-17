@@ -1,0 +1,24 @@
+{
+  "sevenZipPath": "C:\\Program Files\\7-Zip\\7z.exe",
+  "smartctlPath": "C:\\Program Files\\smartmontools\\bin\\smartctl.exe",
+  "ffmpegPath": "C:\\Users\\administrator\\Downloads\\ffmpeg-7.1.1-full_build-shared\\bin\\ffmpeg.exe",
+  "basePaths": {
+    "administrator": "C:\\Users\\administrator"
+  },
+  "previewCachePath": "C:\\Users\\administrator\\Downloads\\FileBrowserServer\\cache",
+  "previewImageMaxWidth": 512,
+  "previewImageMaxHeight": 512,
+  "dbPath": "C:\\Users\\administrator\\Downloads\\FileBrowserServer\\db.sqlite",
+  "playVideoFps": 24,
+  "playVideoSegmentTargetDuration": 6,
+  "tempDir": "C:\\Users\\administrator\\Downloads\\FileBrowserServer\\cache",
+  "enableDirSizeChk": false,
+  "oauth": {
+    "clientId": "self",
+    "clientSecret": "self",
+    "clientUserId": "self"
+  },
+  "winRarPath": "C:\\Program Files\\WinRAR\\Rar.exe",
+  "winRarLang": "zh-CN",
+  "enablePlayVideoHardwareAcceleration": false
+}

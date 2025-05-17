@@ -1,0 +1,133 @@
+#videoSideListCard {
+  width: 360px;
+  flex-shrink: 0;
+  max-height: 78vh;
+  overflow: hidden;
+}
+
+#videoSideListCard.ant-pro-card .ant-pro-card-header {
+  padding-block: 0;
+  padding: 0.5rem 1rem;
+}
+
+#videoSideListCard .ant-list .ant-list-items {
+  padding: 0.25rem 0;
+}
+
+#videoSideListCard .ant-list .ant-list-item {
+  padding: 0.25rem 0.5rem;
+}
+
+#videoSideListCard.ant-pro-card .ant-pro-card-body {
+  position: relative;
+}
+
+#videoSideListInfiniteScrollCtn {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  overflow-x: hidden;
+  overflow-y: auto;
+  background-color: rgba(128, 128, 128, 0.06);
+}
+
+#videoSideListCard .ant-list .ant-list-item a.videoSideListItem {
+  display: flex;
+  justify-content: flex-start;
+  align-items: stretch;
+  flex-wrap: nowrap;
+  gap: 0.5rem;
+  transition: border-color 0.3s, background-color 0.3s;
+  padding: 0.5rem;
+  border-width: 1px;
+  border-style: solid;
+  border-color: rgba(5,5,5,0.06);
+  border-radius: 0.5rem;
+  /*background-color: rgba(128, 128, 128, 0.03);*/
+  background-color: white;
+  width: 100%;
+}
+
+#videoSideListCard .videoSideListItemLoadingMore {
+  margin: 0 0.5rem 0.5rem 0.5rem;
+  padding: 0.5rem;
+  border-width: 1px;
+  border-style: solid;
+  border-color: rgba(5,5,5,0.06);
+  border-radius: 0.5rem;
+  /*background-color: rgba(128, 128, 128, 0.03);*/
+  background-color: white;
+  width: calc(100% - 1rem);
+}
+
+#videoSideListCard .ant-list .ant-list-item a.videoSideListItem:hover {
+  border-color: rgb(22, 119, 255, 0.6);
+  /*background-color: rgba(128, 128, 128, 0);*/
+}
+
+#videoSideListCard .ant-list .ant-list-item a.videoSideListItemActive {
+  border-color: rgb(22, 119, 255, 0.8);
+}
+
+.videoSideListItem .videoSideListItemThumbnailCtn {
+  width: 100px;
+  height: 100px;
+  position: relative;
+  flex-shrink: 0;
+}
+
+.videoSideListItem .videoSideListItemThumbnail {
+  object-fit: cover;
+}
+
+.videoSideListItem .videoSideListItemThumbnailLayer {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  left: 0;
+  top: 0;
+  pointer-events: none;
+}
+
+.videoSideListItem .videoSideListItemThumbnailLayer.videoSideListItemLoadingLayer,
+.videoSideListItem .videoSideListItemThumbnailLayer.videoSideListItemIconLayer {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.videoSideListItem .videoSideListItemThumbnailLayer.videoSideListItemLoadingLayer span.anticon,
+.videoSideListItem .videoSideListItemThumbnailLayer.videoSideListItemIconLayer span.anticon {
+  font-size: 3rem;
+}
+
+.videoSideListItem .videoSideListItemThumbnailLayer.videoSideListItemIconLayer.videoSideListItemThumbnailMediaIcon {
+  opacity: 0;
+  transition: opacity 0.3s;
+  color: white;
+  background-color: rgba(0,0,0,0.4);
+}
+
+a.videoSideListItem:hover .videoSideListItemThumbnailLayer.videoSideListItemIconLayer.videoSideListItemThumbnailMediaIcon {
+  opacity: 1;
+}
+
+.videoSideListItem .videoSideListItemText {
+  flex-grow: 1;
+  line-break: anywhere;
+  height: 100px;
+  overflow: hidden;
+  transition: color 0.3s;
+}
+
+.videoSideListItem .videoSideListItemText .videoSideListItemTextSecondary {
+  color: rgb(150, 150, 150);
+  opacity: 1;
+  transition: opacity 0.3s;
+}
+
+a.videoSideListItem:hover .videoSideListItemText .videoSideListItemTextSecondary {
+  opacity: 0.7;
+}

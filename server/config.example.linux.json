@@ -1,0 +1,22 @@
+{
+  "sevenZipPath": "/usr/local/bin/7z",
+  "smartctlPath": "/usr/sbin/smartctl",
+  "ffmpegPath": "/root/ffmpeg-7.0.2-amd64-static/ffmpeg",
+  "basePaths": {
+    "root": "/root"
+  },
+  "previewCachePath": "/root/FileBrowserServer/server/cache",
+  "previewImageMaxWidth": 512,
+  "previewImageMaxHeight": 512,
+  "dbPath": "/root/FileBrowserServer/server/db/db.sqlite",
+  "playVideoFps": 24,
+  "playVideoSegmentTargetDuration": 6,
+  "tempDir": "/root/FileBrowserServer/server/cache",
+  "enableDirSizeChk": false,
+  "oauth": {
+    "clientId": "self",
+    "clientSecret": "self",
+    "clientUserId": "self"
+  },
+  "enablePlayVideoHardwareAcceleration": false
+}

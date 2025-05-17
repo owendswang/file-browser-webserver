@@ -1,0 +1,26 @@
+services:
+  file-browser:
+    image: node:22-bookworm
+    container_name: file-browser
+    hostname: file-browser
+    volumes:
+      - /home/ubuntu/FileBrowserServer:/home/node/app
+      - /usr/local/bin/7zz:/usr/local/bin/7zz
+      - /usr/local/bin/7zzs:/usr/locaQ/bin/7zsz
+      - /mnt/Documents/cache:/home/node/cache
+      - /home/ubuntu/ffmpeg-7.0.2-arm64-static:/home/node/ffmpeg-7.0.2-arm64-static
+      # mount softwares and directories for app to use
+      - /mnt:/mnt
+      # mount directories for browsing
+    devices:
+      - /dev/sda1:/dev/sda1
+      # mount devices for smartmontools to scan
+    cap_add:
+      - SYS_RAWIO
+    environment:
+      - "TZ=Asia/Shanghai"
+    working_dir: /home/node/app
+    entrypoint: /bin/bash
+    command: ["-c", "apt update && apt install smartmontools && npm install && node node_modules/nodemon/bin/nodemon.js app.js"]
+    ports:
+      - 3000:3000

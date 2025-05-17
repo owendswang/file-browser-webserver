@@ -1,0 +1,21 @@
+.video-player {
+  width: 100%;
+  height: auto;
+  max-height: 78vh;
+  overflow: hidden;
+}
+
+.video-js.vjs-fluid:not(.vjs-audio-only-mode),
+.video-js .vjs-tech {
+  width: inherit;
+  height: inherit;
+  max-height: inherit;
+}
+
+.video-js .vjs-tech {
+  position: unset;
+}
+
+.video-js.vjs-fluid:not(.vjs-audio-only-mode) {
+  padding-top: unset;
+}

@@ -1,0 +1,7 @@
+.loginCtn {
+  height: 100vh;
+}
+
+.loginCtn.ant-dark {
+  background-color: #000;
+}

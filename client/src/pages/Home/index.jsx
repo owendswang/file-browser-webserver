@@ -1,0 +1,238 @@
+import React, { useState, useEffect } from 'react';
+import { Link, useSearchParams, useNavigate, useOutletContext } from "react-router";
+import { Helmet } from "react-helmet";
+import { PageContainer, ProCard } from '@ant-design/pro-components';
+import { Table, message, Progress, Space, Button, Empty, Typography, Spin } from 'antd';
+import { ReloadOutlined, FolderOpenOutlined, MoonOutlined } from '@ant-design/icons';
+import handleErrorContent from '@/utils/handleErrorContent';
+import homeService from '@/services/home';
+import FileIcon from '@/pages/Folder/FileIcon';
+
+const { Text, Paragraph } = Typography;
+const { Column } = Table;
+
+const Home = () => {
+  const navigate = useNavigate();
+
+  const [searchParams] = useSearchParams();
+
+  const [messageApi, contextHolder] = message.useMessage();
+
+  const [user] = useOutletContext();
+
+  const [data, setData] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [sleepBtnloading, setSleepBtnloading] = useState(false);
+  const [sleepable, setSleepable] = useState(false);
+
+  const fetchData = async (signal) => {
+    setLoading(true);
+    try {
+      const res = await homeService.getFolders(signal);
+      // console.log(res);
+      if (res && res.folders && Array.isArray(res.folders)) {
+        setData(res.folders);
+        setSleepable(res.sleepable);
+      }
+    } catch (e) {
+      console.log(e);
+      if (e.message !== 'canceled') {
+        messageApi.error(`Failed to fetch data: ${handleErrorContent(e)}`);
+      }
+    }
+    setLoading(false);
+  }
+
+  const handleSleepBtnClick = async (e) => {
+    setSleepBtnloading(true);
+    try {
+      const res = await homeService.sleep();
+      // console.log(res);
+    } catch (e) {
+      console.log(e);
+      messageApi.error(`Failed to put disks to sleep: ${handleErrorContent(e)}`);
+    }
+    setSleepBtnloading(false);
+  };
+
+  useEffect(() => {
+    const abortController = new AbortController();
+    fetchData(abortController.signal);
+    return () => {
+      abortController.abort();
+    }
+  }, [window.location.pathname]);
+
+  return (
+    <PageContainer
+      header={{
+        title: "Home",
+        ghost: true,
+        breadcrumb: {},
+      }}
+      ghost={true}
+    >
+      <Helmet>
+        <title>Home - File Browser</title>
+      </Helmet>
+      {contextHolder}
+      <ProCard
+        extra={<Space>
+          {(user.scope && user.scope.includes('admin')) && <Button
+            key="sleep"
+            type="link"
+            icon={<MoonOutlined />}
+            loading={sleepBtnloading || loading}
+            onClick={handleSleepBtnClick}
+            disabled={!sleepable}
+            size="small"
+          ></Button>}
+          <Button
+            key="refresh"
+            type="link"
+            icon={<ReloadOutlined />}
+            loading={loading}
+            onClick={() => { fetchData(); }}
+            size="small"
+          ></Button>
+        </Space>}
+      >
+        <Spin spinning={loading}>
+          { data.length > 0 ?
+            <Table
+              dataSource={data}
+              // loading={loading}
+              rowKey="name"
+              pagination={false}
+              // size="small"
+              bordered={false}
+            >
+              <Column
+                title="Folder Name"
+                dataIndex="name"
+                key="name"
+                align="left"
+                render={function(value, record, index) {
+                  let newSearchParams = new URLSearchParams(searchParams.toString());
+                  newSearchParams.delete('page');
+                  return (
+                    <Link
+                      to={{
+                        pathname: record.path.replace(/^\/home\//, '/folder/'),
+                        search: newSearchParams.toString() ? ('?' + newSearchParams.toString()) : '',
+                      }}
+                    ><FileIcon type="Folder" style={{ paddingRight: '8px' }} />{value}</Link>
+                  );
+                }}
+              />
+              <Column
+                title="Disk Status"
+                dataIndex="status"
+                key="status"
+                align="center"
+                width={150}
+                render={function(value, record, index) {
+                  let color = "primary";
+                  if (value === "Healthy") {
+                    color = "green";
+                  } else if (value === "Unhealty") {
+                    color = "danger";
+                  }
+                  return (
+                    <Button
+                      variant="outlined"
+                      color={color}
+                      size="small"
+                      disabled={!['Healthy', 'Unhealty'].includes(value)}
+                      onClick={(e) => {
+                        navigate({
+                          pathname: `/disk/${record.device}`,
+                          search: searchParams.toString() ? ('?' + searchParams.toString()) : '',
+                        })
+                      }}
+                    >{value}</Button>
+                  );
+                }}
+              />
+              <Column
+                title="Total Space"
+                dataIndex="total"
+                key="total"
+                align="center"
+                width={150}
+              />
+              <Column
+                title="Used Space"
+                dataIndex="used"
+                key="used"
+                align="center"
+                width={150}
+              />
+              <Column
+                title="Free Space"
+                dataIndex="available"
+                key="available"
+                align="center"
+                width={150}
+              />
+              {/*<Column
+                title="Usage"
+                dataIndex="percentUsed"
+                key="percentUsed"
+                align="center"
+                width={150}
+                render={function(value, record, index) {
+                  if (isNaN(value)) {
+                    return '-';
+                  } else {
+                    return (
+                      <span>{value} %</span>
+                    );
+                  }
+                }}
+              />*/}
+              <Column
+                title="Usage Bar"
+                dataIndex="percentUsed"
+                key="percentUsed"
+                align="center"
+                width={340}
+                render={function(value, record, index) {
+                  if (isNaN(value)) {
+                    return '-';
+                  } else {
+                    let status = "normal";
+                    if (value > 90) {
+                      status = "exception";
+                    }
+                    return (
+                      <Progress
+                        percent={value}
+                        percentPosition={{ align: 'end', type: 'inner' }}
+                        size={[300, 20]}
+                        strokeLinecap="butt"
+                        status={status}
+                        trailColor="rgba(82,196,26,0.75)"
+                      />
+                    );
+                  }
+                }}
+              />
+            </Table> :
+            <div className="empty-container">
+              <Empty
+                style={{ maxWidth: '400px' }}
+                image={<FolderOpenOutlined style={{ fontSize: '100px', color: 'rgba(0,0,0,0.25)' }} />}  // Empty.PRESENTED_IMAGE_SIMPLE
+                description={<Paragraph style={{ marginBottom: '16px' }}>
+                  <Text type="secondary">No Data</Text>
+                </Paragraph>}
+              />
+            </div>
+          }
+        </Spin>
+      </ProCard>
+    </PageContainer>
+  );
+};
+
+export default Home;

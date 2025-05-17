@@ -1,0 +1,70 @@
+.folderCardWrapper .ant-pro-card-title {
+  width: 100%;
+}
+
+.folderCardTitle {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.tableWrapper {
+  overflow-x: auto;
+}
+
+.tableWrapper table tbody tr td.ant-table-cell {
+  white-space: nowrap;
+}
+
+a.tableRowFileNameLink {
+  transition: color 0.3s;
+}
+
+a.tableRowFileNameLink:visited {
+  color: #4b2feb;
+}
+
+a.tableRowFileNameLink:visited:hover {
+  color: #7e6ddf;
+}
+
+.tableRowFileNameHoverLink {
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s, color 0.3s;
+}
+
+.ant-table-cell-row-hover .tableRowFileNameHoverLink {
+  opacity: 1;
+  pointer-events: unset;
+}
+
+.dropdownButtonGroup {
+  display: flex;
+  flex-wrap: nowrap;
+}
+
+.dropdownButtonGroup .dropdownButtonGroupLeft {
+  margin-right: -1px;
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+}
+
+.dropdownButtonGroup .dropdownButtonGroupRight:hover,
+.dropdownButtonGroup .dropdownButtonGroupRight:active,
+.dropdownButtonGroup .dropdownButtonGroupLeft:hover,
+.dropdownButtonGroup .dropdownButtonGroupLeft:active {
+  z-index: 1;
+}
+
+.dropdownButtonGroup > .dropdownButtonGroupRight {
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+}
+
+.thumbnailContainer {
+  display: grid;
+  grid-gap: 8px;
+  justify-content: space-between;
+}
