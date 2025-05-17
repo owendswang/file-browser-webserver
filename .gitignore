@@ -37,7 +37,6 @@ bower_components
 
 # Compiled binary addons (https://nodejs.org/api/addons.html)
 build/Release
-<<<<<<< HEAD
 
 # Dependency directories
 node_modules/
@@ -45,19 +44,6 @@ jspm_packages/
 
 # Snowpack dependency directory (https://snowpack.dev/)
 web_modules/
-=======
-client/dist
-client/build
-server/public/*
-!server/public/favicon.ico
-
-# Dependency directories
-**/node_modules/
-**/jspm_packages/
-
-# Snowpack dependency directory (https://snowpack.dev/)
-**/web_modules/
->>>>>>> 162fe9d (Initial commit)
 
 # TypeScript cache
 *.tsbuildinfo
@@ -72,17 +58,10 @@ server/public/*
 .stylelintcache
 
 # Microbundle cache
-<<<<<<< HEAD
 .rpt2_cache/
 .rts2_cache_cjs/
 .rts2_cache_es/
 .rts2_cache_umd/
-=======
-**/.rpt2_cache/
-**/.rts2_cache_cjs/
-**/.rts2_cache_es/
-**/.rts2_cache_umd/
->>>>>>> 162fe9d (Initial commit)
 
 # Optional REPL history
 .node_repl_history
@@ -113,21 +92,13 @@ out
 dist
 
 # Gatsby files
-<<<<<<< HEAD
 .cache/
-=======
-**/.cache/
->>>>>>> 162fe9d (Initial commit)
 # Comment in the public line in if your project uses Gatsby and not Next.js
 # https://nextjs.org/blog/next-9-1#public-directory-support
 # public
 
 # vuepress build output
-<<<<<<< HEAD
 .vuepress/dist
-=======
-**/.vuepress/dist
->>>>>>> 162fe9d (Initial commit)
 
 # vuepress v2.x temp and cache directory
 .temp
