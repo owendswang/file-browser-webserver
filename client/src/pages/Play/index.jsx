@@ -256,6 +256,7 @@ const Play = () => {
             playingFileName={fileName}
             playlist={playlist}
             setPlaylist={setPlaylist}
+            location={location}
           />
         </Flex>
       </Spin>
