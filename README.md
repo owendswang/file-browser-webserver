@@ -6,12 +6,21 @@ File Browser 是一个简洁的、网页端的文件管理软件，允许用户�
 
 本项目建项初衷是为了方便的浏览压缩包中的图片和视频，所以其他功能可能不是很完善，请尽管提出，如有必要，我会进行修改。
 
-### 功能
+### 功能介绍
 
-- 文件和文件夹的上传和下载
-- 文件夹的创建、重命名、复制、移动和删除，文件的重命名、复制、移动和删除
-- 支持多种图片、视频、文本文件格式的预览。对于浏览器不支持的视频格式，会由服务端进行实时转码并交给浏览器播放
-- 简单的用户登录管理
+- 文件和文件夹的上传和下载，支持压缩包内操作。
+- 文件夹的创建、重命名、复制、移动和删除，文件的重命名、复制、移动和删除，支持压缩包内操作。
+- 支持多种图片、视频、文本文件格式的预览。对于浏览器不支持的视频格式，会由服务端进行实时转码并交给浏览器播放。支持压缩包内预览。
+- 简单的用户登录管理。默认管理员账号密码均为`admin`，并具有文件管理操作的权限。可在`/register`页面上注册新用户，但只拥有文件浏览权限。
+
+### 演示视频
+
+尚无。
+
+### 功能亮点
+
+- 借助 7-zip 、 WinRAR 、 FFmpeg 第三方工具的功能，以及 Viewer.js 和 Video.js 依赖包，实现了可以简单方便的浏览压缩包内的图片、视频。
+- 简单的账号认证使用了 Oauth 2.0 标准，内建了 Oauth 2.0 服务器。
 
 ## 部署方法
 
@@ -19,7 +28,7 @@ File Browser 是一个简洁的、网页端的文件管理软件，允许用户�
 
 1. **下载**
 
-   在 Releases 中下载最新的压缩包，解压后使用命令行进入解压出的项目目录。
+   在 <a href="https://github.com/owendswang/file-browser-webserver/releases" target="_blank">Releases</a> 中下载最新的压缩包，解压后使用命令行进入解压出的项目目录。
    ```bash
    cd file-browser-webserver
    ```
@@ -47,7 +56,7 @@ File Browser 是一个简洁的、网页端的文件管理软件，允许用户�
 
    启动项目：
    ```bash
-   npm start
+   npm run start
    ```
 
 6. **访问项目**
@@ -78,15 +87,15 @@ File Browser 是一个简洁的、网页端的文件管理软件，允许用户�
 
 ### 项目构建所引用的依赖包
 
+- <a href="https://github.com/fengyuanchen/viewerjs" target="_blank">Viewer.js</a> - MIT License
+- <a href="https://github.com/videojs/video.js" target="_blank">Video.js</a> - Apache License Version 2.0
 - <a href="https://github.com/expressjs/express" target="_blank">Express.js</a> - MIT License
 - <a href="https://github.com/facebook/react" target="_blank">React</a> - MIT License
 - <a href="https://github.com/ant-design/ant-design" target="_blank">Ant Design</a> - MIT License
 - <a href="https://github.com/ant-design/pro-components" target="_blank">Ant Design: ProComponents</a> - MIT License
 - <a href="https://github.com/webpack/webpack" target="_blank">Webpack</a> - MIT License
-- <a href="https://github.com/fengyuanchen/viewerjs" target="_blank">Viewer.js</a> - MIT License
-- <a href="https://github.com/videojs/video.js" target="_blank">Video.js</a> - Apache License Version 2.0
 
-其他依赖包，请参考项目代码仓库中的 package.json 文件，并遵守他们的许可增。
+其他依赖包，请参考项目代码仓库中的 package.json 文件，并遵守他们的许可证。
 
 感谢所有使用到的依赖包，感谢他们的作者。
 
@@ -96,4 +105,4 @@ File Browser 是一个简洁的、网页端的文件管理软件，允许用户�
 
 ## 支持
 
-如果您遇到任何问题，请在 Issues 中提交问题。
+如果您遇到任何问题，请在 [Issues](https://github.com/owendswang/file-browser-webserver/issues) 中提交问题。
