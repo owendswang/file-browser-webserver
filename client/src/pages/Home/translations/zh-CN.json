@@ -1,0 +1,17 @@
+{
+  "File Browser": "文件浏览器",
+  "Failed to put disks to sleep: ": "磁盘休眠失败：",
+  "Home": "主页",
+  "Folder Name": "文件夹名称",
+  "Disk Status": "磁盘状态",
+  "Healthy": "健康",
+  "Unhealthy": "不健康",
+  "Unknown": "未知",
+  "Unsupported": "不支持",
+  "Total Space": "总容量",
+  "Used Space": "已使用",
+  "Free Space": "空闲",
+  "Usage": "使用量",
+  "Usage Bar": "使用量",
+  "No Data": "无数据"
+}

@@ -196,7 +196,7 @@ const method = async (req, res) => {
         }
 
         if (isReadableFile(fullPath)) {
-          const encoding = await chardet.detectFile(extractedFilePath);
+          const encoding = await chardet.detectFile(fullPath);
           res.set('content-type', `text/plain; charset=${encoding.startsWith('UTF') ? encoding : 'GB18030'}`);
         }
 

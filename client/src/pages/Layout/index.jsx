@@ -1,14 +1,33 @@
 import React, { useState, useEffect } from 'react';
-import { Outlet, useNavigate, useLocation, useSearchParams, Link } from 'react-router';
-import { ConfigProvider, Switch, theme, message, FloatButton, Dropdown } from 'antd';
-import { MoonOutlined, SunOutlined, SettingOutlined, UserOutlined, LogoutOutlined, LoadingOutlined, TeamOutlined, GithubOutlined } from '@ant-design/icons';
+import { Outlet, useNavigate, useLocation, useSearchParams } from 'react-router';
+import { ConfigProvider, Switch, theme, message, FloatButton, Dropdown, Space } from 'antd';
+import { MoonOutlined, SunOutlined, SettingOutlined, UserOutlined, LogoutOutlined, LoadingOutlined, TeamOutlined, GithubOutlined, DownOutlined } from '@ant-design/icons';
 import { ProLayout, DefaultFooter } from '@ant-design/pro-components';
+import { useTranslation } from 'react-i18next';
 import enUS from 'antd/locale/en_US';
+import zhCN from 'antd/locale/zh_CN';
+import * as dayjs from 'dayjs';
+import 'dayjs/locale/zh-cn';
 import handleErrorContent from '@/utils/handleErrorContent';
 import userService from '@/services/user';
 import '@/pages/Layout/index.css';
 
 const { defaultAlgorithm, darkAlgorithm } = theme;
+
+const defaultLanguage = 'zh-CN';
+const languageLabelMapping = {
+  'zh-CN': '中文',
+  'en-US': 'English'
+};
+const antdLocaleMapping = {
+  'zh-CN': zhCN,
+  'en-US': enUS
+};
+const dayjsLocaleMapping = {
+  'zh-CN': 'zh-cn',
+  'en-US': 'en',
+}
+dayjs.locale(dayjsLocaleMapping[window.localStorage.getItem('language') || defaultLanguage]);
 
 const Layout = () => {
   const location = useLocation();
@@ -17,10 +36,13 @@ const Layout = () => {
 
   const [searchParams] = useSearchParams();
 
+  const { t, i18n } = useTranslation('Layout');
+
   const [messageApi, messageContextHolder] = message.useMessage();
 
   const [darkMode, setDarkMode] = useState((window.localStorage.getItem('darkMode') === 'true') ? true : false);
   const [user, setUser] = useState({});
+  const [language, setLanguage] = useState(window.localStorage.getItem('language') || defaultLanguage);
 
   const handleTitleClick = (e) => {
     let newSearchParams = new URLSearchParams(searchParams.toString());
@@ -37,19 +59,17 @@ const Layout = () => {
     window.localStorage.setItem('darkMode', checked ? 'true' : 'false');
   }
 
-  const footerRender = (props) => {
-    return (
-      <DefaultFooter
-        copyright={`2024-${BUILD_YEAR} OWENDSWANG`}
-        links={[{
-          key: 'github',
-          title: <><GithubOutlined /> File Browser v{APP_VERSION}</>,
-          href: 'https://github.com/owendswang/file-browser',
-          blankTarget: true,
-        }]}
-      />
-    );
-  }
+  const footerRender = (props) => (
+    <DefaultFooter
+      copyright={`2024-${BUILD_YEAR} OWENDSWANG`}
+      links={[{
+        key: 'github',
+        title: <><GithubOutlined /> {t('File Browser')} v{APP_VERSION}</>,
+        href: 'https://github.com/owendswang/file-browser-webserver',
+        blankTarget: true,
+      }]}
+    />
+  );
 
   const logout = async () => {
     // const refreshToken = sessionStorage.getItem('refreshToken') || localStorage.getItem('refreshToken');
@@ -68,7 +88,7 @@ const Layout = () => {
         });
       } catch (e) {
         console.log(e);
-        messageApi.error(`Failed to logout: ${handleErrorContent(e)}`);
+        messageApi.error(`${t('Failed to logout: ')}${handleErrorContent(e)}`);
       }
     // }
   }
@@ -105,21 +125,21 @@ const Layout = () => {
             items: [{
               key: 'edit',
               icon: <UserOutlined />,
-              label: 'Edit Info',
+              label: t('Edit Info'),
             },
             (user.scope && user.scope.includes('admin')) && ({
               key: 'users',
               icon: <TeamOutlined />,
-              label: 'User management',
+              label: t('User management'),
             }),
             (user.scope && user.scope.includes('admin')) && ({
               key: 'config',
               icon: <SettingOutlined />,
-              label: 'Config',
+              label: t('Config'),
             }), {
               key: 'logout',
               icon: <LogoutOutlined />,
-              label: 'Logout',
+              label: t('Logout'),
             }].filter(Boolean),
             onClick: avatarDropdownOnClick
           }}
@@ -130,15 +150,39 @@ const Layout = () => {
     },
   };
 
+  const languageDropdownMenuItems = Object.entries(languageLabelMapping).map(([key, val]) => ({ label: val, key }));
+
+  const handleLanguageDropdownMenuClick = ({ key }) => {
+    window.localStorage.setItem('language', key);
+    setLanguage(key);
+    dayjs.locale(dayjsLocaleMapping[key]);
+    i18n.changeLanguage(key);
+  }
+
   const actionsRender = (props) => {
     return [
-      <div><Switch
-        key="darkMode"
-        checked={darkMode}
-        onChange={handleDarkModeSwitch}
-        checkedChildren={<MoonOutlined />}
-        unCheckedChildren={<SunOutlined />}
-      /></div>
+      <Dropdown
+        key="language"
+        menu={{
+          items: languageDropdownMenuItems,
+          onClick: handleLanguageDropdownMenuClick
+        }}
+      >
+        <a onClick={(e) => e.preventDefault()} style={{ fontSize: '0.88rem' }}>
+          <Space size="small" wrap={false}>
+            {languageLabelMapping[language]}
+            <DownOutlined />
+          </Space>
+        </a>
+      </Dropdown>,
+      <div key="darkMode">
+        <Switch
+          checked={darkMode}
+          onChange={handleDarkModeSwitch}
+          checkedChildren={<MoonOutlined />}
+          unCheckedChildren={<SunOutlined />}
+        />
+      </div>
     ];
   }
 
@@ -179,7 +223,7 @@ const Layout = () => {
   return (
     <ConfigProvider
       theme={{ algorithm: darkMode ? darkAlgorithm : defaultAlgorithm }}
-      locale={enUS}
+      locale={antdLocaleMapping[language]}
     >
       {messageContextHolder}
       {['/login', '/register'].includes(location.pathname) ?
@@ -189,7 +233,7 @@ const Layout = () => {
       <ProLayout
         layout='top'
         logo={<img src="/favicon.ico" alt="logo" />}
-        title="File Browser"
+        title={t("File Browser")}
         onMenuHeaderClick={handleTitleClick}
         footerRender={footerRender}
         actionsRender={actionsRender}

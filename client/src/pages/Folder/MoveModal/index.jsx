@@ -111,7 +111,7 @@ const MoveModal = (props) => {
       onOk={handleMoveModalOk}
       confirmLoading={confirmLoading}
       onCancel={handleMoveModalCancel}
-      destroyOnClose={true}
+      destroyOnHidden={true}
     >
       <Form
         onFinish={handleFormOnFinish}

@@ -57,7 +57,7 @@ const MkDirModal = (props) => {
       onOk={handleModalOnOk}
       confirmLoading={confirmLoading}
       onCancel={handleModalOnCancel}
-      destroyOnClose={true}
+      destroyOnHidden={true}
     >
       <Form
         onFinish={handleFormOnFinish}

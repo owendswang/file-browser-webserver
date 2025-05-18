@@ -1,7 +1,0 @@
-#videoSideList {
-  width: 360px;
-  flex-shrink: 0;
-  max-height: 78vh;
-  overflow-x: hidden;
-  overflow-y: auto;
-}
