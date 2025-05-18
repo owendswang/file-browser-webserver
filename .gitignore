@@ -143,3 +143,4 @@ server/cache
 .git
 */db.sqlite
 server/config.json
+Archive
