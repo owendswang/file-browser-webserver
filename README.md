@@ -28,7 +28,7 @@ File Browser 是一个简洁的、网页端的文件管理软件，允许用户�
 
 1. **下载**
 
-   在 Releases 中下载最新的压缩包，解压后使用命令行进入解压出的项目目录。
+   在 <a href="https://github.com/owendswang/file-browser-webserver/releases" target="_blank">Releases</a> 中下载最新的压缩包，解压后使用命令行进入解压出的项目目录。
    ```bash
    cd file-browser-webserver
    ```
@@ -56,7 +56,7 @@ File Browser 是一个简洁的、网页端的文件管理软件，允许用户�
 
    启动项目：
    ```bash
-   npm start
+   npm run start
    ```
 
 6. **访问项目**
