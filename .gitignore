@@ -141,6 +141,6 @@ cache
 server/cache
 */package-lock.json
 .git
-*/db.sqlite
+server/db/db.sqlite
 server/config.json
 Archive
