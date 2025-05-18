@@ -105,4 +105,4 @@ File Browser 是一个简洁的、网页端的文件管理软件，允许用户�
 
 ## 支持
 
-如果您遇到任何问题，请在 [Issues](issues) 中提交问题。
+如果您遇到任何问题，请在 [Issues](https://github.com/owendswang/file-browser-webserver/issues) 中提交问题。
