@@ -1,1 +1,14 @@
-{}
+{
+  "File Browser": "文件浏览器",
+  "Failed to fetch data: ": "获取数据失败：",
+  "Approval failed: ": "批准失败：",
+  "Delete": "删除",
+  "Are you sure to delete it?": "确定要删除它吗？",
+  "Nothing to delete": "无可删除对象",
+  "Delete failed: ": "删除失败：",
+  "Are you sure to delete them?": "确定要删除它们吗？",
+  "User Management": "用户管理",
+  "User name": "用户名",
+  "Approved": "批准",
+  "Actions": "操作"
+}

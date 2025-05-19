@@ -1,1 +1,7 @@
-{}
+{
+  "File Browser": "文件浏览器",
+  "Failed to fetch data: ": "获取数据失败：",
+  "Failed to load file content.": "加载文件失败。",
+  "No Data": "无数据",
+  "Refresh": "刷新"
+}

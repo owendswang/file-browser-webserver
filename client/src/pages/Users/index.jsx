@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from "react-router";
 import { Helmet } from "react-helmet";
+import { useTranslation } from 'react-i18next';
 import { PageContainer, ProCard } from '@ant-design/pro-components';
 import { message, Table, Button, Input, Pagination, Checkbox, Spin, Modal } from 'antd';
 import { DeleteOutlined, ReloadOutlined } from '@ant-design/icons';
@@ -19,6 +20,8 @@ const Users = () => {
   const [modalApi, modalContextHolder] = Modal.useModal();
 
   const [searchParams, setSearchParams] = useSearchParams();
+
+  const { t } = useTranslation('Users');
 
   const [data, setData] = useState([]);
   const [total, setTotal] = useState(0);
@@ -45,7 +48,7 @@ const Users = () => {
     } catch (e) {
       console.log(e);
       if (e.message !== 'canceled') {
-        messageApi.error(`Failed to fetch data: ${handleErrorContent(e)}`);
+        messageApi.error(`${t('Failed to fetch data: ')}${handleErrorContent(e)}`);
       }
     }
     setLoading(false);
@@ -61,7 +64,7 @@ const Users = () => {
       refresh();
     } catch(e) {
       console.log(e);
-      messageApi.error(`Approval failed: ${handleErrorContent(e)}`);
+      messageApi.error(`${t('Approval failed: ')}${handleErrorContent(e)}`);
       setLoading(false);
     }
   }
@@ -104,20 +107,20 @@ const Users = () => {
     // console.log(pn);
     setSelectedRowKeys([userId]);
     modalApi.confirm({
-      title: 'Delete',
-      content: 'Are you sure to delete it?',
+      title: t('Delete'),
+      content: t('Are you sure to delete it?'),
       closable: true,
       maskClosable: true,
       onOk: async () => {
         try {
           if (!userId) {
-            throw new Error('Nothing to delete');
+            throw new Error(t('Nothing to delete'));
           }
           await usersService.delete(userId);
           refresh();
         } catch(e) {
           console.log(e);
-          messageApi.error(`Delete failed: ${handleErrorContent(e)}`);
+          messageApi.error(`${t('Delete failed: ')}${handleErrorContent(e)}`);
         }
       },
       onCancel: () => {
@@ -129,8 +132,8 @@ const Users = () => {
   const handleBulkDelete = (e) => {
     // console.log('trying to delete: ', selectedRowKeys);
     modalApi.confirm({
-      title: 'Delete',
-      content: 'Are you sure to delete them?',
+      title: t('Delete'),
+      content: t('Are you sure to delete them?'),
       closable: true,
       maskClosable: true,
       onOk: async () => {
@@ -141,7 +144,7 @@ const Users = () => {
           refresh();
         } catch(e) {
           console.log(e);
-          messageApi.error(`Delete failed: ${handleErrorContent(e)}`);
+          messageApi.error(`${t('Delete failed: ')}${handleErrorContent(e)}`);
         }
       }
     });
@@ -157,12 +160,12 @@ const Users = () => {
 
   return (
     <PageContainer
-      title="User Management"
+      title={t("User Management")}
       breadcrumb={{}}
       onBack={() => navigate(-1)}
     >
       <Helmet>
-        <title>User Management - File Browser</title>
+        <title>{t('User Management')} - {t('File Browser')}</title>
       </Helmet>
       {messageContextHolder}
       {modalContextHolder}
@@ -174,7 +177,7 @@ const Users = () => {
             icon={<DeleteOutlined />}
             disabled={selectedRowKeys.length === 0}
             onClick={handleBulkDelete}
-          >Delete</Button>
+          >{t('Delete')}</Button>
           <Input.Search
             key='search'
             loading={loading}
@@ -216,14 +219,14 @@ const Users = () => {
               hidden={true}
             />
             <Column
-              title="User name"
+              title={t("User name")}
               dataIndex="username"
               key="username"
               align="left"
               sorter={true}
             />
             <Column
-              title="Approved"
+              title={t("Approved")}
               dataIndex="approved"
               key="approved"
               align="center"
@@ -232,7 +235,7 @@ const Users = () => {
               render={(value, record, index) => <Checkbox checked={!!value} onChange={(e) => { handleApprovalChange(record.id, e.target.checked); }} />}
             />
             <Column
-              title="Actions"
+              title={t("Actions")}
               dataIndex="id"
               key="id"
               align="center"

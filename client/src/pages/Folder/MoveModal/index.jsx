@@ -13,7 +13,8 @@ const MoveModal = (props) => {
     refresh,
     pathname,
     messageApi,
-    searchParams
+    searchParams,
+    t
   } = props;
 
   const [form] = Form.useForm();
@@ -32,7 +33,7 @@ const MoveModal = (props) => {
       })))
     } catch(e) {
       console.log(e);
-      messageApi.error(`Failed to fetch folder tree: ${handleErrorContent(e)}`);
+      messageApi.error(`${t('Failed to fetch folder tree: ')}${handleErrorContent(e)}`);
     }
   }
 
@@ -51,7 +52,7 @@ const MoveModal = (props) => {
       );
     } catch(e) {
       console.log(e);
-      messageApi.error(`Failed to fetch folder tree: ${handleErrorContent(e)}`);
+      messageApi.error(`${t('Failed to fetch folder tree: ')}${handleErrorContent(e)}`);
     }
   }
 
@@ -82,11 +83,11 @@ const MoveModal = (props) => {
         setOpen(false);
         refresh();
       } else {
-        throw new Error(`Invalid operation: ${title}`);
+        throw new Error(`${t('Invalid operation: ')}${title}`);
       }
     } catch(e) {
       console.log(e);
-      messageApi.error(`Move failed: ${handleErrorContent(e)}`);
+      messageApi.error(`${t('Move failed: ')}${handleErrorContent(e)}`);
     } finally {
       setConfirmLoading(false);
     }
@@ -106,7 +107,7 @@ const MoveModal = (props) => {
 
   return (
     <Modal
-      title={title}
+      title={t(title)}
       open={open}
       onOk={handleMoveModalOk}
       confirmLoading={confirmLoading}
@@ -122,15 +123,15 @@ const MoveModal = (props) => {
         layout="vertical"
       >
         <Form.Item
-          label={`Where would you like to ${title?.toLowerCase()} ${selectedRowKeys.length > 1 ? 'them' : 'it'}?`}
+          label={`${t('Where would you like to ')}${t(title?.toLowerCase())}${selectedRowKeys.length > 1 ? t(' them') : t(' it')}?`}
           name="dst"
-          rules={[{ required: true, message: 'Please select destination' }]}
+          rules={[{ required: true, message: t('Please select destination') }]}
         >
           <TreeSelect
             treeDataSimpleMode={true}
             style={{ width: 'calc(100% - 16px)' }}
             dropdownStyle={{ maxHeight: 400, overflow: 'auto' }}
-            placeholder={`Please select destination`}
+            placeholder={t('Please select destination')}
             loadData={fetchFolderTreeSelectOptions}
             treeData={folderTreeSelectOptions}
             disabled={confirmLoading}

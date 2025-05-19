@@ -7,7 +7,7 @@ import handleErrorContent from '@/utils/handleErrorContent';
 import folderService from '@/services/folder';
 
 const BriefPanel = (props) => {
-  const { setHidden, fileName, messageApi, pathname, searchParams } = props;
+  const { setHidden, fileName, messageApi, pathname, searchParams, t } = props;
 
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -50,7 +50,7 @@ const BriefPanel = (props) => {
     } catch (e) {
       console.log(e);
       if (e.message !== 'canceled') {
-        messageApi.error(`Failed to fetch brief: ${handleErrorContent(e)}`);
+        messageApi.error(`${t('Failed to fetch brief: ')}${handleErrorContent(e)}`);
       }
     }
     setLoading(false);
@@ -81,7 +81,7 @@ const BriefPanel = (props) => {
         }}
         title={fileName}
       >
-        <InfoCircleOutlined style={{ marginRight: '8px' }} />{fileName || 'Empty'}
+        <InfoCircleOutlined style={{ marginRight: '8px' }} />{fileName || t('Empty')}
       </div>}
       extra={<Button
         icon={<CloseOutlined />}

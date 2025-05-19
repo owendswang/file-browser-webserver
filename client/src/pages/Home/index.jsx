@@ -89,6 +89,7 @@ const Home = () => {
             onClick={handleSleepBtnClick}
             disabled={!sleepable}
             size="small"
+            title={t("Sleep")}
           ></Button>}
           <Button
             key="refresh"
@@ -97,6 +98,7 @@ const Home = () => {
             loading={loading}
             onClick={() => { fetchData(); }}
             size="small"
+            title={t("Refresh")}
           ></Button>
         </Space>}
       >

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Outlet, useNavigate, useLocation, useSearchParams } from 'react-router';
 import { ConfigProvider, Switch, theme, message, FloatButton, Dropdown, Space } from 'antd';
-import { MoonOutlined, SunOutlined, SettingOutlined, UserOutlined, LogoutOutlined, LoadingOutlined, TeamOutlined, GithubOutlined, DownOutlined } from '@ant-design/icons';
+import { MoonOutlined, SunOutlined, SettingOutlined, UserOutlined, LogoutOutlined, LoadingOutlined, TeamOutlined, GithubOutlined, DownOutlined, GlobalOutlined } from '@ant-design/icons';
 import { ProLayout, DefaultFooter } from '@ant-design/pro-components';
 import { useTranslation } from 'react-i18next';
 import enUS from 'antd/locale/en_US';
@@ -167,10 +167,12 @@ const Layout = () => {
           items: languageDropdownMenuItems,
           onClick: handleLanguageDropdownMenuClick
         }}
+        placement="bottom"
       >
         <a onClick={(e) => e.preventDefault()} style={{ fontSize: '0.88rem' }}>
           <Space size="small" wrap={false}>
-            {languageLabelMapping[language]}
+            <GlobalOutlined />
+            {/*languageLabelMapping[language]*/}
             <DownOutlined />
           </Space>
         </a>
@@ -228,7 +230,7 @@ const Layout = () => {
       {messageContextHolder}
       {['/login', '/register'].includes(location.pathname) ?
       <div className={`loginCtn${darkMode ? ' ant-dark' : ''}`}>
-        <Outlet />
+        <Outlet context={[languageDropdownMenuItems, handleLanguageDropdownMenuClick, /*languageLabelMapping, language,*/ darkMode, handleDarkModeSwitch]} />
       </div> :
       <ProLayout
         layout='top'

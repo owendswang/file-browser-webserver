@@ -1,1 +1,21 @@
-{}
+{
+  "File Browser": "File Browser",
+  "Failed to fetch data: ": "Failed to fetch data: ",
+  "Failed to load file content.": "Failed to load file content.",
+  "No Data": "No Data",
+  "Refresh": "Refresh",
+  "Playing next canceled": "Playing next canceled",
+  "Playing next in {countDownSeconds} seconds: ": "Playing next in {{countDownSeconds}} seconds: ",
+  "End of playlist": "End of playlist",
+  "Not playable file": "Not playable file",
+  "Keyboard Controls": "Keyboard Controls",
+  "(when the player is focused)": "(when the player is focused)",
+  "[Space]: Play/Pause": "[Space]: Play/Pause",
+  "[←]/[→]: Rewind/Fast Forward (5 sec)": "[←]/[→]: Rewind/Fast Forward (5 sec)",
+  "[↑]/[↓]: Volume Up/Down (5%)": "[↑]/[↓]: Volume Up/Down (5%)",
+  "[F]: Toggle Fullscreen": "[F]: Toggle Fullscreen",
+  "[M]: Mute/Unmute": "[M]: Mute/Unmute",
+  "Failed to fetch playlist: ": "Failed to fetch playlist: ",
+  "Playlist": "Playlist",
+  "Auto next:": "Auto next:"
+}

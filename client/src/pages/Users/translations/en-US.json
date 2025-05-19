@@ -1,1 +1,14 @@
-{}
+{
+  "File Browser": "File Browser",
+  "Failed to fetch data: ": "Failed to fetch data: ",
+  "Approval failed: ": "Approval failed: ",
+  "Delete": "Delete",
+  "Are you sure to delete it?": "Are you sure to delete it?",
+  "Nothing to delete": "Nothing to delete",
+  "Delete failed: ": "Delete failed: ",
+  "Are you sure to delete them?": "Are you sure to delete them?",
+  "User Management": "User Management",
+  "User name": "User name",
+  "Approved": "Approved",
+  "Actions": "Actions"
+}

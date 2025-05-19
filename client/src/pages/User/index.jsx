@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate, useOutletContext } from "react-router";
+import { Helmet } from "react-helmet";
+import { useTranslation } from 'react-i18next';
 import { PageContainer, ProCard } from '@ant-design/pro-components';
 import { message, Input, Form, Button, Spin } from 'antd';
 import { SaveOutlined, RollbackOutlined } from '@ant-design/icons';
@@ -12,6 +14,8 @@ const User = () => {
   const [messageApi, contextHolder] = message.useMessage();
 
   const [user, setUser] = useOutletContext();
+
+  const { t } = useTranslation('User');
 
   const [form] = Form.useForm();
 
@@ -31,17 +35,20 @@ const User = () => {
       }
     } catch (e) {
       console.log(e);
-      messageApi.error(`Failed to save user info: ${handleErrorContent(e)}`);
+      messageApi.error(`${t('Failed to save user info: ')}${handleErrorContent(e)}`);
     }
     setLoading(false);
   }
 
   return (
     <PageContainer
-      title="Edit User Info"
+      title={t("Edit User Info")}
       breadcrumb={{}}
       onBack={() => navigate(-1)}
     >
+      <Helmet>
+        <title>{t("Edit User Info")} - {t('File Browser')}</title>
+      </Helmet>
       {contextHolder}
       <ProCard>
         <Spin spinning={loading}>
@@ -54,7 +61,7 @@ const User = () => {
             form={form}
           >
             <Form.Item
-              label="User name"
+              label={t("User name")}
               name="username"
               rules={[{
                 required: true
@@ -65,11 +72,11 @@ const User = () => {
               }]}
             >
               <Input
-                placeholder="Input your username"
+                placeholder={t("Please nput your username here...")}
               />
             </Form.Item>
             <Form.Item
-              label="Password"
+              label={t("Password")}
               name="password"
               rules={[{
                 min: 4
@@ -78,11 +85,11 @@ const User = () => {
               }]}
             >
               <Input.Password
-                placeholder="Input your password"
+                placeholder={t("Please input your password here...")}
               />
             </Form.Item>
             <Form.Item
-              label="Repeat password"
+              label={t("Repeat password")}
               name="confirm"
               dependencies={['password']}
               rules={[{
@@ -94,12 +101,12 @@ const User = () => {
                   if (!value || getFieldValue('password') === value) {
                     return Promise.resolve();
                   }
-                  return Promise.reject(new Error('The new password that you entered do not match!'));
+                  return Promise.reject(new Error(t('The new password that you entered do not match!')));
                 },
               })]}
             >
               <Input.Password
-                placeholder="Repeat your password"
+                placeholder={t("Plese input your password again ...")}
               />
             </Form.Item>
             <Form.Item
@@ -110,17 +117,13 @@ const User = () => {
                 type="primary"
                 htmlType="submit"
                 icon={<SaveOutlined />}
-              >
-                Save
-              </Button>
+              >{t("Save")}</Button>
               <Button
                 htmlType="button"
                 icon={<RollbackOutlined />}
                 onClick={() => form.resetFields()}
                 style={{ marginLeft: '8px' }}
-              >
-                Reset
-              </Button>
+              >{t("Reset")}</Button>
             </Form.Item>
           </Form>
         </Spin>

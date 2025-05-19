@@ -1,1 +1,17 @@
-{}
+{
+  "File Browser": "File Browser",
+  "Login": "Login",
+  "Register": "Register",
+  "Browse your files in the web-browser": "Browse your files in the web-browser",
+  "User Name": "User Name",
+  "Please input username": "Please input username",
+  "Length limit between 4 and 16": "Length limit between 4 and 16",
+  "Password": "Password",
+  "Please input password": "Please input password",
+  "Auto Login": "Auto Login",
+  "Repeat Password": "Repeat Password",
+  "Please repeat your password": "Please repeat your password",
+  "The new password that you entered do not match": "The new password that you entered do not match",
+  "Register successfully. Please Login now.": "Register successfully. Please Login now.",
+  "Invalid grant: user credentials are invalid": "Invalid grant: user credentials are invalid"
+}

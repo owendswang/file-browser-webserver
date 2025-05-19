@@ -1,1 +1,21 @@
-{}
+{
+  "File Browser": "文件浏览器",
+  "Failed to fetch data: ": "获取数据失败：",
+  "Failed to load file content.": "加载文件失败。",
+  "No Data": "无数据",
+  "Refresh": "刷新",
+  "Playing next canceled": "已取消自动播放下一个",
+  "Playing next in {countDownSeconds} seconds: ": "将在 {{countDownSeconds}} 秒内播放下一个：",
+  "End of playlist": "没有下一个了",
+  "Not playable file": "无法播放",
+  "Keyboard Controls": "键盘控制",
+  "(when the player is focused)": "（当聚焦于播放窗口时）",
+  "[Space]: Play/Pause": "【空格】：播放/暂停",
+  "[←]/[→]: Rewind/Fast Forward (5 sec)": "【←】/【→】：快退/快进（5秒）",
+  "[↑]/[↓]: Volume Up/Down (5%)": "【↑】/【↓】：音量增/音量减（5%）",
+  "[F]: Toggle Fullscreen": "【F】：控制全屏",
+  "[M]: Mute/Unmute": "【M】：控制静音",
+  "Failed to fetch playlist: ": "获取播放列表失败：",
+  "Playlist": "播放列表",
+  "Auto next:": "自动下一个："
+}

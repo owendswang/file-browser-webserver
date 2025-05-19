@@ -1,1 +1,7 @@
-{}
+{
+  "File Browser": "File Browser",
+  "Failed to fetch data: ": "Failed to fetch data: ",
+  "Failed to load file content.": "Failed to load file content.",
+  "No Data": "No Data",
+  "Refresh": "Refresh"
+}

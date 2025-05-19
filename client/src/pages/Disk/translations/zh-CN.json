@@ -1,1 +1,8 @@
-{}
+{
+  "File Browser": "文件浏览器",
+  "Failed to fetch data: ": "获取数据失败：",
+  "No Data": "无数据",
+  "Refresh": "刷新",
+  "Failed to get data!": "获取数据失败！",
+  "Disk Info": "磁盘信息"
+}

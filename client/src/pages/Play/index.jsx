@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useParams, useLocation, useSearchParams, useNavigate, Link } from "react-router";
 import { Helmet } from "react-helmet";
+import { useTranslation } from 'react-i18next';
 import { PageContainer } from '@ant-design/pro-components';
 import { message, Empty, Typography, Space, Button, Spin, Popover, Flex } from 'antd';
 import { FolderOpenOutlined, ReloadOutlined, QuestionCircleOutlined, PlayCircleFilled, CloseOutlined } from '@ant-design/icons';
@@ -18,6 +19,8 @@ const Play = () => {
   const navigate = useNavigate();
 
   const [searchParams] = useSearchParams();
+
+  const { t } = useTranslation('Play');
 
   const { '*': originalPathname } = useParams();
   const pathname = encodeURIComponent(originalPathname).replaceAll('%2F', '/');
@@ -91,7 +94,7 @@ const Play = () => {
               messageApi.open({
                 ...messageConfig,
                 type: 'warning',
-                content: 'Playing next canceled',
+                content: t('Playing next canceled'),
                 duration: 2
               });
             }
@@ -106,7 +109,7 @@ const Play = () => {
             key: fileName,
             type: 'info',
             icon: <PlayCircleFilled />,
-            content: <>Playing next in {countDownSeconds} seconds: "{nextPlayingName}"<Button type="link" size="small" icon={<CloseOutlined />} onClick={handlePlayNextCancel} /></>,
+            content: <>{t('Playing next in {countDownSeconds} seconds: ', { countDownSeconds })}"{nextPlayingName}"<Button type="link" size="small" icon={<CloseOutlined />} onClick={handlePlayNextCancel} /></>,
             duration: 0
           };
           messageApi.open(messageConfig);
@@ -115,7 +118,7 @@ const Play = () => {
             messageApi.open({
               ...messageConfig,
               type: (countDownSeconds === 0) ? 'success' : 'info',
-              content: <>Playing next in {countDownSeconds} seconds: "{nextPlayingName}"<Button type="link" size="small" icon={<CloseOutlined />} onClick={handlePlayNextCancel} /></>,
+              content: <>{t('Playing next in {countDownSeconds} seconds: ', { countDownSeconds })}"{nextPlayingName}"<Button type="link" size="small" icon={<CloseOutlined />} onClick={handlePlayNextCancel} /></>,
               duration: (countDownSeconds === 0) ? 1 : 0
             });
             if (countDownSeconds === 0) {
@@ -132,7 +135,7 @@ const Play = () => {
             }, { replace: true });
           }, 3000);
         } else {
-          messageApi.info('End of playlist');
+          messageApi.info(t('End of playlist'));
         }
       }
     });
@@ -150,13 +153,13 @@ const Play = () => {
       if (res) {
         setData(res);
         if (!['Video File', 'Audio File'].includes(res.fileType)) {
-          throw new Error('Not playable file');
+          throw new Error(t('Not playable file'));
         }
       }
     } catch (e) {
       console.log(e);
       if (e.message !== 'canceled') {
-        messageApi.error(`Failed to fetch data: ${handleErrorContent(e)}`);
+        messageApi.error(`${t('Failed to fetch data: ')}${handleErrorContent(e)}`);
       }
     }
     setLoading(false);
@@ -178,7 +181,7 @@ const Play = () => {
           key: fileName,
           type: 'warning',
           icon: <PlayCircleFilled />,
-          content: 'Playing next canceled',
+          content: t('Playing next canceled'),
           duration: 2
         });
       }
@@ -199,13 +202,14 @@ const Play = () => {
       extra={<Space>
         {!loading && ['Video File', 'Audio File'].includes(data.fileType) && <Popover
           placement="bottomRight"
-          title="Keyboard Controls"
-          content={<div style={{ lineHeight: '1.5rem' }}>(when the player is focused)
+          title={t("Keyboard Controls")}
+          content={<div style={{ lineHeight: '1.5rem' }}>{t('(when the player is focused)')}
             <ul style={{ margin: '0', paddingLeft: '1rem' }}>
-              <li>[Space]: Play/Pause</li>
-              <li>[←]/[→]: Rewind/Fast Forward (5 sec)</li>
-              <li>[↑]/[↓]: Volume Up/Down (5%)</li>
-              <li>[F]: Toggle Fullscreen[M]: Mute/Unmute</li>
+              <li>{t('[Space]: Play/Pause')}</li>
+              <li>{t('[←]/[→]: Rewind/Fast Forward (5 sec)')}</li>
+              <li>{t('[↑]/[↓]: Volume Up/Down (5%)')}</li>
+              <li>{t('[F]: Toggle Fullscreen')}</li>
+              <li>{t('[M]: Mute/Unmute')}</li>
             </ul>
           </div>}
         >
@@ -223,11 +227,12 @@ const Play = () => {
           loading={loading}
           onClick={handleRefreshButtonClick}
           size="small"
+          title={t('Refresh')}
         ></Button>
       </Space>}
     >
       <Helmet>
-        <title>{fileName} - File Browser</title>
+        <title>{fileName} - {t('File Browser')}</title>
       </Helmet>
       {contextHolder}
       <Spin spinning={loading}>
@@ -237,7 +242,7 @@ const Play = () => {
             style={{ maxWidth: '400px' }}
             image={<FolderOpenOutlined style={{ fontSize: '100px', color: 'rgba(0,0,0,0.25)' }} />} // Empty.PRESENTED_IMAGE_SIMPLE
             description={<Paragraph style={{ marginBottom: '16px' }}>
-              <Text type="secondary">No Data</Text>
+              <Text type="secondary">{t('No Data')}</Text>
             </Paragraph>}
           />
         </div>}
@@ -257,6 +262,7 @@ const Play = () => {
             playlist={playlist}
             setPlaylist={setPlaylist}
             location={location}
+            t={t}
           />
         </Flex>
       </Spin>

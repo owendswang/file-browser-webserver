@@ -1,8 +1,9 @@
 import React, { Fragment, useEffect, useState, useRef } from 'react';
-import { useNavigate, useLocation } from 'react-router';
+import { useNavigate, useLocation, useOutletContext } from 'react-router';
 import { Helmet } from "react-helmet";
-import { Tabs, theme, Alert } from 'antd';
-import { LockOutlined, UserOutlined } from '@ant-design/icons';
+import { useTranslation } from 'react-i18next';
+import { Tabs, theme, Alert, Space, Dropdown, Switch } from 'antd';
+import { LockOutlined, UserOutlined, DownOutlined, MoonOutlined, SunOutlined, GlobalOutlined } from '@ant-design/icons';
 import { LoginFormPage, ProFormText, ProFormCheckbox } from '@ant-design/pro-components';
 import handleErrorContent from '@/utils/handleErrorContent';
 import userService from '@/services/user';
@@ -18,6 +19,10 @@ const Login = () => {
   let navigate = useNavigate();
 
   const timerRef = useRef(0);
+
+  const [languageDropdownMenuItems, handleLanguageDropdownMenuClick, /*languageLabelMapping, language,*/ darkMode, handleDarkModeSwitch] = useOutletContext();
+
+  const { t } = useTranslation('Login');
 
   const [message, setMessage] = useState('');
 
@@ -69,33 +74,59 @@ const Login = () => {
   return (
     <Fragment>
       <Helmet>
-        <title>{(location.pathname === '/login') ? 'Login' : 'Register'} - File Browser</title>
+        <title>{(location.pathname === '/login') ? t('Login') : t('Register')} - {t('File Browser')}</title>
       </Helmet>
       <LoginFormPage
         key={location.pathname}
         logo="/favicon.ico"
-        title="File Browser"
+        title={t("File Browser")}
         containerStyle={{
           backgroundColor: 'rgba(128, 128, 128, 0.1)',
           backdropFilter: 'blur(4px)',
         }}
-        subTitle="Manage and view your files in a web browser"
-        message={message ? <Alert message={message} type="error" /> : null}
+        subTitle={t("Browse your files in the web-browser")}
+        message={message ? <Alert message={t(message)} type="error" /> : null}
         submitter={{
           searchConfig: {
-            submitText: (location.pathname === '/login') ? 'Login' : 'Register',
+            submitText: (location.pathname === '/login') ? t('Login') : t('Register'),
           },
         }}
         onFinish={handleFormOnFinish}
         initialValues={(location.pathname === '/login') ? { autoLogin: true } : {}}
       >
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'nowrap', gap: '1rem', marginBottom: '1rem' }}>
+          <Dropdown
+            key="language"
+            menu={{
+              items: languageDropdownMenuItems,
+              onClick: handleLanguageDropdownMenuClick
+            }}
+            placement="bottomLeft"
+          >
+            <a onClick={(e) => e.preventDefault()} style={{ fontSize: '0.88rem' }}>
+              <Space size="small" wrap={false}>
+                <GlobalOutlined />
+                {/*languageLabelMapping[language]*/}
+                <DownOutlined />
+              </Space>
+            </a>
+          </Dropdown>
+          <div key="darkMode">
+            <Switch
+              checked={darkMode}
+              onChange={handleDarkModeSwitch}
+              checkedChildren={<MoonOutlined />}
+              unCheckedChildren={<SunOutlined />}
+            />
+          </div>
+        </div>
         <Tabs
           centered
           activeKey={location.pathname}
           onChange={(activeKey) => navigate({ ...location, pathname: activeKey }, { replace: true })}
           items={[{
             key: '/login',
-            label: 'Login',
+            label: t('Login'),
             children: <Fragment>
               <ProFormText
                 name="username"
@@ -108,14 +139,14 @@ const Login = () => {
                     />
                   ),
                 }}
-                placeholder='User Name'
+                placeholder={t('User Name')}
                 rules={[{
                   required: true,
-                  message: 'Please input username',
+                  message: t('Please input username'),
                 }, {
                   min: 4,
                   max: 16,
-                  message: 'Length limit between 4 and 16'
+                  message: t('Length limit between 4 and 16')
                 }]}
               />
               <ProFormText.Password
@@ -129,23 +160,23 @@ const Login = () => {
                     />
                   ),
                 }}
-                placeholder='Password'
+                placeholder={t('Password')}
                 rules={[{
                   required: true,
-                  message: 'Please input password',
+                  message: t('Please input password'),
                 }, {
                   min: 4,
                   max: 16,
-                  message: 'Length limit between 4 and 16'
+                  message: t('Length limit between 4 and 16')
                 }]}
               />
               <div style={{ marginBlockEnd: 42 }}>
-                <ProFormCheckbox noStyle name="autoLogin">Auto Login</ProFormCheckbox>
+                <ProFormCheckbox noStyle name="autoLogin">{t('Auto Login')}</ProFormCheckbox>
               </div>
             </Fragment>,
           }, {
             key: '/register',
-            label: 'Register',
+            label: t('Register'),
             children: <Fragment>
               <ProFormText
                 name="username"
@@ -158,14 +189,14 @@ const Login = () => {
                     />
                   ),
                 }}
-                placeholder='User Name'
+                placeholder={t('User Name')}
                 rules={[{
                   required: true,
-                  message: 'Please input username!',
+                  message: t('Please input username'),
                 }, {
                   min: 4,
                   max: 16,
-                  message: 'Length limit between 4 and 16'
+                  message: t('Length limit between 4 and 16')
                 }]}
               />
               <ProFormText.Password
@@ -179,14 +210,14 @@ const Login = () => {
                     />
                   ),
                 }}
-                placeholder='Password'
+                placeholder={t('Password')}
                 rules={[{
                   required: true,
-                  message: 'Please input password!',
+                  message: t('Please input password'),
                 }, {
                   min: 4,
                   max: 16,
-                  message: 'Length limit between 4 and 16'
+                  message: t('Length limit between 4 and 16')
                 }]}
               />
               <ProFormText.Password
@@ -200,20 +231,20 @@ const Login = () => {
                     />
                   ),
                 }}
-                placeholder='Repeat Password'
+                placeholder={t('Repeat Password')}
                 rules={[{
                   required: true,
-                  message: 'Please repeat your password!',
+                  message: t('Please repeat your password'),
                 }, {
                   min: 4,
                   max: 16,
-                  message: 'Length limit between 4 and 16'
+                  message: t('Length limit between 4 and 16')
                 }, ({ getFieldValue }) => ({
                   validator(_, value) {
                     if (!value || getFieldValue('password') === value) {
                       return Promise.resolve();
                     }
-                    return Promise.reject(new Error('The new password that you entered do not match!'));
+                    return Promise.reject(new Error(t('The new password that you entered do not match')));
                   },
                 })]}
               />

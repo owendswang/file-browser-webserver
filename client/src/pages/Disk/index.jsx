@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useLocation, useNavigate, useSearchParams } from "react-router";
+import { Helmet } from "react-helmet";
+import { useTranslation } from 'react-i18next';
 import { PageContainer, ProCard } from '@ant-design/pro-components';
 import { Table, message, Empty, Space, Button, Typography, Spin } from 'antd';
 import { ReloadOutlined, CloseCircleOutlined } from '@ant-design/icons';
@@ -30,6 +32,8 @@ const Disk = () => {
   const { diskId } = useParams();
 
   const [messageApi, contextHolder] = message.useMessage();
+
+  const { t } = useTranslation('Disk');
 
   const [data, setData] = useState({});
   const [smartInfoTableData, setSmartInfoTableData] = useState({
@@ -75,17 +79,10 @@ const Disk = () => {
     } catch (e) {
       console.log(e);
       if (e.message !== 'canceled') {
-        messageApi.error(`Failed to fetch data: ${handleErrorContent(e)}`);
+        messageApi.error(`${t('Failed to fetch data: ')}${handleErrorContent(e)}`);
       }
     }
     setLoading(false);
-  }
-
-  const handleBackClick = () => {
-    navigate({
-      pathname: '/home',
-      search: searchParams.toString() ? ('?' + searchParams.toString()) : '',
-    });
   }
 
   const handleRefreshButtonClick = (e) => {
@@ -145,6 +142,9 @@ const Disk = () => {
       breadcrumb={{}}
       onBack={() => navigate(-1)}
     >
+      <Helmet>
+        <title>{diskId} {t('Disk Info')} - {t('File Browser')}</title>
+      </Helmet>
       {contextHolder}
       <ProCard
         title={`${data.diskInfo?.model_name} ${data.diskInfo?.user_capacity.bytes ? ('(' + formatSize(data.diskInfo?.user_capacity.bytes) + ')') : ''} ${data.diskInfo?.device?.type === 'nvme' ? ('(NVME ' + data.diskInfo?.sata_version.string + ')') : ''}${data.diskInfo?.device?.type === 'sat' ? ('(' + data.diskInfo?.sata_version.string + ')') : ''} `}
@@ -157,6 +157,7 @@ const Disk = () => {
             loading={loading}
             onClick={handleRefreshButtonClick}
             size="small"
+            title={t('Refresh')}
           ></Button>
         </Space>}
       >
@@ -188,7 +189,7 @@ const Disk = () => {
                 description={<Paragraph style={{ marginBottom: '1em', whiteSpace: 'pre-line' }}>
                   <Text>{
                     data.smartInfo?.split(`${data.EOL}${data.EOL}`)[1] ||
-                    'Failed to get data!'
+                    t('Failed to get data!')
                   }</Text>
                 </Paragraph>}
               />
