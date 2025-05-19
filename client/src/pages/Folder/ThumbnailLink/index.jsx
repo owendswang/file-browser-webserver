@@ -28,7 +28,8 @@ const ThumbnailLink = (props) => {
     handleMoveClick,
     handleCopyClick,
     handleDeleteClick,
-    user
+    user,
+    t
   } = props;
 
   const [searchParams] = useSearchParams();
@@ -89,35 +90,35 @@ const ThumbnailLink = (props) => {
   const dropdownItems = (user.scope && user.scope.includes('admin')) ? [{
     key: 'download',
     icon: <DownloadOutlined />,
-    label: 'Download',
+    label: t('Download'),
   }, {
     key: 'rename',
     icon: <EditOutlined />,
-    label: 'Rename',
+    label: t('Rename'),
   }, {
     key: 'move',
     icon: <ExportOutlined />,
-    label: 'Move',
+    label: t('Move'),
   }, {
     key: 'copy',
     icon: <CopyOutlined />,
-    label: 'Copy',
+    label: t('Copy'),
   }, {
     key: 'delete',
     icon: <DeleteOutlined />,
-    label: 'Delete',
+    label: t('Delete'),
   }, {
     key: 'brief',
     icon: <InfoCircleOutlined />,
-    label: 'Info',
+    label: t('Info'),
   }] : [{
     key: 'download',
     icon: <DownloadOutlined />,
-    label: 'Download',
+    label: t('Download'),
   }, {
     key: 'brief',
     icon: <InfoCircleOutlined />,
-    label: 'Info',
+    label: t('Info'),
   }];
 
   if (['Image File', 'Ico File', 'Video File'].includes(file.type)) {

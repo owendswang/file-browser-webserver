@@ -4,6 +4,7 @@ import { Helmet } from "react-helmet";
 import { PageContainer, ProCard } from '@ant-design/pro-components';
 import { Table, message, Progress, Space, Button, Empty, Typography, Spin } from 'antd';
 import { ReloadOutlined, FolderOpenOutlined, MoonOutlined } from '@ant-design/icons';
+import { useTranslation } from 'react-i18next';
 import handleErrorContent from '@/utils/handleErrorContent';
 import homeService from '@/services/home';
 import FileIcon from '@/pages/Folder/FileIcon';
@@ -15,6 +16,8 @@ const Home = () => {
   const navigate = useNavigate();
 
   const [searchParams] = useSearchParams();
+
+  const { t } = useTranslation('Home');
 
   const [messageApi, contextHolder] = message.useMessage();
 
@@ -50,7 +53,7 @@ const Home = () => {
       // console.log(res);
     } catch (e) {
       console.log(e);
-      messageApi.error(`Failed to put disks to sleep: ${handleErrorContent(e)}`);
+      messageApi.error(`${t('Failed to put disks to sleep: ')}${handleErrorContent(e)}`);
     }
     setSleepBtnloading(false);
   };
@@ -66,14 +69,14 @@ const Home = () => {
   return (
     <PageContainer
       header={{
-        title: "Home",
+        title: t("Home"),
         ghost: true,
         breadcrumb: {},
       }}
       ghost={true}
     >
       <Helmet>
-        <title>Home - File Browser</title>
+        <title>{t('Home')} - {t('File Browser')}</title>
       </Helmet>
       {contextHolder}
       <ProCard
@@ -108,7 +111,7 @@ const Home = () => {
               bordered={false}
             >
               <Column
-                title="Folder Name"
+                title={t("Folder Name")}
                 dataIndex="name"
                 key="name"
                 align="left"
@@ -126,7 +129,7 @@ const Home = () => {
                 }}
               />
               <Column
-                title="Disk Status"
+                title={t("Disk Status")}
                 dataIndex="status"
                 key="status"
                 align="center"
@@ -150,33 +153,33 @@ const Home = () => {
                           search: searchParams.toString() ? ('?' + searchParams.toString()) : '',
                         })
                       }}
-                    >{value}</Button>
+                    >{t(value)}</Button>
                   );
                 }}
               />
               <Column
-                title="Total Space"
+                title={t("Total Space")}
                 dataIndex="total"
                 key="total"
                 align="center"
                 width={150}
               />
               <Column
-                title="Used Space"
+                title={t("Used Space")}
                 dataIndex="used"
                 key="used"
                 align="center"
                 width={150}
               />
               <Column
-                title="Free Space"
+                title={t("Free Space")}
                 dataIndex="available"
                 key="available"
                 align="center"
                 width={150}
               />
               {/*<Column
-                title="Usage"
+                title={t("Usage")}
                 dataIndex="percentUsed"
                 key="percentUsed"
                 align="center"
@@ -192,7 +195,7 @@ const Home = () => {
                 }}
               />*/}
               <Column
-                title="Usage Bar"
+                title={t("Usage Bar")}
                 dataIndex="percentUsed"
                 key="percentUsed"
                 align="center"
@@ -224,7 +227,7 @@ const Home = () => {
                 style={{ maxWidth: '400px' }}
                 image={<FolderOpenOutlined style={{ fontSize: '100px', color: 'rgba(0,0,0,0.25)' }} />}  // Empty.PRESENTED_IMAGE_SIMPLE
                 description={<Paragraph style={{ marginBottom: '16px' }}>
-                  <Text type="secondary">No Data</Text>
+                  <Text type="secondary">{t('No Data')}</Text>
                 </Paragraph>}
               />
             </div>

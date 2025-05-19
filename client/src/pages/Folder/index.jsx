@@ -46,6 +46,7 @@ import {
   EditOutlined
 } from '@ant-design/icons';
 import * as dayjs from 'dayjs';
+import { useTranslation } from 'react-i18next';
 import folderService from '@/services/folder';
 import ThumbnailLink from '@/pages/Folder/ThumbnailLink';
 import ViewerJS from '@/components/ViewerJS';
@@ -72,6 +73,8 @@ const Folder = () => {
   const navigate = useNavigate();
 
   const [searchParams, setSearchParams] = useSearchParams();
+
+  const { t } = useTranslation('Folder');
 
   const { '*': originalPathname } = useParams();
   const pathname = encodeURIComponent(originalPathname).replaceAll('%2F', '/');
@@ -151,7 +154,7 @@ const Folder = () => {
     } catch (e) {
       console.log(e);
       if (e.message !== 'canceled') {
-        messageApi.error(`Failed to fetch data: ${handleErrorContent(e)}`);
+        messageApi.error(`${t('Failed to fetch data: ')}${handleErrorContent(e)}`);
       }
     }
     setLoading(false);
@@ -231,7 +234,7 @@ const Folder = () => {
     if (file.status === 'done') {
       notificationApi.open({
         key: file.uid,
-        message: `Uploaded: "${file.name}"`,
+        message: `${t('Uploaded: ')}${t('l"')}${file.name}${t('r"')}`,
         description: <Progress percent={file.percent} status="success" />,
         icon: <CheckCircleFilled style={{ color: '#52c41a' }} />,
         duration: 4.5,
@@ -243,7 +246,7 @@ const Folder = () => {
     } else if (file.status === 'uploading') {
       notificationApi.open({
         key: file.uid,
-        message: `Uploading: "${file.name}"`,
+        message: `${t('Uploading: ')}${t('l"')}${file.name}${t('r"')}`,
         description: <Progress percent={file.percent} status="active" />,
         icon: <SyncOutlined spin style={{ color: '#1890ff' }} />,
         duration: null,
@@ -254,7 +257,7 @@ const Folder = () => {
     } else if (file.status === 'error') {
       notificationApi.open({
         key: file.uid,
-        message: `Upload error: "${file.name}"`,
+        message: `${t('Upload error: ')}${t('l"')}${file.name}${t('r"')}`,
         description: <Progress percent={file.percent} status="exception" />,
         icon: <CloseCircleFilled style={{ color: '#ff4d4f' }} />,
         duration: null,
@@ -340,20 +343,20 @@ const Folder = () => {
     // console.log(pn);
     setSelectedRowKeys([name]);
     modalApi.confirm({
-      title: 'Delete',
-      content: 'Are you sure to delete it?',
+      title: t('Delete'),
+      content: t('Are you sure to delete it?'),
       closable: true,
       maskClosable: true,
       onOk: async () => {
         try {
           if (!name) {
-            throw new Error('Nothing to delete');
+            throw new Error(t('Nothing to delete'));
           }
           await folderService.delete(`${pathname}/${encodeURIComponent(name)}`, searchParams.get('archivePassword') ? { archivePassword: searchParams.get('archivePassword') } : {});
           refresh();
         } catch(e) {
           console.log(e);
-          messageApi.error(`Delete failed: ${handleErrorContent(e)}`);
+          messageApi.error(`${t('Delete failed: ')}${handleErrorContent(e)}`);
         }
       },
       onCancel: () => {
@@ -365,8 +368,8 @@ const Folder = () => {
   const handleBulkDelete = (e) => {
     // console.log('trying to delete: ', selectedRowKeys);
     modalApi.confirm({
-      title: 'Delete',
-      content: 'Are you sure to delete them?',
+      title: t('Delete'),
+      content: t('Are you sure to delete them?'),
       closable: true,
       maskClosable: true,
       onOk: async () => {
@@ -377,7 +380,7 @@ const Folder = () => {
           refresh();
         } catch(e) {
           console.log(e);
-          messageApi.error(`Delete failed: ${handleErrorContent(e)}`);
+          messageApi.error(`${t('Delete failed: ')}${handleErrorContent(e)}`);
         }
       }
     });
@@ -446,7 +449,7 @@ const Folder = () => {
         <div
           key='sliderLabel'
           style={{ display: (searchParams.get('view') || window.localStorage.getItem("view")) === 'thumbnails' ? 'block' : 'none' }}
-        >Thumbnail Size:</div>
+        >{t('Thumbnail Size:')}</div>
         <Slider
           key='slider'
           value={parseInt(searchParams.get('thumbnailSize')) || parseInt(window.localStorage.getItem('thumbnailSize')) || defaultThumbnailSize}
@@ -455,12 +458,12 @@ const Folder = () => {
           onChange={handleSliderChange}
           style={{ width: '200px', display: (searchParams.get('view') || window.localStorage.getItem("view")) === 'thumbnails' ? 'block' : 'none' }}
         />
-        <div key='switchLabel'>View Mode:</div>
+        <div key='switchLabel'>{t('View Mode:')}</div>
         <Segmented
           key='switch'
           options={[
-            { label: 'Table', value: 'table', icon: <BarsOutlined /> },
-            { label: 'Thumbnails', value: 'thumbnails', icon: <AppstoreOutlined /> },
+            { label: t('Table'), value: 'table', icon: <BarsOutlined /> },
+            { label: t('Thumbnails'), value: 'thumbnails', icon: <AppstoreOutlined /> },
           ]}
           value={searchParams.get('view') || window.localStorage.getItem("view") || defaultViewMode}
           onChange={handleViewModeChange}
@@ -468,7 +471,7 @@ const Folder = () => {
       </Space>}
     >
       <Helmet>
-        <title>{curDirName} - File Browser</title>
+        <title>{curDirName} - {t('File Browser')}</title>
       </Helmet>
       {messageContextHolder}
       {notificationContextHolder}
@@ -485,7 +488,7 @@ const Folder = () => {
               showUploadList={false}
               onChange={handleUploadFileChange}
             >
-              <Button icon={<UploadOutlined />} className='dropdownButtonGroupLeft'>Upload</Button>
+              <Button icon={<UploadOutlined />} className='dropdownButtonGroupLeft'>{t('Upload')}</Button>
             </Upload>
             <Dropdown
               menu={{
@@ -498,7 +501,7 @@ const Folder = () => {
                     data={(file) => ({ lastModified: file.lastModified, relativePath: file.relativePath || file.webkitRelativePath })}
                     showUploadList={false}
                     onChange={handleUploadFileChange}
-                  >Upload Directory</Upload>
+                  >{t('Upload Directory')}</Upload>
                 }]
               }}
               placement="bottomRight"
@@ -513,7 +516,7 @@ const Folder = () => {
               disabled={selectedRowKeys.length === 0}
               onClick={handleBulkMove}
               className='dropdownButtonGroupLeft'
-            >Move</Button>
+            >{t('Move')}</Button>
             <Dropdown
               menu={{
                 items: [{
@@ -522,7 +525,7 @@ const Folder = () => {
                     key='bulkCopy'
                     disabled={selectedRowKeys.length === 0}
                     onClick={handleBulkCopy}
-                  ><CopyOutlined style={{ marginRight: '8px' }} />Copy</a>
+                  ><CopyOutlined style={{ marginRight: '8px' }} />{t('Copy')}</a>
                 }]
               }}
               placement="bottomRight"
@@ -536,43 +539,43 @@ const Folder = () => {
             icon={<DeleteOutlined />}
             disabled={selectedRowKeys.length === 0}
             onClick={handleBulkDelete}
-          >Delete</Button>}
+          >{t('Delete')}</Button>}
           {(user.scope && user.scope.includes('admin')) && <Button
             key="rename"
             icon={<EditOutlined />}
             disabled={selectedRowKeys.length !== 1}
             onClick={handleRenameBtnClick}
-          >Rename</Button>}
+          >{t('Rename')}</Button>}
           {(user.scope && user.scope.includes('admin')) && <Button
             key="mkDir"
             icon={<FolderAddOutlined />}
             onClick={handleMkDirBtnClick}
-          >Create Directory</Button>}
+          >{t('Create Directory')}</Button>}
           {((searchParams.get('view') || window.localStorage.getItem("view") || defaultViewMode) === 'thumbnails') && <Checkbox
             key="selectAll"
             onChange={handleSelectAll}
             checked={allSelected}
             indeterminate={indeterminated}
             style={{ marginLeft: 'auto' }}
-          >Select All</Checkbox>}
+          >{t('Select All')}</Checkbox>}
           {hasEncryption && <Button
             key='inputPassword'
             onClick={() => setArchivePasswordModalVisible(true)}
-          >Input Password</Button>}
+          >{t('Input Password')}</Button>}
           {(searchParams.get('view') || window.localStorage.getItem('view')) === 'thumbnails' && <Select
             key="sortBy"
             options={[
-              { value: 'name', label: 'Name' },
-              { value: 'type', label: 'Type' },
-              { value: 'size', label: 'Size' },
-              { value: 'modified', label: 'Modified Time' },
+              { value: 'name', label: t('Name') },
+              { value: 'type', label: t('Type') },
+              { value: 'size', label: t('Size') },
+              { value: 'modified', label: t('Modified Time') },
             ]}
             style={{ width: '140px' }}
             onChange={handleSortBySelectChange}
             loading={loading}
             value={(searchParams.get('sortBy') || window.localStorage.getItem('sortBy') || defaultSortBy)}
             allowClear={true}
-            placeholder="Sort By"
+            placeholder={t("Sort By")}
           />}
           {(searchParams.get('view') || window.localStorage.getItem('view')) === 'thumbnails' && <Switch
             key='order'
@@ -609,7 +612,7 @@ const Folder = () => {
                   block={true}
                   variant="outlined"
                   style={{ marginBottom: '16px' }}
-                >Previous Page</Button>}
+                >{t('Previous Page')}</Button>}
                 {(searchParams.get('view') || window.localStorage.getItem('view')) !== 'thumbnails' && <Table
                   dataSource={data}
                   // loading={loading}
@@ -654,7 +657,7 @@ const Folder = () => {
                           key={`${value}-download`}
                           target='_blank'
                           to={`${record.path.replace(/^\/(folder|view)\//, '/download/')}${searchParams.get('archivePassword') ? ('?archivePassword=' + searchParams.get('archivePassword')) : ''}`}
-                          title={`Download "${value}${record.encrypted ? ' *' : ''}"`}
+                          title={`${t('Download')} "${value}${record.encrypted ? ' *' : ''}"`}
                           className="tableRowFileNameHoverLink"
                         >
                           <DownloadOutlined />
@@ -662,28 +665,28 @@ const Folder = () => {
                         {(user.scope && user.scope.includes('admin')) && <Link
                           key={`${value}-rename`}
                           to={`${record.path.replace(/^\/(folder|view|download)\//, '/rename/')}${searchParams.get('archivePassword') ? ('?archivePassword=' + searchParams.get('archivePassword')) : ''}`}
-                          title={`Rename "${value}${record.encrypted ? ' *': ''}"`} 
+                          title={`${t('Rename')} "${value}${record.encrypted ? ' *': ''}"`} 
                           className="tableRowFileNameHoverLink"
                           onClick={(e) => { e.preventDefault(); handleRenameClick(value); }}
                         ><EditOutlined /></Link>}
                         {(user.scope && user.scope.includes('admin')) && <Link
                           key={`${value}-move`}
                           to={`${record.path.replace(/^\/(folder|view|download)\//, '/move/')}${searchParams.get('archivePassword') ? ('?archivePassword=' + searchParams.get('archivePassword')) : ''}`}
-                          title={`Move "${value}${record.encrypted ? ' *': ''}"`} 
+                          title={`${t('Move')} "${value}${record.encrypted ? ' *': ''}"`} 
                           className="tableRowFileNameHoverLink"
                           onClick={(e) => { e.preventDefault(); handleMoveClick(value); }}
                         ><ExportOutlined /></Link>}
                         {(user.scope && user.scope.includes('admin')) && <Link
                           key={`${value}-copy`}
                           to={`${record.path.replace(/^\/(folder|view|download)\//, '/copy/')}${searchParams.get('archivePassword') ? ('?archivePassword=' + searchParams.get('archivePassword')) : ''}`}
-                          title={`Copy "${value}${record.encrypted ? ' *': ''}"`} 
+                          title={`${t('Copy')} "${value}${record.encrypted ? ' *': ''}"`} 
                           className="tableRowFileNameHoverLink"
                           onClick={(e) => { e.preventDefault(); handleCopyClick(value); }}
                         ><CopyOutlined /></Link>}
                         {(user.scope && user.scope.includes('admin')) && <Link
                           key={`${value}-delete`}
                           to={`${record.path.replace(/^\/(folder|view|download)\//, '/delete/')}${searchParams.get('archivePassword') ? ('?archivePassword=' + searchParams.get('archivePassword')) : ''}`}
-                          title={`Delete "${value}${record.encrypted ? ' *': ''}"`} 
+                          title={`${t('Delete')} "${value}${record.encrypted ? ' *': ''}"`} 
                           className="tableRowFileNameHoverLink"
                           onClick={(e) => { e.preventDefault(); handleDeleteClick(value); }}
                         >
@@ -692,7 +695,7 @@ const Folder = () => {
                         <Link
                           key={`${value}-brief`}
                           to={`${record.path.replace(/^\/(folder|view|download)\//, '/brief/')}${searchParams.get('archivePassword') ? ('?archivePassword=' + searchParams.get('archivePassword')) : ''}`}
-                          title={`Show brief of "${value}${record.encrypted ? ' *': ''}"`} 
+                          title={`${t('Show brief of')} "${value}${record.encrypted ? ' *': ''}"`} 
                           className="tableRowFileNameHoverLink"
                           onClick={(e) => { e.preventDefault(); handleBriefClick(value); }}
                         ><InfoCircleOutlined /></Link>
@@ -700,7 +703,7 @@ const Folder = () => {
                     )}
                   />
                   <Column
-                    title="Type"
+                    title={t("Type")}
                     dataIndex="type"
                     key="type"
                     align="center"
@@ -709,7 +712,7 @@ const Folder = () => {
                     width={200}
                   />
                   <Column
-                    title="Size"
+                    title={t("Size")}
                     dataIndex="size"
                     key="size"
                     align="center"
@@ -718,7 +721,7 @@ const Folder = () => {
                     width={130}
                   />
                   <Column
-                    title="Modified Time"
+                    title={t("Modified Time")}
                     dataIndex="modified"
                     key="modified"
                     align="center"
@@ -761,6 +764,7 @@ const Folder = () => {
                       handleCopyClick={handleCopyClick}
                       handleDeleteClick={handleDeleteClick}
                       user={user}
+                      t={t}
                     />)}
                   </div>
                   {/*</Flex>*/}
@@ -770,7 +774,7 @@ const Folder = () => {
                   block={true}
                   variant="outlined"
                   style={{ marginTop: '16px' }}
-                >Next Page</Button>}
+                >{t('Next Page')}</Button>}
                 <Pagination
                   showQuickJumper={true}
                   showSizeChanger={true}
@@ -807,7 +811,7 @@ const Folder = () => {
         </Spin>
       </ProCard>
       <Modal
-        title="Password is needed"
+        title={t("Password is needed")}
         open={archivePasswordModalVisible}
         closable={true}
         keyboard={true}
@@ -822,9 +826,9 @@ const Folder = () => {
           disabled={loading}
         >
           <Form.Item
-            label="Archive Password"
+            label={t("Archive Password")}
             name="archivePassword"
-            rules={[{ required: true, message: 'Please input archive password!' }]}
+            rules={[{ required: true, message: t('Please input archive password!') }]}
           >
             <Input.Password
               onPressEnter={handleArchivePasswordModalOk}
