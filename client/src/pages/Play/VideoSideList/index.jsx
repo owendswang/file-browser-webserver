@@ -8,7 +8,7 @@ import VideSideListItem from '@/pages/Play/VideoSideList/VideoSideListItem';
 import "@/pages/Play/VideoSideList/index.css";
 
 const VideoSideList = (props) => {
-  const { pathname, messageApi, searchParams, handleErrorContent, playingFileName, playlist, setPlaylist, t, ...otherProps } = props;
+  const { pathname, messageApi, searchParams, handleErrorContent, playingFileName, playlist, setPlaylist, location, t, ...otherProps } = props;
 
   const [playlistLoading, setPlaylistLoading] = useState(false);
   const [page, setPage] = useState(1);
@@ -60,7 +60,7 @@ const VideoSideList = (props) => {
         playingThumbnail.scrollIntoView();
       }
     }
-  }, [playlistLoading]);
+  }, [playlistLoading, location.pathname]);
 
   return (
     <ProCard
