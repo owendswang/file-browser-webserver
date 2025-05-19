@@ -8,7 +8,7 @@ import VideSideListItem from '@/pages/Play/VideoSideList/VideoSideListItem';
 import "@/pages/Play/VideoSideList/index.css";
 
 const VideoSideList = (props) => {
-  const { pathname, messageApi, searchParams, handleErrorContent, playingFileName, playlist, setPlaylist, ...otherProps } = props;
+  const { pathname, messageApi, searchParams, handleErrorContent, playingFileName, playlist, setPlaylist, t, ...otherProps } = props;
 
   const [playlistLoading, setPlaylistLoading] = useState(false);
   const [page, setPage] = useState(1);
@@ -36,7 +36,7 @@ const VideoSideList = (props) => {
     } catch (e) {
       console.log(e);
       if (e.message !== 'canceled') {
-        messageApi.error(`Failed to fetch playlist: ${handleErrorContent(e)}`);
+        messageApi.error(`${t('Failed to fetch playlist: ')}${handleErrorContent(e)}`);
       }
     } finally {
       if (playlist.map((file) => file.name).includes(playingFileName)) {
@@ -67,10 +67,10 @@ const VideoSideList = (props) => {
       id="videoSideListCard"
       bordered={true}
       ghost={true}
-      title="Playlist"
+      title={t("Playlist")}
       headerBordered={true}
       extra={<Space gap="small" wrap={false}>
-        <>Auto next:</>
+        <>{t('Auto next:')}</>
         <Switch
           checkedChildren={<CaretRightOutlined />}
           unCheckedChildren={<XFilled />}

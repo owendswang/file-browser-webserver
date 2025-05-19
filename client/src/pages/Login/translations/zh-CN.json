@@ -1,1 +1,17 @@
-{}
+{
+  "File Browser": "文件浏览器",
+  "Login": "登录",
+  "Register": "注册",
+  "Browse your files in the web-browser": "在浏览器中浏览你的文件",
+  "User Name": "用户名",
+  "Please input username": "请输入用户名",
+  "Length limit between 4 and 16": "长度限制 4 到 16 个字符",
+  "Password": "密码",
+  "Please input password": "请输入密码",
+  "Auto Login": "自动登录",
+  "Repeat Password": "重复密码",
+  "Please repeat your password": "请再次输入密码",
+  "The new password that you entered do not match": "与您输入的密码不一致",
+  "Register successfully. Please Login now.": "注册成功，请登录。",
+  "Invalid grant: user credentials are invalid": "登录失败，请检查账号密码是否正确。"
+}

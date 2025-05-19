@@ -1,6 +1,7 @@
 import React, { useState, useEffect, Fragment } from 'react';
 import { useLocation, useNavigate } from "react-router";
 import { Helmet } from "react-helmet";
+import { useTranslation } from 'react-i18next';
 import { PageContainer, ProCard } from '@ant-design/pro-components';
 import { message, Input, InputNumber, Form, Switch, Button, Spin, Select, Divider } from 'antd';
 import { SaveOutlined, PlusOutlined, MinusCircleOutlined, RollbackOutlined } from '@ant-design/icons';
@@ -13,6 +14,8 @@ const Config = () => {
   const navigate = useNavigate();
 
   const [messageApi, contextHolder] = message.useMessage();
+
+  const { t } = useTranslation('Config');
 
   const [form] = Form.useForm();
 
@@ -40,7 +43,7 @@ const Config = () => {
       }
     } catch (e) {
       console.log(e);
-      messageApi.error(`Failed to fetch config data: ${handleErrorContent(e)}`);
+      messageApi.error(`${t('Failed to fetch config data: ')}${handleErrorContent(e)}`);
     }
     setLoading(false);
   }
@@ -64,7 +67,7 @@ const Config = () => {
       }
     } catch (e) {
       console.log(e);
-      messageApi.error(`Failed to save config data: ${handleErrorContent(e)}`);
+      messageApi.error(`${t('Failed to save config data: ')}${handleErrorContent(e)}`);
     }
     setLoading(false);
   }
@@ -75,12 +78,12 @@ const Config = () => {
 
   return (
     <PageContainer
-      title="Config"
+      title={t("Config")}
       breadcrumb={{}}
       onBack={() => navigate(-1)}
     >
       <Helmet>
-        <title>Config - File Browser</title>
+        <title>{t('Config')} - {t('File Browser')}</title>
       </Helmet>
       {contextHolder}
       <ProCard>
@@ -93,7 +96,7 @@ const Config = () => {
             wrapperCol={{ xxl: 8, xl: 12, lg: 14, md: 12, sm: 12, xs: 24 }}
             form={form}
           >
-            <Divider orientation="left"><h4>General</h4></Divider>
+            <Divider orientation="left"><h4>{t("General")}</h4></Divider>
             <Form.List
               name="basePaths"
             >
@@ -102,9 +105,10 @@ const Config = () => {
                   {fields.map((field, index) => (
                     <Form.Item
                       key={field.key}
-                      label={index === 0 ? "Directories" : " "}
+                      label={index === 0 ? t("Directories") : " "}
                       colon={index === 0 ? true : false}
                       style={{ marginBottom: '0' }}
+                      tooltip={index === 0 ? t("[Name you like] - [Absolute path]") : null}
                     >
                       <div
                         style={{
@@ -115,12 +119,12 @@ const Config = () => {
                         }}
                       >
                         <Form.Item
-                          // label="Name"
+                          // label={t("Name")}
                           name={[field.name, 'name']}
                           style={{ marginBottom: '16px' }}
                         >
                           <Input
-                            placeholder="Name"
+                            placeholder={t("Name")}
                           />
                         </Form.Item>
                         <Form.Item
@@ -129,7 +133,7 @@ const Config = () => {
                           style={{ marginBottom: '16px', flexGrow: '1' }}
                         >
                           <Input
-                            placeholder="Path"
+                            placeholder={t("Path")}
                           />
                         </Form.Item>
                         <MinusCircleOutlined onClick={() => remove(field.name)} />
@@ -145,31 +149,31 @@ const Config = () => {
                       onClick={() => add()}
                       block={true}
                       icon={<PlusOutlined />}
-                    >
-                      Add directory
-                    </Button>
+                    >{t('Add directory')}</Button>
                   </Form.Item>
                 </Fragment>
                 )}
             </Form.List>
             <Form.Item
-              label="SQLite DB file path"
+              label={t("SQLite DB file path")}
               name="dbPath"
+              tooltip={t("Saving thumbnail mappings, video transcode cache mappings and user data")}
             >
               <Input
                 placeholder="C:\FileBrowserServer\server\db\db.sqlite"
               />
             </Form.Item>
             <Form.Item
-              label="Temp file directory"
+              label={t("Temp file directory")}
               name="tempDir"
+              tooltip={t("Temp directory for modifying archives")}
             >
               <Input
                 placeholder="C:\FileBrowserServer\cache"
               />
             </Form.Item>
             <Form.Item
-              label="Smart Monitor Tools executable file path"
+              label={t("Smartmontools executable file path")}
               name="smartctlPath"
             >
               <Input
@@ -177,7 +181,7 @@ const Config = () => {
               />
             </Form.Item>
             <Form.Item
-              label="FFmpeg executable path"
+              label={t("FFmpeg executable path")}
               name="ffmpegPath"
             >
               <Input
@@ -185,15 +189,16 @@ const Config = () => {
               />
             </Form.Item>
             <Form.Item
-              label="Enable folder size calculation"
+              label={t("Enable folder size calculation")}
               name="enableDirSizeChk"
               valuePropName="checked"
+              tooltip={t("It's very slow with large directory with too many items in it.")}
             >
               <Switch />
             </Form.Item>
-            <Divider orientation="left"><h4>Archive</h4></Divider>
+            <Divider orientation="left"><h4>{t("Archive")}</h4></Divider>
             <Form.Item
-              label="7-zip executable file path"
+              label={t("7-zip executable file path")}
               name="sevenZipPath"
             >
               <Input
@@ -201,9 +206,9 @@ const Config = () => {
               />
             </Form.Item>
             <Form.Item
-              label="WinRAR executable file path"
+              label={t("WinRAR executable file path")}
               name="winRarPath"
-              tooltip="Not supported on ARM based linux"
+              tooltip={t("Not supported on ARM based Linux")}
             >
               <Input
                 placeholder="C:\Program Files\WinRAR\Rar.exe"
@@ -211,24 +216,24 @@ const Config = () => {
               />
             </Form.Item>
             <Form.Item
-              label="WinRAR language"
+              label={t("WinRAR language")}
               name="winRarLang"
-              tooltip="Only supports listed languages"
+              tooltip={t("Only supports listed languages")}
             >
               <Select
                 disabled={serverPlatform === 'linux' && serverArch !== 'x64'}
                 options={[{
                   value: 'en-US',
-                  label: 'English'
+                  label: t('English')
                 }, {
                   value: 'zh-CN',
-                  label: 'Chinese Simplified'
+                  label: t('Chinese Simplified')
                 }]}
               />
             </Form.Item>
-            <Divider orientation="left"><h4>Thumbnail</h4></Divider>
+            <Divider orientation="left"><h4>{t("Thumbnail")}</h4></Divider>
             <Form.Item
-              label="Preview thumbnail cache path"
+              label={t("Preview thumbnail cache path")}
               name="previewCachePath"
             >
               <Input
@@ -236,7 +241,7 @@ const Config = () => {
               />
             </Form.Item>
             <Form.Item
-              label="Preview thumbnail image width"
+              label={t("Preview thumbnail image width")}
               name="previewImageMaxWidth"
             >
               <InputNumber
@@ -244,16 +249,16 @@ const Config = () => {
               />
             </Form.Item>
             <Form.Item
-              label="Preview thumbnail image height"
+              label={t("Preview thumbnail image height")}
               name="previewImageMaxHeight"
             >
               <InputNumber
                 placeholder={512}
               />
             </Form.Item>
-            <Divider orientation="left"><h4>Video</h4></Divider>
+            <Divider orientation="left"><h4>{t("Video")}</h4></Divider>
             <Form.Item
-              label="Video transcode FPS"
+              label={t("Video transcode FPS")}
               name="playVideoFps"
             >
               <InputNumber
@@ -261,7 +266,7 @@ const Config = () => {
               />
             </Form.Item>
             <Form.Item
-              label="Enable hardware acceleration"
+              label={t("Enable hardware acceleration")}
               name="enablePlayVideoHardwareAcceleration"
               valuePropName="checked"
             >
@@ -271,7 +276,7 @@ const Config = () => {
               {() => (
                 <Fragment>
                   <Form.Item
-                    label="Hardware vendor"
+                    label={t("Hardware vendor")}
                     name="playVideoHardwareAccelerationVendor"
 
                   >
@@ -287,13 +292,13 @@ const Config = () => {
                     />
                   </Form.Item>
                   <Form.Item
-                    label="Acceleration device"
+                    label={t("Acceleration device")}
                     name="playVideoHardwareAccelerationDevice"
-                    tooltip="It's better to leave it empty if you don't know what this is."
+                    tooltip={t("It's better to leave it empty if you don't know what this is.")}
                   >
                     <Input
                       disabled={!form.getFieldValue('enablePlayVideoHardwareAcceleration')}
-                      placeholder="E.g. '0', '1'. Or leave it empty"
+                      placeholder={t("E.g. '0', '1'. Or leave it empty")}
                     />
                   </Form.Item>
                 </Fragment>
@@ -307,17 +312,13 @@ const Config = () => {
                 type="primary"
                 htmlType="submit"
                 icon={<SaveOutlined />}
-              >
-                Save
-              </Button>
+              >{t("Save")}</Button>
               <Button
                 htmlType="button"
                 icon={<RollbackOutlined />}
                 onClick={() => form.resetFields()}
                 style={{ marginLeft: '8px' }}
-              >
-                Reset
-              </Button>
+              >{t("Reset")}</Button>
             </Form.Item>
           </Form>
         </Spin>

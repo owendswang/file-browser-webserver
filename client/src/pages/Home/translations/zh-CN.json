@@ -13,5 +13,7 @@
   "Free Space": "空闲",
   "Usage": "使用量",
   "Usage Bar": "使用量",
-  "No Data": "无数据"
+  "No Data": "无数据",
+  "Refresh": "刷新",
+  "Sleep": "磁盘休眠"
 }

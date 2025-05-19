@@ -12,7 +12,8 @@ const MkDirModal = (props) => {
     refresh,
     pathname,
     messageApi,
-    searchParams
+    searchParams,
+    t
   } = props;
 
   const [form] = Form.useForm();
@@ -36,7 +37,7 @@ const MkDirModal = (props) => {
       refresh();
     } catch(e) {
       console.log(e);
-      messageApi.error(`Failed to rename: ${handleErrorContent(e)}`);
+      messageApi.error(`${t('Failed to rename: ')}${handleErrorContent(e)}`);
     } finally {
       setConfirmLoading(false);
     }
@@ -52,7 +53,7 @@ const MkDirModal = (props) => {
 
   return (
     <Modal
-      title="Rename"
+      title={t("Rename")}
       open={open}
       onOk={handleModalOnOk}
       confirmLoading={confirmLoading}
@@ -69,12 +70,12 @@ const MkDirModal = (props) => {
         disabled={confirmLoading && selectedRowKeys.length !== 1}
       >
         <Form.Item
-          label="New name"
+          label={t("New name")}
           name="newName"
-          rules={[{ required: true, message: 'Please input a new name' }]}
+          rules={[{ required: true, message: t('Please input a new name') }]}
         >
           <Input
-            placeholder="Please input a new name..."
+            placeholder={t("Please input a new name here...")}
           />
         </Form.Item>
       </Form>

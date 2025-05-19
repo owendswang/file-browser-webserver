@@ -1,1 +1,14 @@
-{}
+{
+  "File Browser": "File Browser",
+  "Failed to save user info: ": "Failed to save user info: ",
+  "Edit User Info": "Edit User Info",
+  "User name": "User name",
+  "Please nput your username here...": "Please nput your username here...",
+  "Password": "Password",
+  "Please input your password here...": "Please input your password here...",
+  "Repeat password": "Repeat password",
+  "The new password that you entered do not match!": "The new password that you entered do not match!",
+  "Plese input your password again ...": "Plese input your password again ...",
+  "Save": "Save",
+  "Reset": "Reset"
+}

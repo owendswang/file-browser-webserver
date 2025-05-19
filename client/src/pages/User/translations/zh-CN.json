@@ -1,1 +1,14 @@
-{}
+{
+  "File Browser": "文件浏览器",
+  "Failed to save user info: ": "保存用户信息失败：",
+  "Edit User Info": "修改用户信息",
+  "User name": "用户名",
+  "Please nput your username here...": "请在此输入用户名……",
+  "Password": "密码",
+  "Please input your password here...": "请在此输入密码……",
+  "Repeat password": "重复密码",
+  "The new password that you entered do not match!": "与您输入的密码不一致！",
+  "Plese input your password again ...": "请再次输入密码……",
+  "Save": "保存",
+  "Reset": "重置"
+}

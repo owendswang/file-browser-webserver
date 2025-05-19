@@ -576,6 +576,7 @@ const Folder = () => {
             value={(searchParams.get('sortBy') || window.localStorage.getItem('sortBy') || defaultSortBy)}
             allowClear={true}
             placeholder={t("Sort By")}
+            title={t("Sort By")}
           />}
           {(searchParams.get('view') || window.localStorage.getItem('view')) === 'thumbnails' && <Switch
             key='order'
@@ -584,6 +585,7 @@ const Folder = () => {
             checked={(searchParams.get('order') || window.localStorage.getItem('order') || defaultOrder) === 'desc'}
             onChange={handleOrderSwitchChange}
             loading={loading}
+            title={t("Order")}
           />}
           <Input.Search
             key='search'
@@ -592,6 +594,7 @@ const Folder = () => {
             defaultValue={searchParams.get('search') || ''}
             allowClear={true}
             style={{ width: '200px', marginLeft: ((searchParams.get('view') || window.localStorage.getItem('view')) === 'thumbnails') ? undefined : 'auto' }}
+            title={t("Search")}
           />
           <Button
             key='refresh'
@@ -600,6 +603,7 @@ const Folder = () => {
             loading={loading}
             onClick={handleRefreshButtonClick}
             size="small"
+            title={t("Refresh")}
           ></Button>
         </div>}
       >
@@ -793,6 +797,7 @@ const Folder = () => {
                 messageApi={messageApi}
                 pathname={pathname}
                 searchParams={searchParams}
+                t={t}
               />}
             </Flex>
           </Fragment> : <div className="empty-container">
@@ -847,6 +852,7 @@ const Folder = () => {
         pathname={pathname}
         messageApi={messageApi}
         searchParams={searchParams}
+        t={t}
       />
       <MkDirModal
         open={mkDirModalOpen}
@@ -855,6 +861,7 @@ const Folder = () => {
         pathname={pathname}
         messageApi={messageApi}
         searchParams={searchParams}
+        t={t}
       />
       <RenameModal
         open={renameModalOpen}
@@ -865,6 +872,7 @@ const Folder = () => {
         pathname={pathname}
         messageApi={messageApi}
         searchParams={searchParams}
+        t={t}
       />
       <FloatButton.BackTop />
     </PageContainer>

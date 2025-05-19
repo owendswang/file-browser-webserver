@@ -10,7 +10,8 @@ const MkDirModal = (props) => {
     refresh,
     pathname,
     messageApi,
-    searchParams
+    searchParams,
+    t
   } = props;
 
   const [form] = Form.useForm();
@@ -33,7 +34,7 @@ const MkDirModal = (props) => {
       refresh();
     } catch(e) {
       console.log(e);
-      messageApi.error(`Failed to create directory: ${handleErrorContent(e)}`);
+      messageApi.error(`${t('Failed to create directory: ')}${handleErrorContent(e)}`);
     } finally {
       setConfirmLoading(false);
     }
@@ -47,7 +48,7 @@ const MkDirModal = (props) => {
 
   return (
     <Modal
-      title="Create Directory"
+      title={t("Create Directory")}
       open={open}
       onOk={handleModalOnOk}
       confirmLoading={confirmLoading}
@@ -64,23 +65,23 @@ const MkDirModal = (props) => {
         disabled={confirmLoading}
       >
         <Form.Item
-          label="Directory name"
+          label={t("Directory name")}
           name="dir"
           rules={[{
             required: true,
-            message: 'Please input directory name'
+            message: t('Please input directory name')
           }, () => ({
             validator(_, value) {
               const invalidCharsPattern = /[\/|\\|<|>|\:|"|\||\?|\*]/g;
               if (invalidCharsPattern.test(value)) {
-                return Promise.reject(new Error('Directory name cannot conain following characters "/\\<>:\"|?*'));
+                return Promise.reject(new Error(t('Directory name cannot conain following characters "/\\<>:"|?*')));
               }
               return Promise.resolve();
             },
           })]}
         >
           <Input
-            placeholder="Please input directory name..."
+            placeholder={t("Please input directory name here...")}
           />
         </Form.Item>
       </Form>

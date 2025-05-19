@@ -1,6 +1,7 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useLocation, useSearchParams, useNavigate, Link } from "react-router";
 import { Helmet } from "react-helmet";
+import { useTranslation } from 'react-i18next';
 import { PageContainer } from '@ant-design/pro-components';
 import { message, Empty, Typography, Space, Button, Spin } from 'antd';
 import { FolderOpenOutlined, ReloadOutlined } from '@ant-design/icons';
@@ -18,6 +19,8 @@ const View = () => {
 
   const [searchParams] = useSearchParams();
 
+  const { t } = useTranslation('View');
+
   const { '*': originalPathname } = useParams();
   const pathname = encodeURIComponent(originalPathname).replaceAll('%2F', '/');
   const pathParts = pathname.split('/').filter(Boolean);
@@ -34,8 +37,6 @@ const View = () => {
   });
 
   const [messageApi, contextHolder] = message.useMessage();
-
-  const playerRef = useRef(null);
 
   const [data, setData] = useState({});
   const [loading, setLoading] = useState(true);
@@ -83,7 +84,7 @@ const View = () => {
     } catch (e) {
       console.log(e);
       if (e.message !== 'canceled') {
-        messageApi.error(`Failed to fetch data: ${handleErrorContent(e)}`);
+        messageApi.error(`${t('Failed to fetch data: ')}${handleErrorContent(e)}`);
       }
     }
     setLoading(false);
@@ -101,7 +102,7 @@ const View = () => {
       }
     } catch (error) {
       console.error(error);
-      setTextContent("Failed to load file content.");
+      setTextContent(t("Failed to load file content."));
     }
   };
 
@@ -132,11 +133,12 @@ const View = () => {
           loading={loading}
           onClick={handleRefreshButtonClick}
           size="small"
+          title={t("Refresh")}
         ></Button>
       </Space>}
     >
       <Helmet>
-        <title>{fileName} - File Browser</title>
+        <title>{fileName} - {t('File Browser')}</title>
       </Helmet>
       {contextHolder}
       <Spin spinning={loading}>
@@ -146,7 +148,7 @@ const View = () => {
             style={{ maxWidth: '400px' }}
             image={<FolderOpenOutlined style={{ fontSize: '100px', color: 'rgba(0,0,0,0.25)' }} />} // Empty.PRESENTED_IMAGE_SIMPLE
             description={<Paragraph style={{ marginBottom: '16px' }}>
-              <Text type="secondary">No Data</Text>
+              <Text type="secondary">{t('No Data')}</Text>
             </Paragraph>}
           />
         </div>}
