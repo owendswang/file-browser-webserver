@@ -223,6 +223,7 @@ const Folder = () => {
     const archivePassword = formRef.getFieldValue('archivePassword');
     updateSearchParams({ archivePassword });
     setArchivePasswordModalVisible(false);
+    setRefreshTag(refreshTag + 1);
   };
 
   const handleArchivePasswordInputChange = (e) => {
@@ -754,7 +755,7 @@ const Folder = () => {
                     style={{ gridTemplateColumns: `repeat(auto-fill, ${parseInt(searchParams.get('thumbnailSize')) || parseInt(window.localStorage.getItem("thumbnailSize")) || defaultThumbnailSize}px)` }}
                   >
                     {data.map((file, idx) => <ThumbnailLink
-                      key={`${file.name}`}
+                      key={`${file.name}-${refreshTag}`}
                       file={file}
                       size={parseInt(searchParams.get('thumbnailSize')) || parseInt(window.localStorage.getItem("thumbnailSize")) || defaultThumbnailSize}
                       setInitialViewIndex={setInitialViewIndex}
