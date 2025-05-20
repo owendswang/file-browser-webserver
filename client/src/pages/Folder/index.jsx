@@ -24,7 +24,8 @@ import {
   Checkbox,
   notification,
   Progress,
-  Spin
+  Spin,
+  Grid
 } from 'antd';
 import {
   AppstoreOutlined,
@@ -60,6 +61,7 @@ import './index.css';
 
 const { Text, Paragraph } = Typography;
 const { Column } = Table;
+const { useBreakpoint } = Grid;
 
 const defaultPageSize = 50;
 const defaultThumbnailSize = 154;
@@ -80,10 +82,12 @@ const Folder = () => {
   const pathname = encodeURIComponent(originalPathname).replaceAll('%2F', '/');
   const pathParts = pathname.split('/').filter(Boolean);
   const curDirName = decodeURIComponent(pathParts[pathParts.length - 1]);
+
   const [messageApi, messageContextHolder] = message.useMessage();
   const [notificationApi, notificationContextHolder] = notification.useNotification();
   const [modalApi, modalContextHolder] = Modal.useModal();
   const [formRef] = Form.useForm();
+  const screens = useBreakpoint();
 
   const [user] = useOutletContext();
 
@@ -446,7 +450,7 @@ const Folder = () => {
       title={curDirName}
       breadcrumb={{ items: breadcrumbItems }}
       onBack={() => navigate(-1)}
-      extra={<Space wrap={true}>
+      extra={<Space wrap={screens.md ? false : true}>
         <div
           key='sliderLabel'
           style={{ display: (searchParams.get('view') || window.localStorage.getItem("view")) === 'thumbnails' ? 'block' : 'none' }}

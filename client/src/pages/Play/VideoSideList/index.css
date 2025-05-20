@@ -62,6 +62,11 @@
   width: calc(100% - 1rem);
 }
 
+.ant-dark #videoSideListCard .ant-list .ant-list-item a.videoSideListItem,
+.ant-dark #videoSideListCard .videoSideListItemLoadingMore {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
 #videoSideListCard .ant-list .ant-list-item a.videoSideListItem:hover {
   border-color: rgb(22, 119, 255, 0.6);
   /*background-color: rgba(128, 128, 128, 0);*/
