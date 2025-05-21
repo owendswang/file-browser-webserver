@@ -65,6 +65,7 @@ const Config = () => {
         setServerPlatform(res.platform);
         setServerArch(res.arch);
       }
+      messageApi.success(t('Save successfully!'));
     } catch (e) {
       console.log(e);
       messageApi.error(`${t('Failed to save config data: ')}${handleErrorContent(e)}`);
@@ -255,6 +256,14 @@ const Config = () => {
               <InputNumber
                 placeholder={512}
               />
+            </Form.Item>
+            <Form.Item
+              label={t("Enable thumbnail animation")}
+              name="enablePreviewAnimation"
+              valuePropName="checked"
+              tooltip={t("It would take a lot of efforts to create animated thumbnails for videos and GIFs.")}
+            >
+              <Switch />
             </Form.Item>
             <Divider orientation="left"><h4>{t("Video")}</h4></Divider>
             <Form.Item

@@ -37,5 +37,8 @@
   "It's better to leave it empty if you don't know what this is.": "建议留空，除非你知道了解这个选项的用途。",
   "E.g. '0', '1'. Or leave it empty": "例如：“0”、“1”，或留空不填",
   "Save": "保存",
-  "Reset": "重置"
+  "Reset": "重置",
+  "Enable thumbnail animation": "启用可动缩略图",
+  "It would take a lot of efforts to create animated thumbnails for videos and GIFs.": "为视频和 GIF 创建可动缩略图会消耗很多资源和时间。",
+  "Save successfully!": "保存成功！"
 }

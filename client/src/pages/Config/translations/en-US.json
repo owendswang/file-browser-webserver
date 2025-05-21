@@ -37,5 +37,8 @@
   "It's better to leave it empty if you don't know what this is.": "It's better to leave it empty if you don't know what this is.",
   "E.g. '0', '1'. Or leave it empty": "E.g. '0', '1'. Or leave it empty",
   "Save": "Save",
-  "Reset": "Reset"
+  "Reset": "Reset",
+  "Enable thumbnail animation": "Enable thumbnail animation",
+  "It would take a lot of efforts to create animated thumbnails for videos and GIFs.": "It would take a lot of efforts to create animated thumbnails for videos and GIFs.",
+  "Save successfully!": "Save successfully!"
 }

@@ -35,6 +35,38 @@ class FFmpeg {
     return this.FFMPEG_PATH.replace(/ffmpeg(\.exe)?$/, 'ffprobe$1'); // 替换最后的 ffmpeg 或 ffmpeg.exe
   }
 
+  // 简化统一处理输入输出同为文件的处理函数
+  _handleCommandFromFileToFile(args, verbose = this.verbose) {
+    return new Promise((resolve, reject) => {
+      if (verbose) console.log(this.FFMPEG_PATH, args.map(arg => arg.includes('=') ? `"${arg}"` : arg).join(' '));
+
+      const child = spawn(this.FFMPEG_PATH, args, {
+        stdio: ['pipe', 'pipe', 'pipe'] // 确保使用 pipe 处理输入
+      });
+
+      // 监听 FFmpeg 的 stdout 输出，用于获取转码进度
+      child.stdout.on('data', (data) => {
+        if (verbose) console.log(data.toString());
+      });
+
+      child.stderr.on('data', (data) => {
+        console.error(data.toString());
+      });
+
+      // 处理 FFmpeg 进程结束
+      child.on('close', (code) => {
+        if (verbose && code === 0) {
+          console.log(`FFmpeg process exited with code ${code}`);
+        }
+        if (code === 0) {
+          resolve(`FFmpeg process exited with code ${code}`);
+        } else {
+          reject(`FFmpeg process exited with code ${code}`);
+        }
+      });
+    });
+  }
+
   // 转换图片流为 WebP 图片流
   convertStreamToWebpStream(inputStream, maxWidth, maxHeight, verbose = this.verbose) {
     const args = [
@@ -42,13 +74,25 @@ class FFmpeg {
       '-v', verbose ? 'info' : 'error',
       '-i', 'pipe:0', // 从标准输入读取数据
       '-vf', `scale='min(${maxWidth},iw)':'min(${maxHeight},ih)':force_original_aspect_ratio=decrease`,
-      '-c:v', 'libwebp_anim',
-      '-loop', '0', // 设置循环，0表示无限循环
+    ];
+    if (animated) {
+      args = args.concat([
+        '-t', '5', // 截取时长
+        '-c:v', 'libwebp_anim',
+        '-loop', '0', // 设置循环，0表示无限循环
+      ]);
+    } else {
+      args = args.concat([
+        '-vframes', '1', // 只截取一帧
+        '-c:v', 'libwebp',
+      ]);
+    }
+    args = args.concat([
       '-quality', '80', // 设置输出质量
       '-f', 'webp',
       '-pix_fmt', 'yuva420p', // 确保支持透明度
       'pipe:1' // 将输出直接发送到标准输出
-    ];
+    ]);
     if (verbose) console.log(this.FFMPEG_PATH, args.map(arg => arg.includes('=') ? `"${arg}"` : arg).join(' '));
 
     const child = spawn(this.FFMPEG_PATH, args, {
@@ -83,13 +127,25 @@ class FFmpeg {
       '-v', verbose ? 'info' : 'error',
       '-i', filePath,
       '-vf', `scale='min(${maxWidth},iw)':'min(${maxHeight},ih)':force_original_aspect_ratio=decrease`,
-      '-c:v', 'libwebp_anim',
-      '-loop', '0', // 设置循环，0表示无限循环
+    ];
+    if (animated) {
+      args = args.concat([
+        '-t', '5', // 截取时长
+        '-c:v', 'libwebp_anim',
+        '-loop', '0', // 设置循环，0表示无限循环
+      ]);
+    } else {
+      args = args.concat([
+        '-vframes', '1', // 只截取一帧
+        '-c:v', 'libwebp',
+      ]);
+    }
+    args = args.concat([
       '-quality', '80', // 设置输出质量
       '-f', 'webp',
       '-pix_fmt', 'yuva420p', // 确保支持透明度
       'pipe:1' // 将输出直接发送到标准输出
-    ];
+    ]);
     if (verbose) console.log(this.FFMPEG_PATH, args.map(arg => arg.includes('=') ? `"${arg}"` : arg).join(' '));
 
     const child = spawn(this.FFMPEG_PATH, args, {
@@ -109,62 +165,63 @@ class FFmpeg {
   }
 
   // 转换图片文件为 WebP 图片文件
-  convertFileToWebpFile(filePath, outputPath, maxWidth, maxHeight, verbose = this.verbose) {
-    return new Promise((resolve, reject) => {
-      const args = [
-        '-hide_banner',
-        '-v', verbose ? 'info' : 'error',
-        '-i', filePath,
-        '-vf', `scale='min(${maxWidth},iw)':'min(${maxHeight},ih)':force_original_aspect_ratio=decrease`,
+  convertFileToWebpFile(filePath, outputPath, animated = false, maxWidth, maxHeight, verbose = this.verbose) {
+    let args = [
+      '-hide_banner',
+      '-v', verbose ? 'info' : 'error',
+      '-i', filePath,
+      '-vf', `scale='min(${maxWidth},iw)':'min(${maxHeight},ih)':force_original_aspect_ratio=decrease`,
+    ];
+    if (animated) {
+      args = args.concat([
+        '-t', '5', // 截取时长
         '-c:v', 'libwebp_anim',
         '-loop', '0', // 设置循环，0表示无限循环
-        '-quality', '80', // 设置输出质量
-        '-f', 'webp',
-        '-pix_fmt', 'yuva420p', // 确保支持透明度
-        '-y',
-        outputPath
-      ];
-      if (verbose) console.log(this.FFMPEG_PATH, args.map(arg => arg.includes('=') ? `"${arg}"` : arg).join(' '));
+      ]);
+    } else {
+      args = args.concat([
+        '-vframes', '1', // 只截取一帧
+        '-c:v', 'libwebp',
+      ]);
+    }
+    args = args.concat([
+      '-quality', '80', // 设置输出质量
+      '-f', 'webp',
+      '-pix_fmt', 'yuva420p', // 确保支持透明度
+      '-y',
+      outputPath
+    ]);
 
-      const child = spawn(this.FFMPEG_PATH, args, {
-        stdio: ['pipe', 'pipe', 'pipe'] // 确保使用 pipe 处理输入
-      });
-
-      // 监听 FFmpeg 的 stdout 输出，用于获取转码进度
-      child.stdout.on('data', (data) => {
-        if (verbose) console.log(data.toString());
-      });
-
-      child.stderr.on('data', (data) => {
-        console.error(data.toString());
-      });
-
-      // 处理 FFmpeg 进程结束
-      child.on('close', (code) => {
-        if (verbose && code === 0) {
-          console.log(`FFmpeg process exited with code ${code}`);
-        }
-        if (code === 0) {
-          resolve(`FFmpeg process exited with code ${code}`);
-        } else {
-          reject(`FFmpeg process exited with code ${code}`);
-        }
-      });
-    });
+    return this._handleCommandFromFileToFile(args, verbose);
   }
 
   // 从视频中截取一帧，返回输出流
-  captureFrameFromStream(inputStream, time = 0, maxWidth = 512, maxHeight = 512, verbose = this.verbose) {
+  captureFrameFromStreamToStream(inputStream, time = 0, animated = false, maxWidth = 512, maxHeight = 512, verbose = this.verbose) {
     const args = [
       '-hide_banner',
       '-v', verbose ? 'info' : 'error',
       '-ss', time, // 指定截取的时间点
       '-i', 'pipe:0', // 从标准输入读取数据
-      '-vf', `scale='min(${maxWidth},iw)':'min(${maxHeight},ih)':force_original_aspect_ratio=decrease`,
-      '-vframes', '1', // 只截取一帧
-      '-f', 'webp',
-      'pipe:1' // 将输出直接发送到标准输出
+      '-vf', `scale='min(${maxWidth},iw)':'min(${maxHeight},ih)':force_original_aspect_ratio=decrease`
     ];
+    if (animated) {
+      args = args.concat([
+        '-t', '5', // 截取时长
+        '-r', '12', // 帧率
+        '-c:v', 'libwebp_anim',
+        '-loop', '0' // 设置循环，0表示无限循环
+      ]);
+    } else {
+      args = args.concat([
+        '-vframes', '1', // 只截取一帧
+        '-c:v', 'libwebp',
+      ]);
+    }
+    args = args.concat([
+      '-f', 'webp',
+      '-pix_fmt', 'yuva420p', // 确保支持透明度
+      'pipe:1' // 将输出直接发送到标准输出
+    ]);
     if (verbose) console.log(this.FFMPEG_PATH, args.map(arg => arg.includes('=') ? `"${arg}"` : arg).join(' '));
 
     const child = spawn(this.FFMPEG_PATH, args, {
@@ -191,19 +248,33 @@ class FFmpeg {
   }
 
   // 截取视频，返回输出流
-  captureFrameFromFileToStream(filePath, time = 0, maxWidth = 512, maxHeight = 512, verbose = this.verbose) {
-    const args = [
+  captureFrameFromFileToStream(filePath, time = 0, animated = false, maxWidth = 512, maxHeight = 512, verbose = this.verbose) {
+    let args = [
       '-hide_banner',
       '-v', verbose ? 'info' : 'error',
       '-ss', time, // 指定截取的时间点
       '-i', filePath,
-      '-vf', `scale='min(${maxWidth},iw)':'min(${maxHeight},ih)':force_original_aspect_ratio=decrease,fps=12`,
-      // '-vframes', '1', // 只截取一帧
-      '-t', '5', // 截取 5 秒
-      '-r', '12',
-      '-f', 'webp',
-      'pipe:1' // 将输出直接发送到标准输出
+      '-vf', `scale='min(${maxWidth},iw)':'min(${maxHeight},ih)':force_original_aspect_ratio=decrease,fps=12`
     ];
+    if (animated) {
+      args = args.concat([
+        '-t', '5', // 截取时长
+        '-r', '12', // 帧率
+        '-c:v', 'libwebp_anim',
+        '-loop', '0' // 设置循环，0表示无限循环
+      ]);
+    } else {
+      args = args.concat([
+        '-vframes', '1', // 只截取一帧
+        '-c:v', 'libwebp',
+      ]);
+    }
+    args = args.concat([
+      '-quality', '80', // 设置输出质量
+      '-f', 'webp',
+      '-pix_fmt', 'yuva420p', // 确保支持透明度
+      'pipe:1' // 将输出直接发送到标准输出
+    ]);
     if (verbose) console.log(this.FFMPEG_PATH, args.map(arg => arg.includes('=') ? `"${arg}"` : arg).join(' '));
 
     const child = spawn(this.FFMPEG_PATH, args, {
@@ -220,6 +291,38 @@ class FFmpeg {
     });
 
     return child.stdout; // 返回输出流
+  }
+
+  // 截取视频，输出文件
+  captureFrameFromFileToFile(filePath, outputPath, time = 0, animated = false, maxWidth = 512, maxHeight = 512, verbose = this.verbose) {
+    let args = [
+      '-hide_banner',
+      '-v', verbose ? 'info' : 'error',
+      '-ss', time, // 指定截取的时间点
+      '-i', filePath,
+      '-vf', `scale='min(${maxWidth},iw)':'min(${maxHeight},ih)':force_original_aspect_ratio=decrease,fps=12`
+    ];
+    if (animated) {
+      args = args.concat([
+        '-t', '5', // 截取时长
+        '-r', '12', // 帧率
+        '-c:v', 'libwebp_anim',
+        '-loop', '0' // 设置循环，0表示无限循环
+      ]);
+    } else {
+      args = args.concat([
+        '-vframes', '1', // 只截取一帧
+        '-c:v', 'libwebp',
+      ]);
+    }
+    args = args.concat([
+      '-f', 'webp',
+      '-pix_fmt', 'yuva420p', // 确保支持透明度
+      '-y',
+      outputPath // 将输出到指定路径
+    ]);
+
+    return this._handleCommandFromFileToFile(args, verbose);
   }
 
   // 获取视频信息
@@ -333,7 +436,7 @@ class FFmpeg {
     'nvidia': 'h264_nvenc',
   };
 
-  createSegment(filePath, outputDir, segmentIndex = 0, segmentFileName, maxWidth = 1280, maxHeight = 1280, fps = 24, duration = 6, streams = ['video', 'audio'], trackIndex = 0, enableHwaccel = false, hwaccelVendor = 'intel', hwaccelDevice, signal, verbose = this.verbose) {
+  createSegmentToFile(filePath, outputDir, segmentIndex = 0, segmentFileName, maxWidth = 1280, maxHeight = 1280, fps = 24, duration = 6, streams = ['video', 'audio'], trackIndex = 0, enableHwaccel = false, hwaccelVendor = 'intel', hwaccelDevice, signal, verbose = this.verbose) {
     return new Promise((resolve, reject) => {
       const startTime = segmentIndex * duration;
       const outputSegmentPath = path.join(outputDir, segmentFileName);

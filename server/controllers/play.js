@@ -136,7 +136,7 @@ const method = async (req, res) => {
 
           // async 的方式生成 ts 文件
           const streams = videoOnly ? ['video'] : audioMatch ? ['audio'] : ['video', 'audio'];
-          const ffmpegRes = await ffmpeg.createSegment(filePath, cacheDir, segmentIndex, tsFileName, playVideoSize, playVideoSize, playVideoFps, playVideoSegmentTargetDuration, streams, audioTrackIndex, enablePlayVideoHardwareAcceleration, playVideoHardwareAccelerationVendor, playVideoHardwareAccelerationDevice, signal, false);
+          const ffmpegRes = await ffmpeg.createSegmentToFile(filePath, cacheDir, segmentIndex, tsFileName, playVideoSize, playVideoSize, playVideoFps, playVideoSegmentTargetDuration, streams, audioTrackIndex, enablePlayVideoHardwareAcceleration, playVideoHardwareAccelerationVendor, playVideoHardwareAccelerationDevice, signal, false);
 
           const m3u8FilePath = path.join(cacheDir, 'index.m3u8');
           if (fs.existsSync(m3u8FilePath) && fs.statSync(m3u8FilePath).size > 0) {
@@ -257,7 +257,7 @@ const method = async (req, res) => {
 
           // async 的方式生成 vtt 文件
           const streams = ['subtitle'];
-          const ffmpegRes = await ffmpeg.createSegment(filePath, cacheDir, segmentIndex, vttFileName, 0, 0, 0, playVideoSegmentTargetDuration, streams, subtitleTrackIndex, null, null, null, signal, false);
+          const ffmpegRes = await ffmpeg.createSegmentToFile(filePath, cacheDir, segmentIndex, vttFileName, 0, 0, 0, playVideoSegmentTargetDuration, streams, subtitleTrackIndex, null, null, null, signal, false);
 
           const m3u8FilePath = path.join(cacheDir, 'index.m3u8');
           if (fs.existsSync(m3u8FilePath) && fs.statSync(m3u8FilePath).size > 0) {

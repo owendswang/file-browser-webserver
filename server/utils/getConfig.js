@@ -41,6 +41,9 @@ const getConfig = () => {
   if (config.previewImageMaxHeight === undefined) {
     config.previewImageMaxHeight = 512;
   }
+  if (config.enablePreviewAnimation === undefined) {
+    config.enablePreviewAnimation = false;
+  }
 
   if (config.dbPath === undefined) {
     config.dbPath = path.resolve(__dirname, '..', 'db', 'db.sqlite');

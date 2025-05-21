@@ -17,6 +17,7 @@ const method = async (req, res) => {
     previewCachePath,
     previewImageMaxWidth,
     previewImageMaxHeight,
+    enablePreviewAnimation,
     tempDir
   } = getConfig();
   
@@ -71,14 +72,14 @@ const method = async (req, res) => {
   // 预览文件处理逻辑
   const handlePreviewFile = async (modifiedTime, size, sevenZip) => {
     // 检查数据库以获取缩略图信息
-    const { thumbnailId, regenerate } = thumbnails.getThumbnailInfo(originalFileName, modifiedTime, size);
+    const { thumbnailId, regenerate } = thumbnails.getThumbnailInfo(originalFileName, modifiedTime, size, enablePreviewAnimation);
 
     if (regenerate) {
       // 生成新的缩略图并更新数据库
       const thumbnailIdToUse = thumbnailId || randomBytes(16).toString('hex');
       const webpFileName = `${thumbnailIdToUse}.webp`;
       const webpFilePath = path.join(previewCachePath, webpFileName);
-      thumbnails.updateThumbnailInfo(originalFileName, modifiedTime, thumbnailIdToUse, size, 1);
+      thumbnails.updateThumbnailInfo(originalFileName, modifiedTime, thumbnailIdToUse, size, 1, enablePreviewAnimation);
 
       try {
         // 移除缓存中是否已有该 WebP 文件
@@ -144,8 +145,8 @@ const method = async (req, res) => {
           ffmpegStream = ffmpeg.convertFileToWebpStream(filePath, previewImageMaxWidth, previewImageMaxHeight, false);
         } else if (fileType === "Video File") {
           const timeToCapture = '00:00:01'; // 设定时间点为视频的第一秒
-          // ffmpegStream = ffmpeg.captureFrameFromStream(readStream, timeToCapture, previewImageMaxWidth, previewImageMaxHeight, false);
-          ffmpegStream = ffmpeg.captureFrameFromFile(filePath, timeToCapture, previewImageMaxWidth, previewImageMaxHeight, false);
+          // ffmpegStream = ffmpeg.captureFrameFromStreamToStream(readStream, timeToCapture, previewImageMaxWidth, previewImageMaxHeight, false);
+          ffmpegStream = ffmpeg.captureFrameFromFileToStream(filePath, timeToCapture, previewImageMaxWidth, previewImageMaxHeight, false);
         }
 
         // Check if ffmpegStream is valid before piping
@@ -176,7 +177,12 @@ const method = async (req, res) => {
         */
 
         /* 直接生成 WebP 文件后，再返回文件，方便处理异常 */
-        await ffmpeg.convertFileToWebpFile(filePath, webpFilePath, previewImageMaxWidth, previewImageMaxHeight, false);
+        if (fileType === "Image File") {
+          await ffmpeg.convertFileToWebpFile(filePath, webpFilePath, enablePreviewAnimation, previewImageMaxWidth, previewImageMaxHeight, false);
+        } else if (fileType === "Video File") {
+          const timeToCapture = '00:00:01'; // 设定时间点为视频的第一秒
+          await ffmpeg.captureFrameFromFileToFile(filePath, webpFilePath, timeToCapture, enablePreviewAnimation, previewImageMaxWidth, previewImageMaxHeight, false);
+        }
 
         if (isInArchive) {
           fs.rmSync(path.dirname(filePath), { recursive: true, force: true });

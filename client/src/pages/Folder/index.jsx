@@ -188,6 +188,7 @@ const Folder = () => {
   };
 
   const refresh = () => {
+    setLoading(true);
     setRefreshTag(refreshTag + 1);
   }
 

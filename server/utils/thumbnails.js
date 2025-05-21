@@ -21,19 +21,20 @@ class Thumbnails {
       modifiedTime TEXT NOT NULL,
       size TEXT NOT NULL,
       thumbnailId TEXT NOT NULL,
+      animated INTEGER NOT NULL DEFAULT 0,
       convertFinished INTEGER NOT NULL DEFAULT 1,
       PRIMARY KEY (fileName, type, modifiedTime, size),
       UNIQUE (thumbnailId)
     )`);
   }
 
-  getThumbnailInfo(fileName, modifiedTime, size) {
-    const query = `SELECT thumbnailId, convertFinished FROM thumbnails WHERE fileName = ? and modifiedTime = ? and size = ? and type = 'thumbnail'`;
+  getThumbnailInfo(fileName, modifiedTime, size, animated) {
+    const query = `SELECT thumbnailId, convertFinished, animated FROM thumbnails WHERE fileName = ? and modifiedTime = ? and size = ? and type = 'thumbnail'`;
     const row = this.db.prepare(query).get(fileName, modifiedTime.toString(), size);
 
     if (row) {
       const thumbnailFilePath = path.join(this.cachePath, `${row.thumbnailId}.webp`);
-      if (!fs.existsSync(thumbnailFilePath) || (fs.statSync(thumbnailFilePath).size === 0) || !row.convertFinished) {
+      if (!fs.existsSync(thumbnailFilePath) || (fs.statSync(thumbnailFilePath).size === 0) || !row.convertFinished || animated !== !!row.animated) {
         return { thumbnailId: row.thumbnailId, regenerate: true };
       } else {
         return { thumbnailId: row.thumbnailId, regenerate: false };
@@ -73,9 +74,9 @@ class Thumbnails {
     }
   }
 
-  updateThumbnailInfo(fileName, modifiedTime, thumbnailId, size, convertFinished = 1) {
-    const query = `INSERT OR REPLACE INTO thumbnails (fileName, type, modifiedTime, thumbnailId, size, convertFinished) VALUES (?, 'thumbnail', ?, ?, ?, ?)`;
-    this.db.prepare(query).run(fileName, modifiedTime.toString(), thumbnailId, size, convertFinished);
+  updateThumbnailInfo(fileName, modifiedTime, thumbnailId, size, convertFinished = 1, animated) {
+    const query = `INSERT OR REPLACE INTO thumbnails (fileName, type, modifiedTime, thumbnailId, size, convertFinished, animated) VALUES (?, 'thumbnail', ?, ?, ?, ?, ?)`;
+    this.db.prepare(query).run(fileName, modifiedTime.toString(), thumbnailId, size, convertFinished, animated ? 1 : 0);
   }
 
   updateM3u8Info(fileName, modifiedTime, thumbnailId, size, convertFinished = 1) {
