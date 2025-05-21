@@ -15,7 +15,7 @@
   "SQLite DB file path": "SQLite 数据库文件路径",
   "Saving thumbnail mappings, video transcode cache mappings and user data": "存储缩略图映射关系、视频转码缓存映射关系、用户数据",
   "Temp file directory": "临时文件夹路径",
-  "Temp directory for modifying archives": "操作压缩文件时会用到的临时目录",
+  "Temp directory for modifying archives and creating thumbnails for files in archives": "操作压缩文件时，以及为压缩包内的文件创建缩略图时，会用到的临时目录",
   "Smartmontools executable file path": "Smartmontools 可执行文件的路径",
   "FFmpeg executable path": "FFmpeg 可执行文件的路径",
   "Enable folder size calculation": "开启文件夹大小计算",

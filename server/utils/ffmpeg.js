@@ -35,8 +35,8 @@ class FFmpeg {
     return this.FFMPEG_PATH.replace(/ffmpeg(\.exe)?$/, 'ffprobe$1'); // 替换最后的 ffmpeg 或 ffmpeg.exe
   }
 
-  // 转换图片为 WebP 格式，返回输出流
-  convertStreamToWebP(inputStream, maxWidth, maxHeight, verbose = this.verbose) {
+  // 转换图片流为 WebP 图片流
+  convertStreamToWebpStream(inputStream, maxWidth, maxHeight, verbose = this.verbose) {
     const args = [
       '-hide_banner',
       '-v', verbose ? 'info' : 'error',
@@ -76,8 +76,8 @@ class FFmpeg {
     return child.stdout; // 返回输出流
   }
 
-  // 转换图片为 WebP 格式，返回输出流
-  convertFileToWebP(filePath, maxWidth, maxHeight, verbose = this.verbose) {
+  // 转换图片文件为 WebP 图片流
+  convertFileToWebpStream(filePath, maxWidth, maxHeight, verbose = this.verbose) {
     const args = [
       '-hide_banner',
       '-v', verbose ? 'info' : 'error',
@@ -106,6 +106,51 @@ class FFmpeg {
     });
 
     return child.stdout; // 返回输出流
+  }
+
+  // 转换图片文件为 WebP 图片文件
+  convertFileToWebpFile(filePath, outputPath, maxWidth, maxHeight, verbose = this.verbose) {
+    return new Promise((resolve, reject) => {
+      const args = [
+        '-hide_banner',
+        '-v', verbose ? 'info' : 'error',
+        '-i', filePath,
+        '-vf', `scale='min(${maxWidth},iw)':'min(${maxHeight},ih)':force_original_aspect_ratio=decrease`,
+        '-c:v', 'libwebp_anim',
+        '-loop', '0', // 设置循环，0表示无限循环
+        '-quality', '80', // 设置输出质量
+        '-f', 'webp',
+        '-pix_fmt', 'yuva420p', // 确保支持透明度
+        '-y',
+        outputPath
+      ];
+      if (verbose) console.log(this.FFMPEG_PATH, args.map(arg => arg.includes('=') ? `"${arg}"` : arg).join(' '));
+
+      const child = spawn(this.FFMPEG_PATH, args, {
+        stdio: ['pipe', 'pipe', 'pipe'] // 确保使用 pipe 处理输入
+      });
+
+      // 监听 FFmpeg 的 stdout 输出，用于获取转码进度
+      child.stdout.on('data', (data) => {
+        if (verbose) console.log(data.toString());
+      });
+
+      child.stderr.on('data', (data) => {
+        console.error(data.toString());
+      });
+
+      // 处理 FFmpeg 进程结束
+      child.on('close', (code) => {
+        if (verbose && code === 0) {
+          console.log(`FFmpeg process exited with code ${code}`);
+        }
+        if (code === 0) {
+          resolve(`FFmpeg process exited with code ${code}`);
+        } else {
+          reject(`FFmpeg process exited with code ${code}`);
+        }
+      });
+    });
   }
 
   // 从视频中截取一帧，返回输出流
@@ -146,7 +191,7 @@ class FFmpeg {
   }
 
   // 截取视频，返回输出流
-  captureFrameFromFile(filePath, time = 0, maxWidth = 512, maxHeight = 512, verbose = this.verbose) {
+  captureFrameFromFileToStream(filePath, time = 0, maxWidth = 512, maxHeight = 512, verbose = this.verbose) {
     const args = [
       '-hide_banner',
       '-v', verbose ? 'info' : 'error',
@@ -428,13 +473,11 @@ class FFmpeg {
 
       // 监听 FFmpeg 的 stdout 输出，用于获取转码进度
       child.stdout.on('data', (data) => {
-        const output = data.toString();
-        if (verbose) console.log(output);
+        if (verbose) console.log(data.toString());
       });
 
       child.stderr.on('data', (data) => {
-        const output = data.toString();
-        console.error(output);
+        console.error(data.toString());
       });
 
       // 处理 FFmpeg 进程结束

@@ -19,6 +19,7 @@
 
 a.tableRowFileNameLink {
   transition: color 0.3s;
+  margin-right: 0.5rem;
 }
 
 a.tableRowFileNameLink:visited {

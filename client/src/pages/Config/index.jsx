@@ -166,7 +166,7 @@ const Config = () => {
             <Form.Item
               label={t("Temp file directory")}
               name="tempDir"
-              tooltip={t("Temp directory for modifying archives")}
+              tooltip={t("Temp directory for modifying archives and creating thumbnails for files in archives")}
             >
               <Input
                 placeholder="C:\FileBrowserServer\cache"

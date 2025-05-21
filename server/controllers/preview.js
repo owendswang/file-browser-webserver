@@ -1,4 +1,3 @@
-const os = require('os');
 const fs = require('fs');
 const path = require('path');
 const { randomBytes } = require('crypto');
@@ -18,6 +17,7 @@ const method = async (req, res) => {
     previewCachePath,
     previewImageMaxWidth,
     previewImageMaxHeight,
+    tempDir
   } = getConfig();
   
   const thumbnails = res.locals.thumbnails;
@@ -80,12 +80,12 @@ const method = async (req, res) => {
       const webpFilePath = path.join(previewCachePath, webpFileName);
       thumbnails.updateThumbnailInfo(originalFileName, modifiedTime, thumbnailIdToUse, size, 1);
 
-      // 移除缓存中是否已有该 WebP 文件
-      if (fs.existsSync(webpFilePath)) {
-        fs.unlinkSync(webpFilePath);
-      }
-
       try {
+        // 移除缓存中是否已有该 WebP 文件
+        if (fs.existsSync(webpFilePath)) {
+          fs.rmSync(webpFilePath, { force: true });
+        }
+  
         /*let readStream;
         if (isInArchive) {
           // 使用 7-Zip 解压指定文件
@@ -99,20 +99,21 @@ const method = async (req, res) => {
           throw new Error('File read stream is not valid');
         }*/
 
+
         let filePath = originalFilePath;
         if (isInArchive) {
           // 系统临时目录 + 随机文件夹名
-          const tempDir = path.join(os.tmpdir(), randomBytes(16).toString('hex'));
+          const extractTempDir = path.join(tempDir, randomBytes(16).toString('hex'));
 
           const options = `"-i!${archiveInternalPath}"`; // 指定要解压的文件
-          const extractResult = await sevenZip.extract(archiveFullPath, tempDir, options, archivePassword, true, signal);
+          const extractResult = await sevenZip.extract(archiveFullPath, extractTempDir, options, archivePassword, false, signal);
 
           if (!extractResult.isOK) {
             return res.status(500).send(`Failed to extract file from archive:\n${extractResult.error}`);
           }
 
           // 解压后的文件路径
-          const extractedFilePath = path.join(tempDir, archiveInternalPath);
+          const extractedFilePath = path.join(extractTempDir, path.basename(archiveInternalPath));
 
           if (!fs.existsSync(extractedFilePath)) {
             return res.status(404).send('Extracted file not found');
@@ -121,9 +122,10 @@ const method = async (req, res) => {
           filePath = extractedFilePath;
         }
 
-        // 否则开始转换并将结果流式传输到响应
-        const ffmpeg = new FFmpeg(ffmpegPath); // 从 config 获取 FFmpeg 路径
+        const ffmpeg = new FFmpeg(ffmpegPath);
 
+        /* 流式返回转码出的缩略图，此方法不能很好处理转码异常的返回 */
+        /*
         // 设置响应类型为 WebP
         res.set('Content-Type', 'image/webp');
 
@@ -138,8 +140,8 @@ const method = async (req, res) => {
 
         let ffmpegStream;
         if (fileType === "Image File") {
-          // ffmpegStream = ffmpeg.convertStreamToWebP(readStream, previewImageMaxWidth, previewImageMaxHeight, false);
-          ffmpegStream = ffmpeg.convertFileToWebP(filePath, previewImageMaxWidth, previewImageMaxHeight, false);
+          // ffmpegStream = ffmpeg.convertStreamToWebpStream(readStream, previewImageMaxWidth, previewImageMaxHeight, false);
+          ffmpegStream = ffmpeg.convertFileToWebpStream(filePath, previewImageMaxWidth, previewImageMaxHeight, false);
         } else if (fileType === "Video File") {
           const timeToCapture = '00:00:01'; // 设定时间点为视频的第一秒
           // ffmpegStream = ffmpeg.captureFrameFromStream(readStream, timeToCapture, previewImageMaxWidth, previewImageMaxHeight, false);
@@ -158,10 +160,8 @@ const method = async (req, res) => {
         writeStream.on('close', () => {
           if (isInArchive) {
             // 确保临时目录被删除
-            const tmpdir = filePath.split(path.sep).slice(0, filePath.split(path.sep).length - 1).join(path.sep);
-            fs.rmSync(tmpdir, { recursive: true, force: true }, (err) => {
-              if (err) console.error('Failed to delete temp folder:', err.message);
-            });
+            const tmpdir = path.dirname(filePath);
+            fs.rmSync(tmpdir, { recursive: true, force: true });
           }
         });
 
@@ -173,6 +173,16 @@ const method = async (req, res) => {
           console.error('Error during FFmpeg processing:', error);
           return res.status(500).send(`Error processing image:\n${error.message}`);
         });
+        */
+
+        /* 直接生成 WebP 文件后，再返回文件，方便处理异常 */
+        await ffmpeg.convertFileToWebpFile(filePath, webpFilePath, previewImageMaxWidth, previewImageMaxHeight, false);
+
+        if (isInArchive) {
+          fs.rmSync(path.dirname(filePath), { recursive: true, force: true });
+        }
+
+        return res.sendFile(webpFilePath);
       } catch (error) {
         console.error('Error in handlePreviewFile:', error);
         if (error.message === 'AbortError') {

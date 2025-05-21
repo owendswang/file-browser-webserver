@@ -65,7 +65,7 @@ const method = async (req, res) => {
 
       if (fs.lstatSync(archiveFullPath).isFile()) {
         isInArchive = true;
-        archiveInternalPath = `${pathParts.slice(index + 1).join('/')}${pathParts.slice(index + 1).length > 0 ? '/' : ''}`;
+        archiveInternalPath = `${pathParts.slice(index + 1).join(path.sep)}${pathParts.slice(index + 1).length > 0 ? path.sep : ''}`;
         break;
       }
     }
@@ -82,7 +82,7 @@ const method = async (req, res) => {
       }
 
       // 找到目标
-      const targetFile = result.files.find(f => f.Path.startsWith(archiveInternalPath));
+      const targetFile = result.files.find(f => (f.Path.startsWith(archiveInternalPath) || f.Path === archiveInternalPath.replace(new RegExp('\\' + path.sep + '$'), '')));
 
       if (!targetFile) {
         return res.status(404).send('Folder not found in archive');
@@ -92,7 +92,7 @@ const method = async (req, res) => {
       const archiveFiles = result.files.map(f => {
         const isDirectory = f.Folder;
         return {
-          name: f.Path.replace(/\\/g, '/'),
+          name: f.Path,
           size: f.Size,
           modifiedTime: f.Modified || '--',
           isDirectory,
@@ -104,7 +104,7 @@ const method = async (req, res) => {
       // 筛选当前层级内的文件和文件夹
       const currentLevelFiles = archiveFiles
                                   .filter(file => file.name.startsWith(archiveInternalPath))
-                                  .filter(file => file.name.replace(archiveInternalPath, '').split('/').filter(Boolean).length === 1)
+                                  .filter(file => file.name.replace(archiveInternalPath, '').split(path.sep).filter(Boolean).length === 1)
                                   .filter(async file => !(await isHidden(file.name, file.isDirectory, false, true)));
 
       files = currentLevelFiles.map(file => {

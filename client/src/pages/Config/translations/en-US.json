@@ -15,7 +15,7 @@
   "SQLite DB file path": "SQLite DB file path",
   "Saving thumbnail mappings, video transcode cache mappings and user data": "Saving thumbnail mappings, video transcode cache mappings and user data",
   "Temp file directory": "Temp file directory",
-  "Temp directory for modifying archives": "Temp directory for modifying archives",
+  "Temp directory for modifying archives and creating thumbnails for files in archives": "Temp directory for modifying archives and creating thumbnails for files in archives",
   "Smartmontools executable file path": "Smartmontools executable file path",
   "FFmpeg executable path": "FFmpeg executable path",
   "Enable folder size calculation": "Enable folder size calculation",
