@@ -1,5 +1,7 @@
 # File Browser
 
+(English version -> [README](https://github.com/owendswang/file-browser-webserver/blob/main/README.md))
+
 ## 项目介绍
 
 File Browser 是一个简洁的、网页端的文件管理软件，允许用户轻松的浏览、管理文件，包括但不限于上传、下载、重命名、移动、复制、删除文件或目录，甚至是压缩包中的对象（ARM 架构的 Linux 系统下不支持RAR压缩包的修改），下载文件夹时会将文件夹打包成ZIP压缩包。
@@ -45,7 +47,7 @@ File Browser 是一个简洁的、网页端的文件管理软件，允许用户�
    cd file-browser-webserver
    ```
 
-   （下载的压缩包只包含 server 端，和 build 好的 client 文件，不包含 client 代码目录。）
+   （下载的压缩包只包含 server 端，和编译好的 client 文件，不包含 client 代码目录。）
 
 2. **安装依赖**
 
@@ -134,3 +136,4 @@ File Browser 是一个简洁的、网页端的文件管理软件，允许用户�
 ![doc (12)](https://github.com/owendswang/file-browser-webserver/blob/main/docs/doc%20(12).png?raw=true)
 ![doc (13)](https://github.com/owendswang/file-browser-webserver/blob/main/docs/doc%20(13).png?raw=true)
 ![doc (14)](https://github.com/owendswang/file-browser-webserver/blob/main/docs/doc%20(14).png?raw=true)
+![doc (15)](https://github.com/owendswang/file-browser-webserver/blob/main/docs/doc%20(15).png?raw=true)
