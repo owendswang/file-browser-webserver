@@ -51,7 +51,7 @@ File Browser 是一个简洁的、网页端的文件管理软件，允许用户�
 
    使用以下命令安装必要的依赖：
    ```bash
-   npm install
+   npm run install
    ```
 
 3. **下载第三方工具**
@@ -61,6 +61,9 @@ File Browser 是一个简洁的、网页端的文件管理软件，允许用户�
 4. **配置**
 
    根据部署的系统环境，复制项目目录中相应的 config.example.json 文件，并命名为 config.json 。
+   ```bash
+   cp config.example.xxx.json config.json
+   ```
 
    根据你的软件安装目录、你的需求，修改 config.json 文件中的内容，或在项目运行起来后，在网页中配置也可以。
 
@@ -110,10 +113,6 @@ File Browser 是一个简洁的、网页端的文件管理软件，允许用户�
 其他依赖包，请参考项目代码仓库中的 package.json 文件，并遵守他们的许可证。
 
 感谢所有使用到的依赖包，感谢他们的作者。
-
-## 贡献
-
-尚无。
 
 ## 支持
 
