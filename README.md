@@ -127,7 +127,6 @@ File Browser 是一个简洁的、网页端的文件管理软件，允许用户�
 ![doc (4)](https://github.com/owendswang/file-browser-webserver/blob/main/docs/doc%20(4).png?raw=true)
 ![doc (5)](https://github.com/owendswang/file-browser-webserver/blob/main/docs/doc%20(5).png?raw=true)
 ![doc (6)](https://github.com/owendswang/file-browser-webserver/blob/main/docs/doc%20(6).png?raw=true)
-![doc (6)](https://github.com/owendswang/file-browser-webserver/blob/main/docs/doc%20(6).png?raw=true)
 ![doc (7)](https://github.com/owendswang/file-browser-webserver/blob/main/docs/doc%20(7).png?raw=true)
 ![doc (8)](https://github.com/owendswang/file-browser-webserver/blob/main/docs/doc%20(8).png?raw=true)
 ![doc (9)](https://github.com/owendswang/file-browser-webserver/blob/main/docs/doc%20(9).png?raw=true)
