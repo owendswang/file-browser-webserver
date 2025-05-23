@@ -24,16 +24,19 @@ In the era of AI, I received some assistance from AI during development, but I c
 - A simple user login management system. The default administrator username and password are both admin, and have file management operation permissions. New users can register on the /register page, but they only have file browsing permissions. Registered users need to be approved by the administrator on the user management page before they can log in.
 - The page supports display in both Chinese and English.
 - The page supports dark mode switching.
+- Checking the healthiness of the disk drive where the mounted folder is in.
 
 ### Page Screenshots
 
 [Jump to the bottom to see the images 👆🏻](#Screenshots)
 
 ### Feature Highlights
+
 - tilizes third-party tools such as 7-zip, WinRAR, FFmpeg, and dependencies like Viewer.js and Video.js for convenient browsing of images and videos within compressed files.
 - With the help of FFmpeg, formats unsupported by browsers can be transcoded in real-time, allowing for progress dragging, multi-audio track, embedded subtitles, and multi-resolution switching.
 - The simple account authentication uses the Oauth 2.0 standard and built-in Oauth 2.0 server.
 Thanks to Node.js and third-party software's multi-platform support, this software can be deployed on Windows and Linux systems. It has never been tested on MacOS.
+- With the help of Smartmontools, it's able to checking the healthiness of the disk drive where the mounted folder is in
 
 ## Deployment Method
 
@@ -135,3 +138,4 @@ If you encounter any issues, please submit them in [Issues](https://github.com/o
 ![doc (13)](https://github.com/owendswang/file-browser-webserver/blob/main/docs/doc%20(13).png?raw=true)
 ![doc (14)](https://github.com/owendswang/file-browser-webserver/blob/main/docs/doc%20(14).png?raw=true)
 ![doc (15)](https://github.com/owendswang/file-browser-webserver/blob/main/docs/doc%20(15).png?raw=true)
+![doc (16)](https://github.com/owendswang/file-browser-webserver/blob/main/docs/doc%20(16).png?raw=true)

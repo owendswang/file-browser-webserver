@@ -24,6 +24,7 @@ File Browser 是一个简洁的、网页端的文件管理软件，允许用户�
 - 简单的用户登录管理。默认管理员账号密码均为`admin`，并具有文件管理操作的权限。可在`/register`页面上注册新用户，但只拥有文件浏览权限。注册过的用户，需要在管理员在用户管理页面里批准后，才可以登录。
 - 页面支持中文、英文显示。
 - 页面支持暗黑模式切换。
+- 可查看文件夹所属磁盘的健康状态
 
 ### 页面展示
 
@@ -35,6 +36,7 @@ File Browser 是一个简洁的、网页端的文件管理软件，允许用户�
 - 借助 FFmpeg 实现浏览器播放不支持的格式，实时转码并支持进度拖拽，支持多音轨、内嵌字幕、多分辨率切换。
 - 简单的账号认证使用了 Oauth 2.0 标准，内建了 Oauth 2.0 服务器。
 - 得益于 Node.js 和第三方软件的多系统支持，可将本软件在 Windows 、 Linux 系统上部署，从未在 MacOS 上试过。
+- 借助 Smartmontools 工具，可查看文件夹所属磁盘的健康状态、Smart 值。
 
 ## 部署方法
 
@@ -137,3 +139,4 @@ File Browser 是一个简洁的、网页端的文件管理软件，允许用户�
 ![doc (13)](https://github.com/owendswang/file-browser-webserver/blob/main/docs/doc%20(13).png?raw=true)
 ![doc (14)](https://github.com/owendswang/file-browser-webserver/blob/main/docs/doc%20(14).png?raw=true)
 ![doc (15)](https://github.com/owendswang/file-browser-webserver/blob/main/docs/doc%20(15).png?raw=true)
+![doc (16)](https://github.com/owendswang/file-browser-webserver/blob/main/docs/doc%20(16).png?raw=true)
