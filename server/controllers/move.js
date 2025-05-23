@@ -118,14 +118,20 @@ const method = async (req, res) => {
 
       // 使用 7-Zip 解压指定文件
       const options = `"-i!${srcArchiveInternalPath}"`; // 指定要解压的文件
-      const extractResult = await sevenZip.extract(srcArchiveFullPath, path.join(sevenZipTempDir, dstArchiveInternalPath), options, archivePassword, true, signal);
+      let extractResult = {};
+      if (dstIsInArchive) {
+        extractResult = await sevenZip.extract(srcArchiveFullPath, path.join(sevenZipTempDir, dstArchiveInternalPath), options, archivePassword, true, signal);
+
+        // 解压后的文件夹路径
+        moveSrc = path.join(sevenZipTempDir, dstArchiveInternalPath ? dstArchiveInternalPath.split(path.sep)[0] : srcArchiveInternalPath );
+      } else {
+        extractResult = await sevenZip.extract(srcArchiveFullPath, dstFullPath, options, archivePassword, true, signal);
+      }
 
       if (!extractResult.isOK) {
         return res.status(500).send(`Failed to extract source from archive:\n${extractResult.error}`);
       }
 
-      // 解压后的文件夹路径
-      moveSrc = path.join(sevenZipTempDir, dstArchiveInternalPath ? dstArchiveInternalPath.split(path.sep)[0] : srcArchiveInternalPath );
     } catch (error) {
       console.error('Error handling source archive file:', error);
       if (error.message === 'AbortError') {
@@ -173,7 +179,7 @@ const method = async (req, res) => {
       }
       return res.status(500).send(`Error handling destination archive file:\n${error.message}`);
     }
-  } else {
+  } else if (!srcIsInArchive) {
     try {
       fs.cpSync(
         moveSrc,

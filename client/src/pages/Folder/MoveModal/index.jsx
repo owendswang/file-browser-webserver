@@ -123,7 +123,7 @@ const MoveModal = (props) => {
         layout="vertical"
       >
         <Form.Item
-          label={`${t('Where would you like to ')}${t(title?.toLowerCase())}${selectedRowKeys.length > 1 ? t(' them') : t(' it')}?`}
+          label={t('Where would you like to ', { operation: t(title?.toLowerCase()), who: selectedRowKeys.length > 1 ? t('them') : t('it') })}
           name="dst"
           rules={[{ required: true, message: t('Please select destination') }]}
         >
