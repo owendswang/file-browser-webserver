@@ -23,9 +23,57 @@ File Browser 是一个简洁的、网页端的文件管理软件，允许用户�
 - 页面支持中文、英文显示。
 - 页面支持暗黑模式切换。
 
-### 演示视频
+### 页面截图
 
-尚无。
+（敏感部分做了马赛克处理，实际显示并非图中模糊的样子）
+
+<marquee behavior="scroll" direction="left">
+  <a href="https://github.com/owendswang/file-browser-webserver/blob/main/docs/doc%20(1).png?raw=true" target="_blank">
+    <img src="https://github.com/owendswang/file-browser-webserver/blob/main/docs/doc%20(1).png?raw=true" style="max-width: 200px; height: auto;" alt="doc (1)" />
+  </a>
+  <a href="https://github.com/owendswang/file-browser-webserver/blob/main/docs/doc%20(2).png?raw=true" target="_blank">
+    <img src="https://github.com/owendswang/file-browser-webserver/blob/main/docs/doc%20(2).png?raw=true" style="max-width: 200px; height: auto;" alt="doc (2)" />
+  </a>
+  <a href="https://github.com/owendswang/file-browser-webserver/blob/main/docs/doc%20(3).png?raw=true" target="_blank">
+    <img src="https://github.com/owendswang/file-browser-webserver/blob/main/docs/doc%20(3).png?raw=true" style="max-width: 200px; height: auto;" alt="doc (3)" />
+  </a>
+  <a href="https://github.com/owendswang/file-browser-webserver/blob/main/docs/doc%20(4).png?raw=true" target="_blank">
+    <img src="https://github.com/owendswang/file-browser-webserver/blob/main/docs/doc%20(4).png?raw=true" style="max-width: 200px; height: auto;" alt="doc (4)" />
+  </a>
+  <a href="https://github.com/owendswang/file-browser-webserver/blob/main/docs/doc%20(5).png?raw=true" target="_blank">
+    <img src="https://github.com/owendswang/file-browser-webserver/blob/main/docs/doc%20(5).png?raw=true" style="max-width: 200px; height: auto;" alt="doc (5)" />
+  </a>
+  <a href="https://github.com/owendswang/file-browser-webserver/blob/main/docs/doc%20(6).png?raw=true" target="_blank">
+    <img src="https://github.com/owendswang/file-browser-webserver/blob/main/docs/doc%20(6).png?raw=true" style="max-width: 200px; height: auto;" alt="doc (6)" />
+  </a>
+  <a href="https://github.com/owendswang/file-browser-webserver/blob/main/docs/doc%20(6).png?raw=true" target="_blank">
+    <img src="https://github.com/owendswang/file-browser-webserver/blob/main/docs/doc%20(6).png?raw=true" style="max-width: 200px; height: auto;" alt="doc (6)" />
+  </a>
+  <a href="https://github.com/owendswang/file-browser-webserver/blob/main/docs/doc%20(7).png?raw=true" target="_blank">
+    <img src="https://github.com/owendswang/file-browser-webserver/blob/main/docs/doc%20(7).png?raw=true" style="max-width: 200px; height: auto;" alt="doc (7)" />
+  </a>
+  <a href="https://github.com/owendswang/file-browser-webserver/blob/main/docs/doc%20(8).png?raw=true" target="_blank">
+    <img src="https://github.com/owendswang/file-browser-webserver/blob/main/docs/doc%20(8).png?raw=true" style="max-width: 200px; height: auto;" alt="doc (8)" />
+  </a>
+  <a href="https://github.com/owendswang/file-browser-webserver/blob/main/docs/doc%20(9).png?raw=true" target="_blank">
+    <img src="https://github.com/owendswang/file-browser-webserver/blob/main/docs/doc%20(9).png?raw=true" style="max-width: 200px; height: auto;" alt="doc (9)" />
+  </a>
+  <a href="https://github.com/owendswang/file-browser-webserver/blob/main/docs/doc%20(10).png?raw=true" target="_blank">
+    <img src="https://github.com/owendswang/file-browser-webserver/blob/main/docs/doc%20(10).png?raw=true" style="max-width: 200px; height: auto;" alt="doc (10)" />
+  </a>
+  <a href="https://github.com/owendswang/file-browser-webserver/blob/main/docs/doc%20(11).png?raw=true" target="_blank">
+    <img src="https://github.com/owendswang/file-browser-webserver/blob/main/docs/doc%20(11).png?raw=true" style="max-width: 200px; height: auto;" alt="doc (11)" />
+  </a>
+  <a href="https://github.com/owendswang/file-browser-webserver/blob/main/docs/doc%20(12).png?raw=true" target="_blank">
+    <img src="https://github.com/owendswang/file-browser-webserver/blob/main/docs/doc%20(12).png?raw=true" style="max-width: 200px; height: auto;" alt="doc (12)" />
+  </a>
+  <a href="https://github.com/owendswang/file-browser-webserver/blob/main/docs/doc%20(13).png?raw=true" target="_blank">
+    <img src="https://github.com/owendswang/file-browser-webserver/blob/main/docs/doc%20(13).png?raw=true" style="max-width: 200px; height: auto;" alt="doc (13)" />
+  </a>
+  <a href="https://github.com/owendswang/file-browser-webserver/blob/main/docs/doc%20(14).png?raw=true" target="_blank">
+    <img src="https://github.com/owendswang/file-browser-webserver/blob/main/docs/doc%20(14).png?raw=true" style="max-width: 200px; height: auto;" alt="doc (14)" />
+  </a>
+</marquee>
 
 ### 功能亮点
 
