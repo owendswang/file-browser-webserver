@@ -1,6 +1,6 @@
 # File Browser
 
-(English version -> [README](https://github.com/owendswang/file-browser-webserver/blob/main/README.md))
+(English version -> [README](https://github.com/owendswang/file-browser-webserver/blob/main/README.en.md))
 
 ## 项目介绍
 
