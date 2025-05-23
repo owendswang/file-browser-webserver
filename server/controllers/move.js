@@ -126,6 +126,10 @@ const method = async (req, res) => {
         moveSrc = path.join(sevenZipTempDir, dstArchiveInternalPath ? dstArchiveInternalPath.split(path.sep)[0] : srcArchiveInternalPath );
       } else {
         extractResult = await sevenZip.extract(srcArchiveFullPath, dstFullPath, options, archivePassword, true, signal);
+        if (srcArchiveInternalPath.split(path.sep).length > 1) {
+          fs.renameSync(path.join(dstFullPath, srcArchiveInternalPath), path.join(dstFullPath, path.basename(srcArchiveInternalPath)));
+          fs.rmSync(path.join(dstFullPath, srcArchiveInternalPath.split(path.sep)[0]), { recursive: true, force: true });
+        }
       }
 
       if (!extractResult.isOK) {
