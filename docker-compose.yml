@@ -21,6 +21,10 @@ services:
       - "TZ=Asia/Shanghai"
     working_dir: /home/node/app
     entrypoint: /bin/bash
-    command: ["-c", "apt update && apt install smartmontools && npm install && node node_modules/nodemon/bin/nodemon.js app.js"]
+    # command for development
+    #command: ["-c", "apt update && apt install -y smartmontools hdparm && npm run install && npm run dev"]
+    # command for production
+    command: ["-c", "apt update && apt install -y smartmontools && npm run install && node run start"]
     ports:
       - 3000:3000
+      #- 3333:3333 # port for front-end development
