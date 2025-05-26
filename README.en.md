@@ -71,14 +71,14 @@ To deploy the project locally, follow these steps:
 
    Modify the content in the config.json file according to your software installation directory and requirements. Alternatively, you can configure it on the webpage after running the project.
 
-5. **Run the Project**
+5. **Run**
 
    Start the project:
    ```bash
    npm run start
    ```
 
-6. **Access the Project**
+6. **Access**
 
    Open your browser and visit <a href="http://localhost:3000" target="_blank">http://localhost:3000</a>.
 

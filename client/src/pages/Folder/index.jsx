@@ -278,6 +278,9 @@ const Folder = () => {
     const controller = new AbortController();
     fetchData(controller.signal);
     setViewerjsVisible(false);
+    
+    setBriefHidden(true);
+    setFileToBrief('');
     return () => {
       controller.abort();
     }
@@ -290,19 +293,6 @@ const Folder = () => {
     searchParams.get('order'),
     searchParams.get('search'),
     refreshTag
-  ]);
-
-  useEffect(() => {
-    setBriefHidden(true);
-    setFileToBrief('');
-  }, [
-    location.pathname,
-    searchParams.get('page'),
-    searchParams.get('pageSize'),
-    searchParams.get('archivePassword'),
-    searchParams.get('sortBy'),
-    searchParams.get('order'),
-    searchParams.get('search')
   ]);
 
   useEffect(() => {

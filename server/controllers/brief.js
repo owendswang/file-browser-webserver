@@ -2,6 +2,7 @@ const fs = require('fs');
 const path = require('path');
 const { randomBytes } = require('crypto');
 const mime = require('mime').default; // 使用 mime 库来解析 MIME 类型
+const exif = require('jpeg-exif');
 const SevenZip = require('@/utils/7zip');
 const FFmpeg = require('@/utils/ffmpeg');
 const {
@@ -165,12 +166,42 @@ const method = async (req, res) => {
   }
 
   let mediaInfo = {};
+  let exifInfo = {};
 
   if (['Video File', 'Image File'].includes(fileType) && mediaFilePath) {
     try {
+      if ((fileType === 'Image File') && (mediaFilePath.toLowerCase().endsWith('.jpg') || mediaFilePath.toLowerCase().endsWith('.jpeg') || mediaFilePath.toLowerCase().endsWith('.tiff'))) {
+        const output = exif.parseSync(mediaFilePath);
+
+        const convert2exifInfo = (objData) => {
+          let infoObj = {};
+          for (const [key, val] of Object.entries(objData)) {
+            let newKey = key
+              .replace(/([A-Z]{2,})(?=[A-Z][a-z]|\b|$)/g, (match) => {
+                return match;
+              })
+              .replace(/([a-z])([A-Z])/g, '$1 $2')
+              .replace(/([A-Z])([A-Z][a-z])/g, '$1 $2')
+              .replace(/^\s+/, '')
+              .replace('Y Cb Cr', 'YCbCr');
+            if (typeof(val) === 'object') {
+              infoObj[newKey] = convert2exifInfo(val);
+            } else {
+              infoObj[newKey] = val;
+            }
+          }
+          return infoObj;
+        }
+  
+        exifInfo = convert2exifInfo(output);
+      }
+    } catch (e) {
+      console.error(e);
+    }
+    try {
       // 使用 ffprobe 获取媒体文件信息
       const ffmpeg = new FFmpeg(ffmpegPath);
-      let output = await ffmpeg.getMediaInfoFromFile(mediaFilePath, true);
+      const output = await ffmpeg.getMediaInfoFromFile(mediaFilePath, true);
 
       const convert2mediaInfo = (objData) => {
         let infoObj = {};
@@ -203,6 +234,17 @@ const method = async (req, res) => {
   responseData = {
     ...responseData,
     ...fileInfo,
+  };
+
+  if (Object.keys(exifInfo).length > 0) {
+    responseData = {
+      ...responseData,
+      Exif: exifInfo,
+    }
+  }
+  
+  responseData = {
+    ...responseData,
     ...mediaInfo,
   };
 

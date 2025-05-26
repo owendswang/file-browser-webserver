@@ -71,14 +71,14 @@ File Browser 是一个简洁的、网页端的文件管理软件，允许用户�
 
    根据你的软件安装目录、你的需求，修改 config.json 文件中的内容，或在项目运行起来后，在网页中配置也可以。
 
-5. **运行项目**
+5. **运行**
 
    启动项目：
    ```bash
    npm run start
    ```
 
-6. **访问项目**
+6. **访问**
 
    打开您的浏览器，访问 <a href="http://localhost:3000" target="_blank">http://localhost:3000</a>。
    
