@@ -168,6 +168,7 @@ const method = async (req, res) => {
         const winRar = new WinRar(winRarPath, true, winRarLang);
         const options = `"-x*${path.sep}desktop.ini" "-x*${path.sep}.DS_Store" "-x*${path.sep}__MACOSX" "-w${tempDir}"`;
         compressResult = await winRar.add(dstArchiveFullPath, [moveSrc], options, archivePassword, signal);
+        console.log(compressResult);
       } else {
         const options = `"-xr!desktop.ini" "-xr!.DS_Store" "-xr!__MACOSX" "-w${tempDir}"`;
         compressResult = await sevenZip.add(dstArchiveFullPath, [moveSrc], options, archivePassword, signal);

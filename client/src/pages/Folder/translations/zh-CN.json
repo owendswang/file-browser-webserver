@@ -29,7 +29,6 @@
   "Modified Time": "修改时间",
   "Sort By": "排序",
   "Previous Page": "上一页",
-  "Show brief of": "显示信息",
   "Next Page": "下一页",
   "Password is needed": "需要密码",
   "Archive Password": "压缩包密码",
@@ -58,5 +57,7 @@
   "Empty": "无",
   "Refresh": "刷新",
   "Search": "搜索",
-  "Order": "顺序"
+  "Order": "顺序",
+  "Decompress": "解压",
+  "Default to current directory": "默认为当前目录"
 }

@@ -60,6 +60,17 @@ const FolderServices = {
     return res.data;
   },
 
+  async decompress(src, dst, params = {}) {
+    const res = await axios.request({
+      url: `/decompress/${src}`,
+      params: {
+        ...params,
+        dst,
+      },
+    });
+    return res.data;
+  },
+
   async rename(pathname, newName, params = {}) {
     const res = await axios.request({
       url: `/rename/${pathname}`,

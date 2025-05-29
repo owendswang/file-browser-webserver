@@ -15,6 +15,7 @@ const playRouter = require('./controllers/play');
 const uploadRouter = require('./controllers/upload');
 const deleteRouter = require('./controllers/delete');
 const moveRouter = require('./controllers/move');
+const decompressRouter = require('./controllers/decompress');
 const renameRouter = require('./controllers/rename');
 const getConfigRouter = require('./controllers/getConfig');
 const setConfigRouter = require('./controllers/setConfig');
@@ -102,6 +103,9 @@ router.delete('/api/delete/*', oauth.authenticate({ scope: ['admin'] }), deleteR
 
 // File move route
 router.get('/api/move/*', oauth.authenticate({ scope: ['admin'] }), moveRouter);
+
+// Archive file decompress route
+router.get('/api/decompress/*', oauth.authenticate({ scope: ['admin'] }), decompressRouter);
 
 // File rename route
 router.get('/api/rename/*', oauth.authenticate({ scope: ['admin'] }), renameRouter);

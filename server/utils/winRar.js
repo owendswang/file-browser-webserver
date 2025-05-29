@@ -1,6 +1,7 @@
 const { spawn } = require('child_process');
 const fs = require('fs');
 const os = require('os');
+const iconv = require('iconv-lite');
 
 // Language map examples for English and Chinese
 const languageMaps = {
@@ -69,24 +70,36 @@ class WinRAR {
   // 方法用于执行命令并处理输出和错误
   _runCommand(args, signal) {
     return new Promise((resolve, reject) => {
-      const child = spawn(`"${this.WINRAR_PATH}"`, args, { shell: true });
+      const child = spawn(`"${this.WINRAR_PATH}"`, args, { shell: true, stdio: ['pipe', 'pipe', 'pipe'] });
       const output = [];
       const errorOutput = [];
 
       child.stdout.on('data', (data) => {
-        const line = data.toString();
-        output.push(line);
-        if (this.verbose) process.stdout.write(line);
+        let line;
+        if (this.language === 'zh-CN') {
+          line = iconv.decode(data, 'gbk');
+        } else {
+          line = data.toString();
+        }
+        output.push(data);
+        // if (this.verbose) console.log(line);
       });
 
       child.stderr.on('data', (data) => {
-        const line = data.toString();
-        errorOutput.push(line);
-        if (this.verbose) process.stderr.write(line);
+        let line;
+        if (this.language === 'zh-CN') {
+          line = iconv.decode(data, 'gbk');
+        } else {
+          line = data.toString();
+        }
+        errorOutput.push(data);
+        // if (this.verbose) console.error(line);
       });
 
       child.on('close', (code) => {
-        resolve({ output: output.join('').trim(), code, error: errorOutput.join('').trim() });
+        const outputBuffer = Buffer.concat(output);
+        const errorBuffer = Buffer.concat(errorOutput);
+        resolve({ output: iconv.decode(outputBuffer, 'gbk').replace(/\x1B\[[0-?9;]*[mK]/g, ''), code, error: iconv.decode(errorBuffer, 'gbk').replace(/\x1B\[[0-?9;]*[mK]/g, '') });
       });
 
       child.on('error', (error) => {
@@ -138,7 +151,7 @@ class WinRAR {
   // 添加文件到压缩包
   async add(archivePath, files, options = '', password = '', signal) {
     const fileList = files.map(file => `"${file}"`);
-    const args = ['a', '-r', ...(password ? [`-p"${password}"`] : []), options, `"${archivePath}"`, ...fileList];
+    const args = ['a', '-r', '-ep1', ...(password ? [`-p"${password}"`] : []), options, `"${archivePath}"`, ...fileList];
     return this._handleCommand(args, signal);
   }
 

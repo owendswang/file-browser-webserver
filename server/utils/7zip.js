@@ -26,7 +26,7 @@ class SevenZip {
     return new Promise((resolve, reject) => {
       if (this.verbose) console.log(`"${this.SEVEN_ZIP_PATH}" ${args.join(' ')}`);
 
-      const child = spawn(`"${this.SEVEN_ZIP_PATH}"`, args, { shell: true });
+      const child = spawn(`"${this.SEVEN_ZIP_PATH}"`, args, { shell: true, stdio: ['pipe', 'pipe', 'pipe'] });
       const output = [];
       const errorOutput = [];
 
@@ -34,7 +34,7 @@ class SevenZip {
       child.stdout.on('data', (data) => {
         const line = data.toString();
         output.push(line);
-        if (this.verbose) process.stdout.write(line);
+        if (this.verbose) console.log(line);
         if (line.includes('Enter password')) {
           child.stdin.write('\n');
         }
@@ -44,7 +44,7 @@ class SevenZip {
       child.stderr.on('data', (data) => {
         const line = data.toString();
         errorOutput.push(line);
-        if (this.verbose) process.stderr.write(line);
+        if (this.verbose) console.error(line);
       });
 
       // 子进程关闭时返回结果
@@ -101,18 +101,18 @@ class SevenZip {
   extractStream(archivePath, options = '', password = '', signal) {
     const args = ['e', options, `-p"${password}"`, `"${archivePath}"`, '-sccUTF-8', '-so'];
 
-    const child = spawn(`"${this.SEVEN_ZIP_PATH}"`, args, { shell: true });
+    const child = spawn(`"${this.SEVEN_ZIP_PATH}"`, args, { shell: true, stdio: ['pipe', 'pipe', 'pipe'] });
 
     // 监听标准输出
     child.stdout.on('data', (data) => {
       const line = data.toString();
-      if (this.verbose) process.stdout.write(line);
+      if (this.verbose) console.log(line);
     });
 
     // 监听标准错误输出
     child.stderr.on('data', (data) => {
       const line = data.toString();
-      process.stderr.write(line);
+      console.error(line);
     });
 
     // 子进程关闭时返回结果

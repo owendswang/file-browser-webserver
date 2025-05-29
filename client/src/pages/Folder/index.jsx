@@ -56,6 +56,7 @@ import FileIcon from '@/pages/Folder/FileIcon';
 import MoveModal from '@/pages/Folder/MoveModal';
 import MkDirModal from '@/pages/Folder/MkDirModal';
 import RenameModal from '@/pages/Folder/RenameModal';
+import DecompressModal from '@/pages/Folder/DecompressModal';
 import BriefPanel from '@/pages/Folder/BriefPanel';
 import './index.css';
 
@@ -106,6 +107,7 @@ const Folder = () => {
   const [moveModalTitle, setMoveModalTitle] = useState('');
   const [mkDirModalOpen, setMkDirModalOpen] = useState(false);
   const [renameModalOpen, setRenameModalOpen] = useState(false);
+  const [decompressModalOpen, setDecompressModalOpen] = useState(false);
   const [fileToBrief, setFileToBrief] = useState('');
   const [briefHidden, setBriefHidden] = useState(true);
 
@@ -431,9 +433,14 @@ const Folder = () => {
     }
   }
 
-  const handleBriefClick = async (fileName) => {
+  const handleBriefClick = (fileName) => {
     setBriefHidden(false);
     setFileToBrief(fileName);
+  }
+
+  const handleDecompressClick = (name) => {
+    setSelectedRowKeys([name]);
+    setDecompressModalOpen(true);
   }
 
   return (
@@ -657,7 +664,7 @@ const Folder = () => {
                           key={`${value}-download`}
                           target='_blank'
                           to={`${record.path.replace(/^\/(folder|view)\//, '/download/')}${searchParams.get('archivePassword') ? ('?archivePassword=' + searchParams.get('archivePassword')) : ''}`}
-                          title={`${t('Download')} "${value}${record.encrypted ? ' *' : ''}"`}
+                          title={t('Download')}
                           className="tableRowFileNameHoverLink"
                         >
                           <DownloadOutlined />
@@ -665,28 +672,28 @@ const Folder = () => {
                         {(user.scope && user.scope.includes('admin')) && <Link
                           key={`${value}-rename`}
                           to={`${record.path.replace(/^\/(folder|view|download)\//, '/rename/')}${searchParams.get('archivePassword') ? ('?archivePassword=' + searchParams.get('archivePassword')) : ''}`}
-                          title={`${t('Rename')} "${value}${record.encrypted ? ' *': ''}"`} 
+                          title={t('Rename')}
                           className="tableRowFileNameHoverLink"
                           onClick={(e) => { e.preventDefault(); handleRenameClick(value); }}
                         ><EditOutlined /></Link>}
                         {(user.scope && user.scope.includes('admin')) && <Link
                           key={`${value}-move`}
                           to={`${record.path.replace(/^\/(folder|view|download)\//, '/move/')}${searchParams.get('archivePassword') ? ('?archivePassword=' + searchParams.get('archivePassword')) : ''}`}
-                          title={`${t('Move')} "${value}${record.encrypted ? ' *': ''}"`} 
+                          title={t('Move')}
                           className="tableRowFileNameHoverLink"
                           onClick={(e) => { e.preventDefault(); handleMoveClick(value); }}
                         ><ExportOutlined /></Link>}
                         {(user.scope && user.scope.includes('admin')) && <Link
                           key={`${value}-copy`}
                           to={`${record.path.replace(/^\/(folder|view|download)\//, '/copy/')}${searchParams.get('archivePassword') ? ('?archivePassword=' + searchParams.get('archivePassword')) : ''}`}
-                          title={`${t('Copy')} "${value}${record.encrypted ? ' *': ''}"`} 
+                          title={t('Copy')}
                           className="tableRowFileNameHoverLink"
                           onClick={(e) => { e.preventDefault(); handleCopyClick(value); }}
                         ><CopyOutlined /></Link>}
                         {(user.scope && user.scope.includes('admin')) && <Link
                           key={`${value}-delete`}
                           to={`${record.path.replace(/^\/(folder|view|download)\//, '/delete/')}${searchParams.get('archivePassword') ? ('?archivePassword=' + searchParams.get('archivePassword')) : ''}`}
-                          title={`${t('Delete')} "${value}${record.encrypted ? ' *': ''}"`} 
+                          title={t('Delete')}
                           className="tableRowFileNameHoverLink"
                           onClick={(e) => { e.preventDefault(); handleDeleteClick(value); }}
                         >
@@ -695,10 +702,19 @@ const Folder = () => {
                         <Link
                           key={`${value}-brief`}
                           to={`${record.path.replace(/^\/(folder|view|download)\//, '/brief/')}${searchParams.get('archivePassword') ? ('?archivePassword=' + searchParams.get('archivePassword')) : ''}`}
-                          title={`${t('Show brief of')} "${value}${record.encrypted ? ' *': ''}"`} 
+                          title={t('Info')}
                           className="tableRowFileNameHoverLink"
                           onClick={(e) => { e.preventDefault(); handleBriefClick(value); }}
                         ><InfoCircleOutlined /></Link>
+                        {(user.scope && user.scope.includes('admin') && (record.type === 'Compressed File') && record.path.startsWith('/folder/')) && <Link
+                          key={`${value}-decompress`}
+                          to={`${record.path.replace('/folder/', '/decompress/')}${searchParams.get('archivePassword') ? ('?archivePassword=' + searchParams.get('archivePassword')) : ''}`}
+                          title={t('Decompress')}
+                          className="tableRowFileNameHoverLink"
+                          onClick={(e) => { e.preventDefault(); handleDecompressClick(value); }}
+                        >
+                          <FolderOpenOutlined />
+                        </Link>}
                       </Space>
                     )}
                   />
@@ -763,6 +779,7 @@ const Folder = () => {
                       handleMoveClick={handleMoveClick}
                       handleCopyClick={handleCopyClick}
                       handleDeleteClick={handleDeleteClick}
+                      handleDecompressClick={handleDecompressClick}
                       user={user}
                       t={t}
                     />)}
@@ -842,6 +859,17 @@ const Folder = () => {
         title={moveModalTitle}
         open={moveModalOpen}
         setOpen={setMoveModalOpen}
+        selectedRowKeys={selectedRowKeys}
+        setSelectedKeys={setSelectedRowKeys}
+        refresh={refresh}
+        pathname={pathname}
+        messageApi={messageApi}
+        searchParams={searchParams}
+        t={t}
+      />
+      <DecompressModal
+        open={decompressModalOpen}
+        setOpen={setDecompressModalOpen}
         selectedRowKeys={selectedRowKeys}
         setSelectedKeys={setSelectedRowKeys}
         refresh={refresh}

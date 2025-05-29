@@ -29,7 +29,6 @@
   "Modified Time": "Modified Time",
   "Sort By": "Sort By",
   "Previous Page": "Previous Page",
-  "Show brief of": "Show brief of",
   "Next Page": "Next Page",
   "Password is needed": "Password is needed",
   "Archive Password": "Archive Password",
@@ -58,5 +57,7 @@
   "Empty": "Empty",
   "Refresh": "Refresh",
   "Search": "Search",
-  "Order": "Order"
+  "Order": "Order",
+  "Decompress": "Decompress",
+  "Default to current directory": "Default to current directory"
 }

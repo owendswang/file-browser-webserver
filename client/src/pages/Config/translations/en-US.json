@@ -13,7 +13,7 @@
   "Path": "Path",
   "Add directory": "Add directory",
   "SQLite DB file path": "SQLite DB file path",
-  "Saving thumbnail mappings, video transcode cache mappings and user data": "Saving thumbnail mappings, video transcode cache mappings and user data",
+  "Saving thumbnail mappings, video transcode cache mappings and user data": "Saving thumbnail mappings, video transcode cache mappings and user data.\nYou have to copy the sqlite file to the new location and restart the server after changing this option.",
   "Temp file directory": "Temp file directory",
   "Temp directory for modifying archives and creating thumbnails for files in archives": "Temp directory for modifying archives and creating thumbnails for files in archives",
   "Smartmontools executable file path": "Smartmontools executable file path",

@@ -9,7 +9,8 @@ import {
   CopyOutlined,
   ExportOutlined,
   EditOutlined,
-  DownloadOutlined
+  DownloadOutlined,
+  FolderOpenOutlined
 } from '@ant-design/icons';
 import FileIcon from '@/pages/Folder/FileIcon';
 import '@/pages/Folder/ThumbnailLink/index.css';
@@ -28,6 +29,7 @@ const ThumbnailLink = (props) => {
     handleMoveClick,
     handleCopyClick,
     handleDeleteClick,
+    handleDecompressClick,
     user,
     t
   } = props;
@@ -84,6 +86,8 @@ const ThumbnailLink = (props) => {
       handleDeleteClick(file.name);
     } else if (key === 'brief') {
       handleBriefClick(file.name);
+    } else if (key === 'decompress') {
+      handleDecompressClick(file.name);
     }
   }
 
@@ -119,6 +123,10 @@ const ThumbnailLink = (props) => {
     key: 'brief',
     icon: <InfoCircleOutlined />,
     label: t('Info'),
+  }, {
+    key: 'decompress',
+    icon: <FolderOpenOutlined />,
+    label: t('Decompress'),
   }];
 
   if (['Image File', 'Ico File', 'Video File'].includes(file.type)) {

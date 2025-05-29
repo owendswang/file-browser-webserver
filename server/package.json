@@ -20,6 +20,7 @@
     "ejs": "^3.1.10",
     "express": "^4.21.2",
     "fast-folder-size": "^2.4.0",
+    "iconv-lite": "^0.6.3",
     "jpeg-exif": "^1.1.4",
     "mime": "^4.0.6",
     "module-alias": "^2.2.3",
