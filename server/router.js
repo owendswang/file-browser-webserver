@@ -99,13 +99,13 @@ router.get('/download/*', thumbnailMiddleWare, downloadRouter);
 router.post('/api/upload/*', oauth.authenticate({ scope: ['view'] }), uploadRouter);
 
 // File delete route
-router.delete('/api/delete/*', oauth.authenticate({ scope: ['admin'] }), deleteRouter);
+router.post('/api/delete/*', oauth.authenticate({ scope: ['admin'] }), deleteRouter);
 
 // File move route
-router.get('/api/move/*', oauth.authenticate({ scope: ['admin'] }), moveRouter);
+router.post('/api/move/*', oauth.authenticate({ scope: ['admin'] }), moveRouter);
 
 // Archive file decompress route
-router.get('/api/decompress/*', oauth.authenticate({ scope: ['admin'] }), decompressRouter);
+router.post('/api/decompress/*', oauth.authenticate({ scope: ['admin'] }), decompressRouter);
 
 // File rename route
 router.get('/api/rename/*', oauth.authenticate({ scope: ['admin'] }), renameRouter);

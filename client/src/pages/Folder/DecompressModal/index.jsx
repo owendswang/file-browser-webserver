@@ -69,9 +69,7 @@ const DecompressModal = (props) => {
   const handleFormOnFinish = async (values) => {
     setConfirmLoading(true);
     try {
-      await Promise.all(selectedRowKeys.map((fileName) => {
-        return folderService.decompress(`${pathname}/${encodeURIComponent(fileName)}`, values.dst, searchParams.get('archivePassword') ? { archivePassword: searchParams.get('archivePassword') } : {});
-      }));
+      await folderService.decompress(pathname, selectedRowKeys, values.dst, searchParams.get('archivePassword') ? { archivePassword: searchParams.get('archivePassword') } : {});
       setOpen(false);
       refresh();
     } catch(e) {

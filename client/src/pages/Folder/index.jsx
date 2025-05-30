@@ -350,7 +350,7 @@ const Folder = () => {
           if (!name) {
             throw new Error(t('Nothing to delete'));
           }
-          await folderService.delete(`${pathname}/${encodeURIComponent(name)}`, searchParams.get('archivePassword') ? { archivePassword: searchParams.get('archivePassword') } : {});
+          await folderService.delete(pathname, [name], searchParams.get('archivePassword') ? { archivePassword: searchParams.get('archivePassword') } : {});
           refresh();
         } catch(e) {
           console.log(e);
@@ -372,9 +372,7 @@ const Folder = () => {
       maskClosable: true,
       onOk: async () => {
         try {
-          await Promise.all(selectedRowKeys.map((fileName) => {
-            return folderService.delete(`${pathname}/${encodeURIComponent(fileName)}`, searchParams.get('archivePassword') ? { archivePassword: searchParams.get('archivePassword') } : {});
-          }));
+          await folderService.delete(pathname, selectedRowKeys, searchParams.get('archivePassword') ? { archivePassword: searchParams.get('archivePassword') } : {});
           refresh();
         } catch(e) {
           console.log(e);
@@ -409,6 +407,11 @@ const Folder = () => {
     // console.log('trying to copy: ', selectedRowKeys.join(', '));
     setMoveModalOpen(true);
     setMoveModalTitle('Copy');
+  }
+
+  const handleBulkDecompress = (e) => {
+    // console.log('trying to decompress: ', selectedRowKeys.join(', '));
+    setDecompressModalOpen(true);
   }
 
   const handleRenameClick = (name) => {
@@ -537,6 +540,12 @@ const Folder = () => {
               <Button icon={<DownOutlined />} className='dropdownButtonGroupRight'></Button>
             </Dropdown>
           </div>}
+          {(user.scope && user.scope.includes('admin')) && <Button
+            key='bulkDecompress'
+            icon={<FolderOpenOutlined />}
+            disabled={selectedRowKeys.filter(fileName => data.find(file => file.name === fileName).type === 'Compressed File').length === 0}
+            onClick={handleBulkDecompress}
+          >{t('Decompress')}</Button>}
           {(user.scope && user.scope.includes('admin')) && <Button
             key='bulkDelete'
             icon={<DeleteOutlined />}

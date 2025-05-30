@@ -19,11 +19,52 @@ const FolderServices = {
     return res.data;
   },
 
-  async delete(pathname, params = {}) {
+  async delete(pathname, fileList, params = {}) {
     const res = await axios.request({
-      method: 'delete',
+      method: 'post',
       url: `/delete/${pathname}`,
       params,
+      data: fileList,
+    });
+    return res.data;
+  },
+
+  async move(pathname, fileList, dst, params = {}) {
+    const res = await axios.request({
+      method: 'post',
+      url: `/move/${pathname}`,
+      params: {
+        ...params,
+        dst,
+      },
+      data: fileList,
+    });
+    return res.data;
+  },
+
+  async copy(pathname, fileList, dst, params = {}) {
+    const res = await axios.request({
+      method: 'post',
+      url: `/move/${pathname}`,
+      params: {
+        ...params,
+        dst,
+        keepSrc: 1,
+      },
+      data: fileList,
+    });
+    return res.data;
+  },
+
+  async decompress(pathname, fileList, dst, params = {}) {
+    const res = await axios.request({
+      method: 'post',
+      url: `/decompress/${pathname}`,
+      params: {
+        ...params,
+        dst,
+      },
+      data: fileList,
     });
     return res.data;
   },
@@ -33,40 +74,6 @@ const FolderServices = {
       url: `/brief/${pathname}`,
       params,
       signal
-    });
-    return res.data;
-  },
-
-  async move(src, dst, params = {}) {
-    const res = await axios.request({
-      url: `/move/${src}`,
-      params: {
-        ...params,
-        dst,
-      },
-    });
-    return res.data;
-  },
-
-  async copy(src, dst, params = {}) {
-    const res = await axios.request({
-      url: `/move/${src}`,
-      params: {
-        ...params,
-        dst,
-        keepSrc: 1,
-      },
-    });
-    return res.data;
-  },
-
-  async decompress(src, dst, params = {}) {
-    const res = await axios.request({
-      url: `/decompress/${src}`,
-      params: {
-        ...params,
-        dst,
-      },
     });
     return res.data;
   },

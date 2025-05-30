@@ -71,15 +71,11 @@ const MoveModal = (props) => {
     setConfirmLoading(true);
     try {
       if (title.includes('Move')) {
-        await Promise.all(selectedRowKeys.map((fileName) => {
-          return folderService.move(`${pathname}/${encodeURIComponent(fileName)}`, values.dst, searchParams.get('archivePassword') ? { archivePassword: searchParams.get('archivePassword') } : {});
-        }));
+        await folderService.move(pathname, selectedRowKeys, values.dst, searchParams.get('archivePassword') ? { archivePassword: searchParams.get('archivePassword') } : {});
         setOpen(false);
         refresh();
       } else if (title.includes('Copy')) {
-        await Promise.all(selectedRowKeys.map((fileName) => {
-          return folderService.copy(`${pathname}/${encodeURIComponent(fileName)}`, values.dst, searchParams.get('archivePassword') ? { archivePassword: searchParams.get('archivePassword') } : {});
-        }));
+        await folderService.copy(pathname, selectedRowKeys, values.dst, searchParams.get('archivePassword') ? { archivePassword: searchParams.get('archivePassword') } : {});
         setOpen(false);
         refresh();
       } else {

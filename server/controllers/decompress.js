@@ -8,6 +8,14 @@ const { isArchive, rm } = require('@/utils/fileUtils');
 const getConfig = require('@/utils/getConfig');
 
 const method = async (req, res) => {
+  // 获取查询参数
+  const { archivePassword = '', dst = '' } = req.query;
+  const fileList = req.body;
+
+  if (!fileList || !Array.isArray(fileList)) {
+    return res.status(404).send('No archives to decompress');
+  }
+
   const {
     sevenZipPath,
     winRarPath,
@@ -28,35 +36,35 @@ const method = async (req, res) => {
     return res.status(404).send('Source path not found');
   }
 
-  const srcFullPath = path.join(basePaths[srcFolderName], srcUrlPath.replace(new RegExp(`^${srcFolderName}`, 'g'), ""));
-  const srcPathParts = srcFullPath.split(path.sep); // 解析路径部分
-
-  // 获取查询参数
-  const { archivePassword = '', dst = '' } = req.query;
-
-  let srcIsArchive = false;
-  let srcArchivePath, srcArchiveFileName, srcArchiveFullPath;
+  const srcFolderPath = path.join(basePaths[srcFolderName], srcUrlPath.replace(new RegExp(`^${srcFolderName}`, 'g'), ""));
+  const srcFolderPathParts = srcFolderPath.split(path.sep); // 解析路径部分
 
   // 判断源是否为压缩包内部文件
-  for (const [index, srcPathPart] of srcPathParts.entries()) {
+  for (const [index, srcPathPart] of srcFolderPathParts.entries()) {
     if (isArchive(srcPathPart)) {
-      srcArchivePath = srcPathParts.slice(0, index).join(path.sep);
-      srcArchiveFileName = srcPathPart;
-      srcArchiveFullPath = path.join(srcArchivePath, srcArchiveFileName);
+      const srcPath = srcFolderPathParts.slice(0, index).join(path.sep);
+      const srcFileName = srcPathPart;
+      const srcFullPath = path.join(srcPath, srcFileName);
 
-      if (!fs.existsSync(srcArchiveFullPath)) {
+      if (!fs.existsSync(srcFullPath)) {
         return res.status(404).send('Source not found');
       }
 
-      if (fs.statSync(srcArchiveFullPath).isFile() && srcFullPath.length === srcArchiveFullPath.length) {
-        srcIsArchive = true; 
-        break;
+      if (fs.statSync(srcFullPath).isFile()) {
+        return res.status(400).send('Decompressing files in an archive is not supported');
       }
     }
   }
 
-  if (!srcIsArchive) {
-    return res.status(400).send('Source is not an archive file');
+  const fileListToDecompress = [];
+  for (const fileName of fileList) {
+    if (fs.lstatSync(path.join(srcFolderPath, fileName)).isFile() && isArchive(fileName)) {
+      fileListToDecompress.push(path.join(srcFolderPath, fileName));
+    }
+  }
+
+  if (fileListToDecompress.length === 0) {
+    return res.status(404).send('No archives to decompress');
   }
 
   let dstUrlPath;
@@ -105,37 +113,39 @@ const method = async (req, res) => {
   });
 
   let moveSrcList = [];
-  try {
-    const listResult = await sevenZip.list(srcArchiveFullPath, true, '', archivePassword, signal);
+  for (const srcArchiveFullPath of fileListToDecompress) {
+    try {
+      const listResult = await sevenZip.list(srcArchiveFullPath, true, '', archivePassword, signal);
 
-    if (!listResult.isOK) {
-      return res.status(500).send(`Failed to read source from archive content:\n${listResult.error}`);
-    }
-
-    // 使用 7-Zip 解压指定文件
-    let extractResult = {};
-    if (dstIsInArchive) {
-      extractResult = await sevenZip.extract(srcArchiveFullPath, path.join(sevenZipTempDir, dstArchiveInternalPath), '', archivePassword, true, signal);
-
-      // 解压后的文件夹路径
-      const files = fs.readdirSync(sevenZipTempDir);
-      for (const file of files) {
-        moveSrcList.push(path.join(sevenZipTempDir, file));
+      if (!listResult.isOK) {
+        return res.status(500).send(`Failed to read source from archive content:\n${listResult.error}`);
       }
-    } else {
-      extractResult = await sevenZip.extract(srcArchiveFullPath, dstFullPath, '', archivePassword, true, signal);
-    }
 
-    if (!extractResult.isOK) {
-      return res.status(500).send(`Failed to extract source from archive:\n${extractResult.error}`);
-    }
+      // 使用 7-Zip 解压指定文件
+      let extractResult = {};
+      if (dstIsInArchive) {
+        extractResult = await sevenZip.extract(srcArchiveFullPath, path.join(sevenZipTempDir, dstArchiveInternalPath), '', archivePassword, true, signal);
 
-  } catch (error) {
-    console.error('Error handling source archive file:', error);
-    if (error.message === 'AbortError') {
-      return res.status(499).send('Client Closed Request');
+        // 解压后的文件夹路径
+        const files = fs.readdirSync(sevenZipTempDir);
+        for (const file of files) {
+          moveSrcList.push(path.join(sevenZipTempDir, file));
+        }
+      } else {
+        extractResult = await sevenZip.extract(srcArchiveFullPath, dstFullPath, '', archivePassword, true, signal);
+      }
+
+      if (!extractResult.isOK) {
+        return res.status(500).send(`Failed to extract source from archive:\n${extractResult.error}`);
+      }
+
+    } catch (error) {
+      console.error('Error handling source archive file:', error);
+      if (error.message === 'AbortError') {
+        return res.status(499).send('Client Closed Request');
+      }
+      return res.status(500).send(`Error handling source archive file:\n${error.message}`);
     }
-    return res.status(500).send(`Error handling source archive file:\n${error.message}`);
   }
 
   if (dstIsInArchive) {
