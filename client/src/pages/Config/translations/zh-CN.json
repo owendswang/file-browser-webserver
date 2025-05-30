@@ -18,6 +18,7 @@
   "Temp directory for modifying archives and creating thumbnails for files in archives": "操作压缩文件时，以及为压缩包内的文件创建缩略图时，会用到的临时目录",
   "Smartmontools executable file path": "Smartmontools 可执行文件的路径",
   "FFmpeg executable path": "FFmpeg 可执行文件的路径",
+  "FFmpeg executable tooltip": "建议使用 7.0 以上的版本",
   "Enable folder size calculation": "开启文件夹大小计算",
   "It's very slow with large directory with too many items in it.": "如果遇到很大的、存有很多内容的文件夹，会很慢。",
   "7-zip executable file path": "7-zip 可执行文件的路径",

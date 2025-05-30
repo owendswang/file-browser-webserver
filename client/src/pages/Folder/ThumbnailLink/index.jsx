@@ -115,7 +115,11 @@ const ThumbnailLink = (props) => {
     key: 'brief',
     icon: <InfoCircleOutlined />,
     label: t('Info'),
-  }] : [{
+  }, (file.type === 'Compressed File') && ({
+    key: 'decompress',
+    icon: <FolderOpenOutlined />,
+    label: t('Decompress'),
+  })].filter(Boolean) : [{
     key: 'download',
     icon: <DownloadOutlined />,
     label: t('Download'),
@@ -123,10 +127,6 @@ const ThumbnailLink = (props) => {
     key: 'brief',
     icon: <InfoCircleOutlined />,
     label: t('Info'),
-  }, {
-    key: 'decompress',
-    icon: <FolderOpenOutlined />,
-    label: t('Decompress'),
   }];
 
   if (['Image File', 'Ico File', 'Video File'].includes(file.type)) {

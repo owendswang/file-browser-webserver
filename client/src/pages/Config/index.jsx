@@ -184,6 +184,7 @@ const Config = () => {
             <Form.Item
               label={t("FFmpeg executable path")}
               name="ffmpegPath"
+              tooltip={t("FFmpeg executable tooltip")}
             >
               <Input
                 placeholder="C:\ffmpeg-7.1-full_build-shared\bin\ffmpeg.exe"

@@ -451,7 +451,7 @@ class FFmpeg {
         if (hwaccelVendor === 'nvidia') {
           args = args.concat([
             '-hwaccel', 'cuda',
-            // '-hwaccel_output_format', 'cuda',
+            '-hwaccel_output_format', 'cuda',
             // '-c:v', 'h264_cuvid'
           ]);
           //if (hwaccelDevice) {
@@ -487,17 +487,17 @@ class FFmpeg {
       if (streams.includes('video')) {
         if (enableHwaccel && (hwaccelVendor === 'nvidia')) {
           // use 'ffmpeg -h encoder=h264_nvenc' to list all parameters for this encoder
-          // const videoFilterScale = `scale_cuda=${(maxWidth > 0) && (maxHeight > 0) ? `'min(${maxWidth},iw)':'min(${maxHeight},ih)':force_original_aspect_ratio=decrease:force_divisible_by=2:` : ''}format=yuv420p,`;
-          const videoFilterScale = (maxWidth > 0) && (maxHeight > 0) ? `scale='min(${maxWidth},iw)':'min(${maxHeight},ih)':force_original_aspect_ratio=decrease:force_divisible_by=2,` : '';
+          const videoFilterScale = `scale_cuda=${(maxWidth > 0) && (maxHeight > 0) ? `'min(${maxWidth},iw)':'min(${maxHeight},ih)':force_original_aspect_ratio=decrease:force_divisible_by=2:` : ''}format=yuv420p`;
+          // const videoFilterScale = (maxWidth > 0) && (maxHeight > 0) ? `scale='min(${maxWidth},iw)':'min(${maxHeight},ih)':force_original_aspect_ratio=decrease:force_divisible_by=2,format=yuv420p` : 'format=yuv420p';
           args = args.concat([
             // '-init_hw_device', `cuda${hwaccelDevice ? `:${hwaccelDevice}` : ''}`,
-            '-vf', `${videoFilterScale}format=yuv420p,fps=${fps}`,
+            '-vf', videoFilterScale,
             '-c:v', 'h264_nvenc',
             '-gpu', hwaccelDevice || '-1', // (-1 ~ INT_MAX) -1: any, -2: list all
             '-preset', 'p4', // default, slow, medium, fast, hp, hq, bd, ll, llhq, llhp, lossless, losslesshp, p1, p2, p3, p4, p5, p6
             '-tune', 'hq', // hq, ll, ull, lossless
             '-r:v', fps.toString(),
-            '-pix_fmt', 'yuv420p',
+            // '-pix_fmt', 'yuv420p',
             '-g', (fps * duration).toString(),
             '-profile:v', 'main', // baseline, main, high, high444p
           ]);

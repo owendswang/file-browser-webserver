@@ -243,7 +243,7 @@ const Folder = () => {
       notificationApi.open({
         key: file.uid,
         message: `${t('Uploaded: ')}${t('l"')}${file.name}${t('r"')}`,
-        description: <Progress percent={file.percent} status="success" />,
+        description: <Progress percent={Math.round(file.percent)} status="success" />,
         icon: <CheckCircleFilled style={{ color: '#52c41a' }} />,
         duration: 4.5,
         closeIcon: true,
@@ -255,7 +255,7 @@ const Folder = () => {
       notificationApi.open({
         key: file.uid,
         message: `${t('Uploading: ')}${t('l"')}${file.name}${t('r"')}`,
-        description: <Progress percent={file.percent} status="active" />,
+        description: <Progress percent={Math.round(file.percent)} status="active" />,
         icon: <SyncOutlined spin style={{ color: '#1890ff' }} />,
         duration: null,
         closeIcon: false,
@@ -266,7 +266,7 @@ const Folder = () => {
       notificationApi.open({
         key: file.uid,
         message: `${t('Upload error: ')}${t('l"')}${file.name}${t('r"')}`,
-        description: <Progress percent={file.percent} status="exception" />,
+        description: <Progress percent={Math.round(file.percent)} status="exception" />,
         icon: <CloseCircleFilled style={{ color: '#ff4d4f' }} />,
         duration: null,
         closeIcon: true,

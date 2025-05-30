@@ -18,6 +18,7 @@
   "Temp directory for modifying archives and creating thumbnails for files in archives": "Temp directory for modifying archives and creating thumbnails for files in archives",
   "Smartmontools executable file path": "Smartmontools executable file path",
   "FFmpeg executable path": "FFmpeg executable path",
+  "FFmpeg executable tooltip": "Recommending version higher than 7.0",
   "Enable folder size calculation": "Enable folder size calculation",
   "It's very slow with large directory with too many items in it.": "It's very slow with large directory with too many items in it.",
   "7-zip executable file path": "7-zip executable file path",
