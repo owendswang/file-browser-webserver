@@ -67,7 +67,7 @@ async function getDiskSpace(devicePath, formatSizeFlag = false) {
     } else if ((percentage.toFixed(0) === '0') && used > 0) {
       return 1;
     } else {
-      return parseInt(percentage);
+      return parseInt(percentage.toFixed(0));
     }
   }
   try {

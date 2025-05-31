@@ -9,13 +9,17 @@ function getVersion() {
 
   const clientPackagePath = path.resolve(__dirname, 'package.json');
   const clientPackageData = JSON.parse(fs.readFileSync(clientPackagePath, 'utf-8'));
-  clientPackageData.version = packageData.version;
-  fs.writeFileSync(clientPackagePath, JSON.stringify(clientPackageData, null, 2));
+  if (clientPackageData.version !== packageData.version) {
+    clientPackageData.version = packageData.version;
+    fs.writeFileSync(clientPackagePath, JSON.stringify(clientPackageData, null, 2));
+  }
 
   const serverPackagePath = path.resolve(__dirname, '..', 'server', 'package.json');
   const serverPackageData = JSON.parse(fs.readFileSync(serverPackagePath, 'utf-8'));
-  serverPackageData.version = packageData.version;
-  fs.writeFileSync(serverPackagePath, JSON.stringify(serverPackageData, null, 2));
+  if (serverPackageData.version !== packageData.version) {
+    serverPackageData.version = packageData.version;
+    fs.writeFileSync(serverPackagePath, JSON.stringify(serverPackageData, null, 2));
+  }
 
   return packageData.version;
 }

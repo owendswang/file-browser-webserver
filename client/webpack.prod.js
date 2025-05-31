@@ -3,8 +3,6 @@ const { merge } = require('webpack-merge');
 const CopyPlugin = require("copy-webpack-plugin");
 const common = require('./webpack.common');
 
-const serverPublickPath = path.resolve(__dirname, '..', 'server', 'public');
-
 module.exports = merge(common, {
   mode: 'production',
   optimization: {

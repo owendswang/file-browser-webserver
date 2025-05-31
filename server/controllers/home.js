@@ -36,10 +36,10 @@ const method = async (req, res) => {
       name: folderName,
       status, // Disk health status
       device, // Device name for href (e.g., "sda")
-      total: diskInfo.size ? formatSize(diskInfo.size) : '-',
-      used: diskInfo.used ? formatSize(diskInfo.used) : '-',
-      available: diskInfo.free ? formatSize(diskInfo.free) : '-',
-      percentUsed: diskInfo.usedPct ? diskInfo.usedPct : '-',
+      total: !isNaN(diskInfo.size) ? formatSize(diskInfo.size) : '-',
+      used: !isNaN(diskInfo.used) ? formatSize(diskInfo.used) : '-',
+      available: !isNaN(diskInfo.free) ? formatSize(diskInfo.free) : '-',
+      percentUsed: !isNaN(diskInfo.usedPct) ? diskInfo.usedPct : '-',
       path: `/home/${folderName}`,
     };
   }));
