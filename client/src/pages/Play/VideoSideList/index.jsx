@@ -83,7 +83,7 @@ const VideoSideList = (props) => {
           if (!name) {
             throw new Error(t('Nothing to delete'));
           }
-          // await folderService.delete(pathname, [name], searchParams.get('archivePassword') ? { archivePassword: searchParams.get('archivePassword') } : {});
+          await folderService.delete(pathname, [name], searchParams.get('archivePassword') ? { archivePassword: searchParams.get('archivePassword') } : {});
         } catch(e) {
           console.log(e);
           messageApi.error(`${t('Delete failed: ')}${handleErrorContent(e)}`);
