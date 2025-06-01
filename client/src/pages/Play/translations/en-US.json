@@ -17,5 +17,9 @@
   "[M]: Mute/Unmute": "[M]: Mute/Unmute",
   "Failed to fetch playlist: ": "Failed to fetch playlist: ",
   "Playlist": "Playlist",
-  "Auto next:": "Auto next:"
+  "Auto next:": "Auto next:",
+  "Delete": "Delete",
+  "Are you sure to delete it?": "Are you sure to delete it?",
+  "Nothing to delete": "Nothing to delete",
+  "Delete failed: ": "Delete failed: "
 }

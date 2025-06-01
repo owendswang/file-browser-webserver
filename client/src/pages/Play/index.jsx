@@ -3,7 +3,7 @@ import { useParams, useLocation, useSearchParams, useNavigate, Link } from "reac
 import { Helmet } from "react-helmet";
 import { useTranslation } from 'react-i18next';
 import { PageContainer } from '@ant-design/pro-components';
-import { message, Empty, Typography, Space, Button, Spin, Popover, Flex } from 'antd';
+import { message, Empty, Typography, Space, Button, Spin, Popover, Flex, Modal } from 'antd';
 import { FolderOpenOutlined, ReloadOutlined, QuestionCircleOutlined, PlayCircleFilled, CloseOutlined } from '@ant-design/icons';
 import VideoJS from '@/components/VideoJS';
 import VideoSideList from '@/pages/Play/VideoSideList';
@@ -37,7 +37,8 @@ const Play = () => {
     }
   });
 
-  const [messageApi, contextHolder] = message.useMessage();
+  const [messageApi, messageContextHolder] = message.useMessage();
+  const [modalApi, modalContextHolder] = Modal.useModal();
 
   const playerRef = useRef(null);
   const playNextTimerRef = useRef(null);
@@ -234,7 +235,8 @@ const Play = () => {
       <Helmet>
         <title>{fileName} - {t('File Browser')}</title>
       </Helmet>
-      {contextHolder}
+      {messageContextHolder}
+      {modalContextHolder}
       <Spin spinning={loading}>
         {(loading && Object.keys(data).length === 0) && 
         <div className="empty-container">
@@ -263,6 +265,7 @@ const Play = () => {
             setPlaylist={setPlaylist}
             location={location}
             t={t}
+            modalApi={modalApi}
           />
         </Flex>
       </Spin>

@@ -1,11 +1,19 @@
 import React, { useState } from "react";
 import { Link } from "react-router";
-import { List } from 'antd';
+import { List, Button } from 'antd';
 import { PlayCircleFilled, Loading3QuartersOutlined } from '@ant-design/icons';
 import * as dayjs from 'dayjs';
 
 const VideSideListItem = (props) => {
-  const { item, searchParams, playingFileName, ...otherProps } = props;
+  const {
+    item,
+    searchParams,
+    playingFileName,
+    t,
+    modalApi,
+    handleDeleteClick,
+    ...otherProps
+  } = props;
 
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState(false);
@@ -56,13 +64,23 @@ const VideSideListItem = (props) => {
             <PlayCircleFilled />
           </div>
         </div>
-        <div className="videoSideListItemText">
+        <div className="videoSideListItemTextCtn">
           {(playingFileName === item.name)
             ? <b><PlayCircleFilled style={{ marginRight: '0.3rem' }} />{item.name}{item.encrypted ? ' *' : ''}</b>
-            : <>{item.name}{item.encrypted ? ' *' : ''}</>
+            : <>{(item.name.length) > 45 ? (item.name.slice(0, 45) + '...') : item.name}{item.encrypted ? ' *' : ''}</>
           }
-          <br />
-          <span className="videoSideListItemTextSecondary">{item.modifiedTime ? dayjs(item.modifiedTime).format('YYYY-MM-DD HH:mm:ss') : '-'}</span>
+          <div className="videoSideListItemTextSecondary">{item.modifiedTime ? dayjs(item.modifiedTime).format('YYYY-MM-DD HH:mm:ss') : '-'}</div>
+          {(playingFileName !== item.name) && <div className="videoSideListItemTextOperation">
+            <Button
+              type="link"
+              size="small"
+              className="videoSideListItemDelete"
+              onClick={(e) => {
+                e.preventDefault();
+                handleDeleteClick(item.name);
+              }}
+            >{t('Delete')}</Button>
+          </div>}
         </div>
       </Link>
     </List.Item>
