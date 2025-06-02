@@ -159,7 +159,7 @@ const Folder = () => {
       }
     } catch (e) {
       console.log(e);
-      if (e.message !== 'canceled') {
+      if (!['canceled', 'error.response is undefined'].includes(e.message)) {
         messageApi.error(`${t('Failed to fetch data: ')}${handleErrorContent(e)}`);
       }
     }
@@ -245,7 +245,7 @@ const Folder = () => {
         message: `${t('Uploaded: ')}${t('l"')}${file.name}${t('r"')}`,
         description: <Progress percent={Math.round(file.percent)} status="success" />,
         icon: <CheckCircleFilled style={{ color: '#52c41a' }} />,
-        duration: 4.5,
+        duration: 3,
         closeIcon: true,
         role: 'status',
         placement: 'bottomRight',

@@ -8,6 +8,10 @@ const { isArchive, rm } = require('@/utils/fileUtils');
 const getConfig = require('@/utils/getConfig');
 
 const method = async (req, res) => {
+  // 获取查询参数
+  const { archivePassword = '', dst = '', keepSrc = '0' } = req.query;
+  const fileList = req.body;
+
   const {
     sevenZipPath,
     winRarPath,
@@ -28,11 +32,8 @@ const method = async (req, res) => {
     return res.status(404).send('Source path not found');
   }
 
-  const srcFullPath = path.join(basePaths[srcFolderName], srcUrlPath.replace(new RegExp(`^${srcFolderName}`, 'g'), ""));
-  const srcPathParts = srcFullPath.split(path.sep); // 解析路径部分
-
-  // 获取查询参数
-  const { archivePassword = '', dst = '', keepSrc = '0' } = req.query;
+  const srcFolderPath = path.join(basePaths[srcFolderName], srcUrlPath.replace(new RegExp(`^${srcFolderName}`, 'g'), ""));
+  const srcFolderPathParts = srcFolderPath.split(path.sep); // 解析路径部分
 
   if (!dst) {
     return res.status(404).send('Destination path not found');
@@ -42,9 +43,9 @@ const method = async (req, res) => {
   let srcArchivePath, srcArchiveFileName, srcArchiveFullPath, srcArchiveInternalPath = '';
 
   // 判断源是否为压缩包内部文件
-  for (const [index, srcPathPart] of srcPathParts.entries()) {
+  for (const [index, srcPathPart] of srcFolderPathParts.entries()) {
     if (isArchive(srcPathPart)) {
-      srcArchivePath = srcPathParts.slice(0, index).join(path.sep);
+      srcArchivePath = srcFolderPathParts.slice(0, index).join(path.sep);
       srcArchiveFileName = srcPathPart;
       srcArchiveFullPath = path.join(srcArchivePath, srcArchiveFileName);
 
@@ -52,9 +53,9 @@ const method = async (req, res) => {
         return res.status(404).send('Source not found');
       }
 
-      if (fs.statSync(srcArchiveFullPath).isFile() && srcFullPath.length > srcArchiveFullPath.length) {
+      if (fs.statSync(srcArchiveFullPath).isFile()) {
         srcIsInArchive = true;
-        srcArchiveInternalPath = srcPathParts.slice(index + 1).join(path.sep);  
+        srcArchiveInternalPath = srcFolderPathParts.slice(index + 1).join(path.sep);  
         break;
       }
     }
@@ -93,14 +94,14 @@ const method = async (req, res) => {
 
   const sevenZip = new SevenZip(sevenZipPath);
   const sevenZipTempDir = path.join(tempDir, randomBytes(16).toString('hex'));
-  // 下载完成后删除临时目录
+  // 处理完成后删除临时目录
   res.on('close', () => {
     if (fs.existsSync(sevenZipTempDir)) {
       rm(sevenZipTempDir);
     }
   });
 
-  let moveSrc;
+  let moveSrcList = [];
   if (srcIsInArchive) {
     try {
       const listResult = await sevenZip.list(srcArchiveFullPath, true, '', archivePassword, signal);
@@ -109,26 +110,38 @@ const method = async (req, res) => {
         return res.status(500).send(`Failed to read source from archive content:\n${listResult.error}`);
       }
 
-      // 找到目标文件的信息
-      const targetFile = listResult.files.find(f => f.Path === srcArchiveInternalPath);
+      for (const fn of fileList) {
+        // 找到目标文件的信息
+        const targetFile = listResult.files.find(f => f.Path ===  path.join(srcArchiveInternalPath, fn));
 
-      if (!targetFile) {
-        return res.status(404).send('Source not found in archive');
+        if (!targetFile) {
+          return res.status(404).send('Source not found in archive');
+        }
       }
 
       // 使用 7-Zip 解压指定文件
-      const options = `"-i!${srcArchiveInternalPath}"`; // 指定要解压的文件
+      const options = fileList.map((fn) => `"-i!${path.join(srcArchiveInternalPath, fn)}"`).join(' '); // 指定要解压的文件
       let extractResult = {};
       if (dstIsInArchive) {
-        extractResult = await sevenZip.extract(srcArchiveFullPath, path.join(sevenZipTempDir, dstArchiveInternalPath), options, archivePassword, true, signal);
+        extractResult = await sevenZip.extract(srcArchiveFullPath, sevenZipTempDir, options, archivePassword, true, signal);
 
-        // 解压后的文件夹路径
-        moveSrc = path.join(sevenZipTempDir, dstArchiveInternalPath ? dstArchiveInternalPath.split(path.sep)[0] : srcArchiveInternalPath );
+        if (dstArchiveInternalPath) {
+          fs.renameSync(path.join(sevenZipTempDir, srcArchiveInternalPath), path.join(sevenZipTempDir, dstArchiveInternalPath));
+          moveSrcList.push(dstArchiveInternalPath.split(path.sep)[0]);
+        } else {
+          for (const fn of fileList) {
+            // 解压后的文件夹路径
+            const moveSrc = path.join(sevenZipTempDir, srcArchiveInternalPath, fn);
+            moveSrcList.push(moveSrc);
+          }
+        }
       } else {
         extractResult = await sevenZip.extract(srcArchiveFullPath, dstFullPath, options, archivePassword, true, signal);
-        if (srcArchiveInternalPath.split(path.sep).length > 1) {
-          fs.renameSync(path.join(dstFullPath, srcArchiveInternalPath), path.join(dstFullPath, path.basename(srcArchiveInternalPath)));
-          fs.rmSync(path.join(dstFullPath, srcArchiveInternalPath.split(path.sep)[0]), { recursive: true, force: true });
+        if (srcArchiveInternalPath) {
+          for (const fn of fileList) {
+            fs.renameSync(path.join(dstFullPath, srcArchiveInternalPath, fn), path.join(dstFullPath, fn));
+          }
+          fs.rmSync(path.join(dstFullPath, srcArchiveInternalPath.split(path.sep)[0]), { recursive: true, force: false });
         }
       }
 
@@ -144,17 +157,23 @@ const method = async (req, res) => {
       return res.status(500).send(`Error handling source archive file:\n${error.message}`);
     }
   } else {
-    if (fs.existsSync(srcFullPath)) {
+    if (fs.existsSync(srcFolderPath)) {
       if (dstArchiveInternalPath) {
         fs.mkdirSync(path.join(sevenZipTempDir, dstArchiveInternalPath), { recursive: true });
-        fs.cpSync(
-          srcFullPath,
-          path.join(sevenZipTempDir, dstArchiveInternalPath, path.basename(srcFullPath)),
-          { errorOnExist: true, force: false, preserveTimestamps: true, recursive: true }
-        );
-        moveSrc = path.join(sevenZipTempDir, dstArchiveInternalPath.split(path.sep)[0])
+        for (const fn of fileList) {
+          fs.cpSync(
+            path.join(srcFolderPath, fn),
+            path.join(sevenZipTempDir, dstArchiveInternalPath, fn),
+            { errorOnExist: true, force: false, preserveTimestamps: true, recursive: true }
+          );
+          const moveSrc = path.join(sevenZipTempDir, dstArchiveInternalPath.split(path.sep)[0]);
+          moveSrcList.push(moveSrc);
+        }
       } else {
-        moveSrc = srcFullPath;
+        for (const fn of fileList) {
+          const moveSrc = path.join(srcFolderPath, fn);
+          moveSrcList.push(moveSrc);
+        }
       }
     } else {
       return res.status(404).send('Source not found');
@@ -167,11 +186,11 @@ const method = async (req, res) => {
       if (dstArchiveFileName.endsWith('.rar') && ['x86', 'x64'].includes(os.arch())) {
         const winRar = new WinRar(winRarPath, true, winRarLang);
         const options = `"-x*${path.sep}desktop.ini" "-x*${path.sep}.DS_Store" "-x*${path.sep}__MACOSX" "-w${tempDir}"`;
-        compressResult = await winRar.add(dstArchiveFullPath, [moveSrc], options, archivePassword, signal);
+        compressResult = await winRar.add(dstArchiveFullPath, moveSrcList, options, archivePassword, signal);
         console.log(compressResult);
       } else {
         const options = `"-xr!desktop.ini" "-xr!.DS_Store" "-xr!__MACOSX" "-w${tempDir}"`;
-        compressResult = await sevenZip.add(dstArchiveFullPath, [moveSrc], options, archivePassword, signal);
+        compressResult = await sevenZip.add(dstArchiveFullPath, moveSrcList, options, archivePassword, signal);
       }
 
       if (!compressResult.isOK) {
@@ -186,11 +205,13 @@ const method = async (req, res) => {
     }
   } else if (!srcIsInArchive) {
     try {
-      fs.cpSync(
-        moveSrc,
-        path.join(dstFullPath, path.basename(srcFullPath)),
-        { errorOnExist: true, force: false, preserveTimestamps: true, recursive: true }
-      );
+      for (const moveSrc of moveSrcList) {
+        fs.cpSync(
+          moveSrc,
+          path.join(dstFullPath, path.basename(moveSrc)),
+          { errorOnExist: true, force: false, preserveTimestamps: true, recursive: true }
+        );
+      }
     } catch(error) {
       console.error('Error copying', error);
       return res.status(500).send(`Error copying:\n${error.message}`);
@@ -203,11 +224,12 @@ const method = async (req, res) => {
         const options = `"-w${tempDir}"`;
 
         let deleteResult;
+        const srcArchiveInternalDeletePathList = fileList.map((fn) => path.join(srcArchiveInternalPath, fn));
         if (srcArchiveFullPath.endsWith('.rar') && ['x86', 'x64'].includes(os.arch())) {
           const winRar = new WinRar(winRarPath, true, winRarLang);
-          deleteResult = await winRar.delete(srcArchiveFullPath, [srcArchiveInternalPath], options, archivePassword, signal);
+          deleteResult = await winRar.delete(srcArchiveFullPath, srcArchiveInternalDeletePathList, options, archivePassword, signal);
         } else {
-          deleteResult = await sevenZip.delete(srcArchiveFullPath, [srcArchiveInternalPath], options, archivePassword, signal);
+          deleteResult = await sevenZip.delete(srcArchiveFullPath, srcArchiveInternalDeletePathList, options, archivePassword, signal);
         }
   
         if (!deleteResult.isOK) {
@@ -221,7 +243,9 @@ const method = async (req, res) => {
         return res.status(500).send(`Error deleting from source archive file:\n${error.message}`);
       }
     } else {
-      await rm(srcFullPath);
+      for (const fn of fileList) {
+        fs.rmSync(path.join(srcFolderPath, fn), { recursive: true, force: false });
+      }
     }
   }
 

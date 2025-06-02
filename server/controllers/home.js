@@ -21,12 +21,13 @@ const method = async (req, res) => {
     try {
       const smartctl = new SmartMontools(smartctlPath);
       if (['linux', 'win32'].includes(os.platform())) {
-        const devicePath = await getDevicePath(folderPath);
-        if (devicePath) {
-          device = path.basename(devicePath.replace(/\d+$/, '')); // Remove `/dev/` prefix for href
-          status = await smartctl.getDiskHealth(devicePath.replace(/\d+$/, ''));
+        const partitionPath = await getDevicePath(folderPath);
+        if (partitionPath) {
+          const devicePath = partitionPath.replace(/p?\d+$/, '')
+          device = path.basename(devicePath); // Remove `/dev/` prefix for href
+          status = await smartctl.getDiskHealth(devicePath);
         }
-        diskInfo = await getDiskSpace((os.platform() === 'linux') ? devicePath : folderPath, false);
+        diskInfo = await getDiskSpace((os.platform() === 'linux') ? partitionPath : folderPath, false);
       }
     } catch (error) {
       console.error(error);

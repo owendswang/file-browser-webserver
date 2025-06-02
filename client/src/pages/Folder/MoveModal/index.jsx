@@ -62,7 +62,7 @@ const MoveModal = (props) => {
 
   const handleMoveModalCancel = () => {
     setOpen(false);
-    if (selectedRowKeys.length === 1) {
+    if ([...new Set(selectedRowKeys)].length === 1) {
       setSelectedKeys([]);
     }
   }
@@ -71,11 +71,11 @@ const MoveModal = (props) => {
     setConfirmLoading(true);
     try {
       if (title.includes('Move')) {
-        await folderService.move(pathname, selectedRowKeys, values.dst, searchParams.get('archivePassword') ? { archivePassword: searchParams.get('archivePassword') } : {});
+        await folderService.move(pathname, [...new Set(selectedRowKeys)], values.dst, searchParams.get('archivePassword') ? { archivePassword: searchParams.get('archivePassword') } : {});
         setOpen(false);
         refresh();
       } else if (title.includes('Copy')) {
-        await folderService.copy(pathname, selectedRowKeys, values.dst, searchParams.get('archivePassword') ? { archivePassword: searchParams.get('archivePassword') } : {});
+        await folderService.copy(pathname, [...new Set(selectedRowKeys)], values.dst, searchParams.get('archivePassword') ? { archivePassword: searchParams.get('archivePassword') } : {});
         setOpen(false);
         refresh();
       } else {
@@ -119,7 +119,7 @@ const MoveModal = (props) => {
         layout="vertical"
       >
         <Form.Item
-          label={t('Where would you like to ', { operation: t(title?.toLowerCase()), who: selectedRowKeys.length > 1 ? t('them') : t('it') })}
+          label={t('Where would you like to ', { operation: t(title?.toLowerCase()), who: [...new Set(selectedRowKeys)].length > 1 ? t('them') : t('it') })}
           name="dst"
           rules={[{ required: true, message: t('Please select destination') }]}
         >

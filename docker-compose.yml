@@ -13,10 +13,16 @@ services:
       - /mnt:/mnt
       # mount directories for browsing
     devices:
+      - /dev/sda:/dev/sda
       - /dev/sda1:/dev/sda1
+      - /dev/nvme0n1:/dev/nvme0n1
+      - /dev/nvme0n1p1:/dev/nvme0n1p1
       # mount devices for smartmontools to scan
     cap_add:
+      # necessary for smartctl to detect SATA device health
       - SYS_RAWIO
+      # necessary for smartctl to detect NVME device health
+      - SYS_ADMIN
     environment:
       - "TZ=Asia/Shanghai"
     working_dir: /home/node/app

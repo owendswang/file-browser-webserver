@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useLocation, useNavigate, useSearchParams } from "react-router";
+import { useParams, useLocation, useNavigate } from "react-router";
 import { Helmet } from "react-helmet";
 import { useTranslation } from 'react-i18next';
 import { PageContainer, ProCard } from '@ant-design/pro-components';
@@ -26,8 +26,6 @@ const Disk = () => {
   const location = useLocation();
 
   const navigate = useNavigate();
-
-  const [searchParams] = useSearchParams();
 
   const { diskId } = useParams();
 
@@ -147,7 +145,7 @@ const Disk = () => {
       </Helmet>
       {contextHolder}
       <ProCard
-        title={`${data.diskInfo?.model_name} ${data.diskInfo?.user_capacity.bytes ? ('(' + formatSize(data.diskInfo?.user_capacity.bytes) + ')') : ''} ${data.diskInfo?.device?.type === 'nvme' ? ('(NVME ' + data.diskInfo?.sata_version.string + ')') : ''}${data.diskInfo?.device?.type === 'sat' ? ('(' + data.diskInfo?.sata_version.string + ')') : ''} `}
+        title={`${data.diskInfo?.model_name} ${data.diskInfo?.user_capacity.bytes ? ('(' + formatSize(data.diskInfo?.user_capacity.bytes) + ')') : ''} ${data.diskInfo?.device?.type === 'nvme' ? ('(NVME ' + data.diskInfo?.nvme_version.string + ')') : ''}${data.diskInfo?.device?.type === 'sat' ? ('(' + data.diskInfo?.sata_version.string + ')') : ''} `}
         tooltip={data.diskInfo?.serial_number ? `S/N: ${data.diskInfo?.serial_number}` : ''}
         extra={<Space>
           <Button

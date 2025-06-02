@@ -61,7 +61,7 @@ const DecompressModal = (props) => {
 
   const handleDecompressModalCancel = () => {
     setOpen(false);
-    if (selectedRowKeys.length === 1) {
+    if ([...new Set(selectedRowKeys)].length === 1) {
       setSelectedKeys([]);
     }
   }
@@ -69,7 +69,7 @@ const DecompressModal = (props) => {
   const handleFormOnFinish = async (values) => {
     setConfirmLoading(true);
     try {
-      await folderService.decompress(pathname, selectedRowKeys, values.dst, searchParams.get('archivePassword') ? { archivePassword: searchParams.get('archivePassword') } : {});
+      await folderService.decompress(pathname, [...new Set(selectedRowKeys)], values.dst, searchParams.get('archivePassword') ? { archivePassword: searchParams.get('archivePassword') } : {});
       setOpen(false);
       refresh();
     } catch(e) {
@@ -110,7 +110,7 @@ const DecompressModal = (props) => {
         layout="vertical"
       >
         <Form.Item
-          label={t('Where would you like to ', { operation: t("Decompress"), who: selectedRowKeys.length > 1 ? t('them') : t('it') })}
+          label={t('Where would you like to ', { operation: t("Decompress"), who: [...new Set(selectedRowKeys)].length > 1 ? t('them') : t('it') })}
           name="dst"
         >
           <TreeSelect

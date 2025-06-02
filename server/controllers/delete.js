@@ -7,6 +7,14 @@ const { isArchive, rm } = require('@/utils/fileUtils');
 const getConfig = require('@/utils/getConfig');
 
 const method = async (req, res) => {
+  // 获取查询参数
+  const { archivePassword = '' } = req.query;
+  const fileList = req.body;
+
+  if (!fileList || !Array.isArray(fileList)) {
+    return res.status(404).send('Nothing to delete');
+  }
+
   const {
     sevenZipPath,
     winRarPath,
@@ -25,11 +33,8 @@ const method = async (req, res) => {
   if (!basePaths[folderName]) {
     return res.status(404).send('Path not found');
   }
-  const fullPath = path.join(basePaths[folderName], urlPath.replace(new RegExp(`^${folderName}`, 'g'), "")); // 使用 decodeURIComponent 解析路径
-  const pathParts = fullPath.split(path.sep); // 解析路径部分
-
-  // 获取查询参数
-  const { archivePassword = '' } = req.query;
+  const folderPath = path.join(basePaths[folderName], urlPath.replace(new RegExp(`^${folderName}`, 'g'), "")); // 使用 decodeURIComponent 解析路径
+  const pathParts = folderPath.split(path.sep); // 解析路径部分
 
   let isInArchive = false;
   let archivePath, archiveFileName, archiveFullPath, archiveInternalPath = '';
@@ -45,7 +50,7 @@ const method = async (req, res) => {
         return res.status(404).send('Source not found');
       }
 
-      if (fs.statSync(archiveFullPath).isFile() && fullPath.length > archiveFullPath.length) {
+      if (fs.statSync(archiveFullPath).isFile()) {
         isInArchive = true;
         archiveInternalPath = pathParts.slice(index + 1).join(path.sep);  
         break;
@@ -58,12 +63,13 @@ const method = async (req, res) => {
       const options = `"-w${tempDir}"`;
 
       let deleteResult;
+      let archiveInternalFileList = fileList.map((fn) => path.join(archiveInternalPath, fn));
       if (archiveFileName.endsWith('.rar') && ['x86', 'x64'].includes(os.arch())) {
         const winRar = new WinRar(winRarPath, true);
-        deleteResult = await winRar.delete(archiveFullPath, [archiveInternalPath], options, archivePassword, signal);
+        deleteResult = await winRar.delete(archiveFullPath, archiveInternalFileList, options, archivePassword, signal);
       } else {
         const sevenZip = new SevenZip(sevenZipPath);
-        deleteResult = await sevenZip.delete(archiveFullPath, [archiveInternalPath], options, archivePassword, signal);
+        deleteResult = await sevenZip.delete(archiveFullPath, archiveInternalFileList, options, archivePassword, signal);
       }
 
       if (!deleteResult.isOK) {
@@ -77,11 +83,18 @@ const method = async (req, res) => {
       return res.status(500).send(`Error deleting from archive file:\n${error.message}`);
     }
   } else {
-    // 如果不是压缩包内部文件，直接下载
-    if (fs.existsSync(fullPath)) {
-      await rm(fullPath);
-    } else {
-      return res.status(404).send('File not found');
+    // 如果不是压缩包内部文件，直接删除
+    let noOneExists = true;
+    for (const fn of fileList) {
+      const fullPath = path.join(folderPath, fn);
+      if (fs.existsSync(fullPath)) {
+        noOneExists = false;
+        await rm(fullPath);
+      }
+    }
+
+    if (noOneExists) {
+      return res.status(404).send('Nothing to delete');
     }
   }
   return res.end();
