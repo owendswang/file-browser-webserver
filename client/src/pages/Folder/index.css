@@ -9,10 +9,6 @@
   flex-wrap: wrap;
 }
 
-.tableWrapper {
-  overflow-x: auto;
-}
-
 .tableWrapper table tbody tr td.ant-table-cell {
   white-space: nowrap;
 }

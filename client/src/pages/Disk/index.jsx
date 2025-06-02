@@ -172,6 +172,7 @@ const Disk = () => {
               bordered={false}
               style={{ marginBottom: '1em' }}
               rowClassName={handleRowClassName}
+              scroll={{ x: 'max-content' }}
             >
               {smartInfoTableData.headers.map((colName, idx) => (
                 <Column

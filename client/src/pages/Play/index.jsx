@@ -248,7 +248,7 @@ const Play = () => {
             </Paragraph>}
           />
         </div>}
-        <Flex gap="small" wrap={false} style={{ display: Object.keys(data).length === 0 ? 'none' : 'flex' }}>
+        <div className="videoPlayCtn" style={{ display: Object.keys(data).length === 0 ? 'none' : 'flex' }}>
           {Object.keys(data).length > 0 && <VideoJS
             key={pathname}
             options={videoJsOptions}
@@ -267,7 +267,7 @@ const Play = () => {
             t={t}
             modalApi={modalApi}
           />
-        </Flex>
+        </div>
       </Spin>
     </PageContainer>
   );

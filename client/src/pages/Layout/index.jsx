@@ -234,9 +234,10 @@ const Layout = () => {
       </div> :
       <ProLayout
         layout='top'
-        logo={<img src="/favicon.ico" alt="logo" />}
+        logo={<img src="/favicon.ico" alt="logo" onClick={handleTitleClick} />}
         title={t("File Browser")}
         onMenuHeaderClick={handleTitleClick}
+        onTopMixMenuHeaderClick={handleTitleClick}
         footerRender={footerRender}
         actionsRender={actionsRender}
         avatarProps={avatarProps}

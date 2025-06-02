@@ -111,6 +111,7 @@ const Home = () => {
               pagination={false}
               // size="small"
               bordered={false}
+              scroll={{ x: 'max-content' }}
             >
               <Column
                 title={t("Folder Name")}

@@ -642,7 +642,10 @@ const Folder = () => {
                     onChange: setSelectedRowKeys,
                     selections: [Table.SELECTION_ALL, Table.SELECTION_INVERT, Table.SELECTION_NONE],
                   }}
-                  scroll={{ scrollToFirstRowOnChange: true }}
+                  scroll={{
+                    x: 'max-content',
+                    scrollToFirstRowOnChange: true
+                  }}
                   className='tableWrapper'
                 >
                   <Column

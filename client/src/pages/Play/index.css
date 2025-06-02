@@ -1,5 +1,11 @@
+.videoPlayCtn {
+  gap: 0.5rem;
+  flex-wrap: nowrap;
+}
+
 .video-player {
   width: 100%;
+  /*min-width: 640px;*/
   height: auto;
   max-height: 78vh;
   overflow: hidden;
@@ -18,4 +24,10 @@
 
 .video-js.vjs-fluid:not(.vjs-audio-only-mode) {
   padding-top: unset;
+}
+
+@media (max-width: 992px) {
+  .videoPlayCtn {
+    flex-wrap: wrap;
+  }
 }
