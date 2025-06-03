@@ -126,8 +126,11 @@ const method = async (req, res) => {
         extractResult = await sevenZip.extract(srcArchiveFullPath, sevenZipTempDir, options, archivePassword, true, signal);
 
         if (dstArchiveInternalPath) {
-          fs.renameSync(path.join(sevenZipTempDir, srcArchiveInternalPath), path.join(sevenZipTempDir, dstArchiveInternalPath));
-          moveSrcList.push(dstArchiveInternalPath.split(path.sep)[0]);
+          fs.mkdirSync(path.join(sevenZipTempDir, dstArchiveInternalPath), { recursive: true, });
+          for (const fn of fileList) {
+            fs.renameSync(path.join(sevenZipTempDir, srcArchiveInternalPath, fn), path.join(sevenZipTempDir, dstArchiveInternalPath, fn));
+          }
+          moveSrcList.push(path.join(sevenZipTempDir, dstArchiveInternalPath.split(path.sep)[0]));
         } else {
           for (const fn of fileList) {
             // 解压后的文件夹路径
@@ -166,9 +169,9 @@ const method = async (req, res) => {
             path.join(sevenZipTempDir, dstArchiveInternalPath, fn),
             { errorOnExist: true, force: false, preserveTimestamps: true, recursive: true }
           );
-          const moveSrc = path.join(sevenZipTempDir, dstArchiveInternalPath.split(path.sep)[0]);
-          moveSrcList.push(moveSrc);
         }
+        const moveSrc = path.join(sevenZipTempDir, dstArchiveInternalPath.split(path.sep)[0]);
+        moveSrcList.push(moveSrc);
       } else {
         for (const fn of fileList) {
           const moveSrc = path.join(srcFolderPath, fn);
@@ -190,6 +193,7 @@ const method = async (req, res) => {
         console.log(compressResult);
       } else {
         const options = `"-xr!desktop.ini" "-xr!.DS_Store" "-xr!__MACOSX" "-w${tempDir}"`;
+        console.log(moveSrcList);
         compressResult = await sevenZip.add(dstArchiveFullPath, moveSrcList, options, archivePassword, signal);
       }
 
