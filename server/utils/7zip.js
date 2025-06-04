@@ -22,9 +22,20 @@ class SevenZip {
   }
 
   // 执行命令并统一处理输出和错误
-  _runCommandWithProgress(args, signal) {
+  _runCommandWithProgress(args, signal, progressCallback) {
     return new Promise((resolve, reject) => {
       if (this.verbose) console.log(`"${this.SEVEN_ZIP_PATH}" ${args.join(' ')}`);
+
+      let progressArgExists = false;
+      for (const arg of args) {
+        if (arg.match(/-bsp\d/)) {
+          progressArgExists = true;
+          break;
+        }
+      }
+      if (!progressArgExists) {
+        args = ['-bsp1'].concat(args);
+      }
 
       const child = spawn(`"${this.SEVEN_ZIP_PATH}"`, args, { shell: true, stdio: ['pipe', 'pipe', 'pipe'] });
       const output = [];
@@ -32,9 +43,17 @@ class SevenZip {
 
       // 监听标准输出
       child.stdout.on('data', (data) => {
-        const line = data.toString();
+        const line = data.toString().replace(/\u0008/gm, '');
         output.push(line);
         if (this.verbose) console.log(line);
+
+        // 对进度行进行检查并回调
+        const progressMatch = line.match(/(\d+)%/m);
+        if (progressMatch && progressCallback) {
+          const progress = parseInt(progressMatch[1], 10);
+          progressCallback(progress); // 调用回调函数传递当前进度
+        }
+
         if (line.includes('Enter password')) {
           child.stdin.write('\n');
         }
@@ -42,7 +61,7 @@ class SevenZip {
 
       // 监听标准错误输出
       child.stderr.on('data', (data) => {
-        const line = data.toString();
+        const line = data.toString().replace(/\u0008/gm, '');
         errorOutput.push(line);
         if (this.verbose) console.error(line);
       });
@@ -73,9 +92,9 @@ class SevenZip {
   }
 
   // 统一处理命令执行逻辑
-  async _handleCommand(args, signal, parser = null, forceOK = false) {
+  async _handleCommand(args, signal, parser = null, forceOK = false, progressCallback) {
     try {
-      const output = await this._runCommandWithProgress(args, signal);
+      const output = await this._runCommandWithProgress(args, signal, progressCallback);
       const isOK = forceOK ? true : output.includes('Everything is Ok'); // 根据 forceOK 参数设置默认状态
       const result = parser ? parser(output) : {};
       return { isOK, ...result, output };
@@ -84,7 +103,7 @@ class SevenZip {
       return { isOK: false, exitCode: error.code, error: error.message };
     }
   }
-  
+
   // 1. 添加文件到压缩包
   async add(archivePath, files, options = '', password = '', signal) {
     const fileList = files.map(file => `"${path.resolve(file)}"`);

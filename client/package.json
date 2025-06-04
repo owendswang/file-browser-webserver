@@ -7,6 +7,9 @@
     "start": "webpack serve --config webpack.dev.js",
     "build": "webpack --config webpack.prod.js"
   },
+  "engines": {
+    "node": ">=22.16.0 <23.0.0"
+  },
   "author": "OWENDSWANG",
   "license": "ISC",
   "_moduleAliases": {

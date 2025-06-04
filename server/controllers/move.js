@@ -19,7 +19,7 @@ const method = async (req, res) => {
     basePaths,
     tempDir
   } = getConfig();
-  
+
   const abortController = new AbortController();
   const { signal } = abortController;
   req.on('close', () => {
