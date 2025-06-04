@@ -146,3 +146,4 @@ server/config.json
 Archive
 server/public
 sample-files
+server/controllers/test7z.js
