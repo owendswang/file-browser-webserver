@@ -33,8 +33,8 @@ const User = () => {
           };
         });
       }
-    } catch (e) {
-      console.log(e);
+    } catch(e) {
+      console.error(e);
       messageApi.error(`${t('Failed to save user info: ')}${handleErrorContent(e)}`);
     }
     setLoading(false);

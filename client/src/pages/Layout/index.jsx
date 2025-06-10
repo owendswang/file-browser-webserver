@@ -86,8 +86,8 @@ const Layout = () => {
           pathname: '/login',
           search: `?redirect=${encodeURIComponent(location.pathname)}`
         });
-      } catch (e) {
-        console.log(e);
+      } catch(e) {
+        console.error(e);
         messageApi.error(`${t('Failed to logout: ')}${handleErrorContent(e)}`);
       }
     // }
@@ -203,9 +203,9 @@ const Layout = () => {
             navigate('/', { replace: true });
           }
         }
-      } catch (e) {
+      } catch(e) {
         setUser({});
-        console.log(e);
+        console.error(e);
         if (!['/login', '/register'].includes(location.pathname)) {
           navigate({
             pathname: `/login`,

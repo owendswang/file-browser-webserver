@@ -91,13 +91,13 @@ router.get('/api/home', nocacheMiddleware, oauth.authenticate({ scope: ['view'] 
 router.get('/api/folder/*', nocacheMiddleware, oauth.authenticate({ scope: ['view'] }), folderRouter);
 
 // Serve folder contents dynamically
-router.get('/api/foldertree/*', nocacheMiddleware, oauth.authenticate({ scope: ['view'] }), folderTreeRouter);
+router.get('/api/foldertree/*', nocacheMiddleware, oauth.authenticate({ scope: ['admin'] }), folderTreeRouter);
 
 // File download route
 router.get('/download/*', thumbnailMiddleWare, downloadRouter);
 
 // File upload route
-router.post('/api/upload/*', oauth.authenticate({ scope: ['view'] }), uploadRouter);
+router.post('/api/upload/*', oauth.authenticate({ scope: ['admin'] }), uploadRouter);
 
 // File delete route
 router.post('/api/delete/*', oauth.authenticate({ scope: ['admin'] }), deleteRouter);

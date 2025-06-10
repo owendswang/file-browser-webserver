@@ -112,9 +112,9 @@ class SevenZip {
   }
 
   // 2. 解压文件到指定目录
-  async extract(archivePath, outputDir, options = '', password = '', fullPaths = true, signal) {
+  async extract(archivePath, outputDir, options = '', password = '', fullPaths = true, signal, progressCallback) {
     const args = [fullPaths ? 'x' : 'e', options, ...(password ? [`-p"${password}"`] : []), `"${archivePath}"`, (outputDir ? `"-o${outputDir}"` : ''), '-y'];
-    return this._handleCommand(args, signal);
+    return this._handleCommand(args, signal, null, false, progressCallback);
   }
 
   extractStream(archivePath, options = '', password = '', signal) {

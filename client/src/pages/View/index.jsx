@@ -81,8 +81,8 @@ const View = () => {
           await fetchTextContent(signal);
         }
       }
-    } catch (e) {
-      console.log(e);
+    } catch(e) {
+      console.error(e);
       if (e.message !== 'canceled') {
         messageApi.error(`${t('Failed to fetch data: ')}${handleErrorContent(e)}`);
       }
@@ -100,8 +100,8 @@ const View = () => {
       if (res) {
         setTextContent(res);
       }
-    } catch (error) {
-      console.error(error);
+    } catch(e) {
+      console.error(e);
       setTextContent(t("Failed to load file content."));
     }
   };

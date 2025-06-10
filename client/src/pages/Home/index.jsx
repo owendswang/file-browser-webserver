@@ -37,8 +37,8 @@ const Home = () => {
         setData(res.folders);
         setSleepable(res.sleepable);
       }
-    } catch (e) {
-      console.log(e);
+    } catch(e) {
+      console.error(e);
       if (e.message !== 'canceled') {
         messageApi.error(`Failed to fetch data: ${handleErrorContent(e)}`);
       }
@@ -51,8 +51,8 @@ const Home = () => {
     try {
       const res = await homeService.sleep();
       // console.log(res);
-    } catch (e) {
-      console.log(e);
+    } catch(e) {
+      console.error(e);
       messageApi.error(`${t('Failed to put disks to sleep: ')}${handleErrorContent(e)}`);
     }
     setSleepBtnloading(false);

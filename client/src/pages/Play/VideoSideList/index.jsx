@@ -50,8 +50,8 @@ const VideoSideList = (props) => {
           setPage((prev) => (prev + 1));
         }
       }
-    } catch (e) {
-      console.log(e);
+    } catch(e) {
+      console.error(e);
       if (e.message !== 'canceled') {
         messageApi.error(`${t('Failed to fetch playlist: ')}${handleErrorContent(e)}`);
       }
@@ -85,7 +85,7 @@ const VideoSideList = (props) => {
           }
           await folderService.delete(pathname, [name], searchParams.get('archivePassword') ? { archivePassword: searchParams.get('archivePassword') } : {});
         } catch(e) {
-          console.log(e);
+          console.error(e);
           messageApi.error(`${t('Delete failed: ')}${handleErrorContent(e)}`);
         } finally {
           fetchPlaylistAfterDelete(name);

@@ -33,7 +33,7 @@ const MkDirModal = (props) => {
       setOpen(false);
       refresh();
     } catch(e) {
-      console.log(e);
+      console.error(e);
       messageApi.error(`${t('Failed to create directory: ')}${handleErrorContent(e)}`);
     } finally {
       setConfirmLoading(false);

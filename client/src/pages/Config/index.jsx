@@ -41,8 +41,8 @@ const Config = () => {
         setServerPlatform(res.platform);
         setServerArch(res.arch);
       }
-    } catch (e) {
-      console.log(e);
+    } catch(e) {
+      console.error(e);
       messageApi.error(`${t('Failed to fetch config data: ')}${handleErrorContent(e)}`);
     }
     setLoading(false);
@@ -66,8 +66,8 @@ const Config = () => {
         setServerArch(res.arch);
       }
       messageApi.success(t('Save successfully!'));
-    } catch (e) {
-      console.log(e);
+    } catch(e) {
+      console.error(e);
       messageApi.error(`${t('Failed to save config data: ')}${handleErrorContent(e)}`);
     }
     setLoading(false);

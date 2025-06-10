@@ -31,7 +31,7 @@ const DecompressModal = (props) => {
         title: decodeURIComponent(folderPath.split('/')[folderPath.split('/').length - 1])
       })))
     } catch(e) {
-      console.log(e);
+      console.error(e);
       messageApi.error(`${t('Failed to fetch folder tree: ')}${handleErrorContent(e)}`);
     }
   }
@@ -50,7 +50,7 @@ const DecompressModal = (props) => {
         })))
       );
     } catch(e) {
-      console.log(e);
+      console.error(e);
       messageApi.error(`${t('Failed to fetch folder tree: ')}${handleErrorContent(e)}`);
     }
   }
@@ -73,7 +73,7 @@ const DecompressModal = (props) => {
       setOpen(false);
       refresh();
     } catch(e) {
-      console.log(e);
+      console.error(e);
       messageApi.error(`${t('Decompress failed: ')}${handleErrorContent(e)}`);
     } finally {
       setConfirmLoading(false);

@@ -59,5 +59,6 @@
   "Search": "Search",
   "Order": "Order",
   "Decompress": "Decompress",
-  "Default to current directory": "Default to current directory"
+  "Default to current directory": "Default to current directory",
+  "Drop in to upload": "Drop in to upload"
 }

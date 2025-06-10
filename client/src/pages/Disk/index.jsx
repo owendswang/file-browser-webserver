@@ -74,8 +74,8 @@ const Disk = () => {
           rows: tableData,
         })
       }
-    } catch (e) {
-      console.log(e);
+    } catch(e) {
+      console.error(e);
       if (e.message !== 'canceled') {
         messageApi.error(`${t('Failed to fetch data: ')}${handleErrorContent(e)}`);
       }

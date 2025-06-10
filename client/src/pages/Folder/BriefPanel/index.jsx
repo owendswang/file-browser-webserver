@@ -47,8 +47,8 @@ const BriefPanel = (props) => {
         const treeData = convertObj2TreeData(res);
         setData(treeData);
       }
-    } catch (e) {
-      console.log(e);
+    } catch(e) {
+      console.error(e);
       if (e.message !== 'canceled') {
         messageApi.error(`${t('Failed to fetch brief: ')}${handleErrorContent(e)}`);
       }

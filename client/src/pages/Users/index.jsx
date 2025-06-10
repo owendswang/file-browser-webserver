@@ -45,8 +45,8 @@ const Users = () => {
         setData(res.users);
         setTotal(res.pagination.total);
       }
-    } catch (e) {
-      console.log(e);
+    } catch(e) {
+      console.error(e);
       if (e.message !== 'canceled') {
         messageApi.error(`${t('Failed to fetch data: ')}${handleErrorContent(e)}`);
       }
@@ -63,7 +63,7 @@ const Users = () => {
       });
       refresh();
     } catch(e) {
-      console.log(e);
+      console.error(e);
       messageApi.error(`${t('Approval failed: ')}${handleErrorContent(e)}`);
       setLoading(false);
     }
@@ -119,7 +119,7 @@ const Users = () => {
           await usersService.delete(userId);
           refresh();
         } catch(e) {
-          console.log(e);
+          console.error(e);
           messageApi.error(`${t('Delete failed: ')}${handleErrorContent(e)}`);
         }
       },
@@ -143,7 +143,7 @@ const Users = () => {
           }));
           refresh();
         } catch(e) {
-          console.log(e);
+          console.error(e);
           messageApi.error(`${t('Delete failed: ')}${handleErrorContent(e)}`);
         }
       }

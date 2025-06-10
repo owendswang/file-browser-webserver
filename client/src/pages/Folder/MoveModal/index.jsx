@@ -32,7 +32,7 @@ const MoveModal = (props) => {
         title: decodeURIComponent(folderPath.split('/')[folderPath.split('/').length - 1])
       })))
     } catch(e) {
-      console.log(e);
+      console.error(e);
       messageApi.error(`${t('Failed to fetch folder tree: ')}${handleErrorContent(e)}`);
     }
   }
@@ -51,7 +51,7 @@ const MoveModal = (props) => {
         })))
       );
     } catch(e) {
-      console.log(e);
+      console.error(e);
       messageApi.error(`${t('Failed to fetch folder tree: ')}${handleErrorContent(e)}`);
     }
   }
@@ -82,7 +82,7 @@ const MoveModal = (props) => {
         throw new Error(`${t('Invalid operation: ')}${title}`);
       }
     } catch(e) {
-      console.log(e);
+      console.error(e);
       messageApi.error(`${t('Move failed: ')}${handleErrorContent(e)}`);
     } finally {
       setConfirmLoading(false);

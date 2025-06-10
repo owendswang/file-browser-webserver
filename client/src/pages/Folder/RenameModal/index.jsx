@@ -36,7 +36,7 @@ const MkDirModal = (props) => {
       setOpen(false);
       refresh();
     } catch(e) {
-      console.log(e);
+      console.error(e);
       messageApi.error(`${t('Failed to rename: ')}${handleErrorContent(e)}`);
     } finally {
       setConfirmLoading(false);

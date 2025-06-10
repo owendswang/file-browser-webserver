@@ -58,8 +58,8 @@ const Login = () => {
           navigate('/login', { replace: true });
         }, 2000);
       }
-    } catch (e) {
-      console.log(e);
+    } catch(e) {
+      console.error(e);
       setMessage(handleErrorContent(e));
     }
   }

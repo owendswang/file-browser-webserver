@@ -52,6 +52,7 @@ import folderService from '@/services/folder';
 import ThumbnailLink from '@/pages/Folder/ThumbnailLink';
 import ViewerJS from '@/components/ViewerJS';
 import handleErrorContent from '@/utils/handleErrorContent';
+import axios from '@/utils/axios';
 import FileIcon from '@/pages/Folder/FileIcon';
 import MoveModal from '@/pages/Folder/MoveModal';
 import MkDirModal from '@/pages/Folder/MkDirModal';
@@ -110,6 +111,7 @@ const Folder = () => {
   const [decompressModalOpen, setDecompressModalOpen] = useState(false);
   const [fileToBrief, setFileToBrief] = useState('');
   const [briefHidden, setBriefHidden] = useState(true);
+  const [isDragOver, setIsDragOver] = useState(false);
 
   const allSelected = data.length > 0 && data.length === selectedRowKeys.length;
   const indeterminated = data.length > selectedRowKeys.length && selectedRowKeys.length > 0;
@@ -157,8 +159,8 @@ const Folder = () => {
         setNeedsPwd(res.needsPassword);
         setHasEncryption(res.needsPassword || res.files.some(file => file.encrypted));
       }
-    } catch (e) {
-      console.log(e);
+    } catch(e) {
+      console.error(e);
       if (!['canceled', 'error.response is undefined'].includes(e.message)) {
         messageApi.error(`${t('Failed to fetch data: ')}${handleErrorContent(e)}`);
       }
@@ -353,7 +355,7 @@ const Folder = () => {
           await folderService.delete(pathname, [name], searchParams.get('archivePassword') ? { archivePassword: searchParams.get('archivePassword') } : {});
           refresh();
         } catch(e) {
-          console.log(e);
+          console.error(e);
           messageApi.error(`${t('Delete failed: ')}${handleErrorContent(e)}`);
         }
       },
@@ -375,7 +377,7 @@ const Folder = () => {
           await folderService.delete(pathname, selectedRowKeys, searchParams.get('archivePassword') ? { archivePassword: searchParams.get('archivePassword') } : {});
           refresh();
         } catch(e) {
-          console.log(e);
+          console.error(e);
           messageApi.error(`${t('Delete failed: ')}${handleErrorContent(e)}`);
         }
       }
@@ -445,6 +447,144 @@ const Folder = () => {
     setSelectedRowKeys([name]);
     setDecompressModalOpen(true);
   }
+
+  useEffect(() => {
+    const handleDragOver = (event) => {
+      event.preventDefault();
+    };
+
+    const handleDragEnter = (event) => {
+      event.preventDefault();
+      setIsDragOver(true);
+    };
+
+    const handleDragLeave = (event) => {
+      event.preventDefault();
+      if (event.target.id === 'dragging-overlay' || event.target.closest('#dragging-overlay')) {
+        setIsDragOver(false);
+      }
+    };
+
+    const handleDrop = async (event) => {
+      event.preventDefault();
+      setIsDragOver(false);
+
+      const items = event.dataTransfer.items;
+      const newFiles = [];
+
+      const readDirectory = (entry, newFiles, currentPath) => {
+        return new Promise((resolve) => {
+          const dirReader = entry.createReader();
+          dirReader.readEntries((entries) => {
+            const promises = entries.map((ent) => {
+              return new Promise((resolveEntry) => {
+                const newRelativePath = currentPath ? `${currentPath}/${ent.name}` : ent.name;
+                if (ent.isFile) {
+                  ent.file((file) => {
+                    newFiles.push({ file, relativePath: newRelativePath });
+                    resolveEntry();
+                  });
+                } else if (ent.isDirectory) {
+                  readDirectory(ent, newFiles, newRelativePath).then(resolveEntry);
+                } else {
+                  resolveEntry();
+                }
+              });
+            });
+            Promise.all(promises).then(() => resolve());
+          });
+        });
+      };
+
+      for (const item of items) {
+        if (item.kind === 'file') {
+          const entry = item.webkitGetAsEntry();
+          if (entry) {
+            if (entry.isDirectory) {
+              await readDirectory(entry, newFiles, entry.name);
+            } else {
+              const file = item.getAsFile();
+              newFiles.push({ file });
+            }
+          }
+        }
+      }
+
+      const uploadFiles = async (filesToUpload) => {
+        for (const fileToUpload of filesToUpload) {
+          // console.log(fileToUpload);
+          const { file, relativePath } = fileToUpload;
+          const formData = new FormData();
+          formData.append('lastModified', file.lastModified);
+          if (relativePath) {
+            formData.append('relativePath', relativePath);
+          }
+          formData.append('file', file);
+          try {
+            const response = await axios.post(
+              `/upload/${pathname}${searchParams.get('archivePassword') ? ('?archivePassword=' + searchParams.get('archivePassword')) : ''}`,
+              formData,
+              {
+                headers: { 'Content-Type': 'multipart/form-data' },
+                onUploadProgress: function ({loaded, total, progress, bytes, estimated, rate, upload = true}) {
+                  if (progress === 1) {
+                    notificationApi.open({
+                      key: file.uid,
+                      message: `${t('Uploaded: ')}${t('l"')}${file.name}${t('r"')}`,
+                      description: <Progress percent={100} status="success" />,
+                      icon: <CheckCircleFilled style={{ color: '#52c41a' }} />,
+                      duration: 3,
+                      closeIcon: true,
+                      role: 'status',
+                      placement: 'bottomRight',
+                    });
+                  } else {
+                    notificationApi.open({
+                      key: file.uid,
+                      message: `${t('Uploading: ')}${t('l"')}${file.name}${t('r"')}`,
+                      description: <Progress percent={Math.round(progress * 100)} status="active" />,
+                      icon: <SyncOutlined spin style={{ color: '#1890ff' }} />,
+                      duration: null,
+                      closeIcon: false,
+                      role: 'status',
+                      placement: 'bottomRight',
+                    });
+                  }
+                },
+              }
+            );
+          } catch(e) {
+            console.error(`Error uploading ${file.name}:`, e);
+            notificationApi.open({
+              key: file.uid,
+              message: `${t('Upload error: ')}${t('l"')}${file.name}${t('r"')}`,
+              description: <Progress percent={100} status="exception" />,
+              icon: <CloseCircleFilled style={{ color: '#ff4d4f' }} />,
+              duration: null,
+              closeIcon: true,
+              role: 'status',
+              placement: 'bottomRight',
+            });
+          }
+        }
+      };
+
+      await uploadFiles(newFiles);
+      refresh();
+    };
+
+    window.addEventListener('dragover', handleDragOver, true);
+    window.addEventListener('dragenter', handleDragEnter, true);
+    window.addEventListener('dragleave', handleDragLeave, true);
+    window.addEventListener('drop', handleDrop, true);
+
+    return () => {
+      window.removeEventListener("dragover", handleDragOver, true);
+      window.removeEventListener("dragenter", handleDragEnter, true);
+      window.removeEventListener("dragleave", handleDragLeave, true);
+      window.removeEventListener("drop", handleDrop, true);
+    };
+  }, [location.pathname]);
 
   return (
     <PageContainer
@@ -840,6 +980,13 @@ const Folder = () => {
           </div>}
         </Spin>
       </ProCard>
+      {
+        isDragOver && <div id='dragging-overlay'>
+          <div className='dropin-box'>
+            <div className='dropin-text'>{t('Drop in to upload')}</div>
+          </div>
+        </div>
+      }
       <Modal
         title={t("Password is needed")}
         open={archivePasswordModalVisible}

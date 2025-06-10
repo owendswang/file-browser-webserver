@@ -27,7 +27,7 @@ axiosInstance.interceptors.response.use(
     return response;
   },
   async function (error) {
-    console.log(error);
+    console.error(error);
     // Any status codes that falls outside the range of 2xx cause this function to trigger
     // Do something with response error
     const originalRequest = error.config;
@@ -57,10 +57,10 @@ axiosInstance.interceptors.response.use(
         originalRequest.headers['Authorization'] = `Bearer ${res.access_token}`;*/
         await axiosInstance.post('/token', new URLSearchParams());
         return axiosInstance(originalRequest);
-      } catch (refreshError) {
+      } catch(e) {
         // 处理刷新 token 的错误，例如 token 已失效
-        console.log('Refresh token failed:', refreshError);
-        return Promise.reject(refreshError);
+        console.log('Refresh token failed:', e);
+        return Promise.reject(e);
       }
     }
     // 如果不是 token 过期错误，则直接抛出

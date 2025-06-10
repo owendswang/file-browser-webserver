@@ -90,6 +90,7 @@ const typeExtMapping = {
   ps1: { type: 'PowerShell Script', icon: '🖥️' },
   bat: { type: 'Batch Script', icon: '📜' },
   cmd: { type: 'Command Line Script', icon: '📜' },
+  reg: { type: 'Registration Entries File', icon: '📜' },
 
   // Executables
   exe: { type: 'Windows Executable', icon: '💻' },
@@ -167,7 +168,7 @@ function getFileIcon(filename, isDirectory = false) {
 function isViewableFile(filePath) {
   const fileName = filePath.split('/')[filePath.split('/').length - 1];
   const fileType = getFileType(fileName);
-  if (['Image File', 'Ico File', 'Text File', 'SQL Script', 'HTML Application', 'JSON File', 'Shell Script', 'Batch Script', 'Command Line Script', 'PowerShell Script', 'HTML File', 'Subtitle File'].includes(fileType)) {
+  if (['Image File', 'Ico File', 'Text File', 'SQL Script', 'HTML Application', 'JSON File', 'Shell Script', 'Batch Script', 'Command Line Script', 'PowerShell Script', 'HTML File', 'Subtitle File', 'Registration Entries File'].includes(fileType)) {
     return true;
   } else {
     return false;
@@ -178,7 +179,7 @@ function isViewableFile(filePath) {
 function isReadableFile(filePath) {
   const fileName = filePath.split('/')[filePath.split('/').length - 1];
   const fileType = getFileType(fileName);
-  if (['Text File', 'SQL Script', 'HTML Application', 'JSON File', 'Shell Script', 'Batch Script', 'Command Line Script', 'PowerShell Script', 'HTML File', 'Subtitle File'].includes(fileType)) {
+  if (['Text File', 'SQL Script', 'HTML Application', 'JSON File', 'Shell Script', 'Batch Script', 'Command Line Script', 'PowerShell Script', 'HTML File', 'Subtitle File', 'Registration Entries File'].includes(fileType)) {
     return true;
   } else {
     return false;
