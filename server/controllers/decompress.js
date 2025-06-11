@@ -71,7 +71,7 @@ const method = async (req, res) => {
   if (dst) {
     dstUrlPath = decodeURIComponent(dst);
   } else {
-    dstUrlPath = srcUrlPath.split('/').slice(0, srcUrlPath.split('/').length - 1).join('/');
+    dstUrlPath = srcUrlPath;
   }
   const dstFolderName = dstUrlPath.split('/')[0];
   if (!basePaths[dstFolderName]) {
@@ -103,8 +103,13 @@ const method = async (req, res) => {
     }
   }
 
+  res.setHeader('Content-Type', 'text/event-stream');
+  res.setHeader('Cache-Control', 'no-cache');
+  res.setHeader('Connection', 'keep-alive');
+
   const sevenZip = new SevenZip(sevenZipPath);
   const sevenZipTempDir = path.join(tempDir, randomBytes(16).toString('hex'));
+
   // 下载完成后删除临时目录
   res.on('close', () => {
     if (fs.existsSync(sevenZipTempDir)) {
@@ -113,6 +118,7 @@ const method = async (req, res) => {
   });
 
   let moveSrcList = [];
+  let srcIndex = 0;
   for (const srcArchiveFullPath of fileListToDecompress) {
     try {
       const listResult = await sevenZip.list(srcArchiveFullPath, true, '', archivePassword, signal);
@@ -124,7 +130,11 @@ const method = async (req, res) => {
       // 使用 7-Zip 解压指定文件
       let extractResult = {};
       if (dstIsInArchive) {
-        extractResult = await sevenZip.extract(srcArchiveFullPath, path.join(sevenZipTempDir, dstArchiveInternalPath), '', archivePassword, true, signal);
+        const progressCallback = (progress) => {
+          const currentProgress = (progress + (srcIndex * 100)) / (fileListToDecompress.length * 2);
+          res.write(`data: ${JSON.stringify({ currentProgress })}\n\n`);
+        };
+        extractResult = await sevenZip.extract(srcArchiveFullPath, path.join(sevenZipTempDir, dstArchiveInternalPath), '', archivePassword, true, signal, progressCallback);
 
         // 解压后的文件夹路径
         const files = fs.readdirSync(sevenZipTempDir);
@@ -132,7 +142,11 @@ const method = async (req, res) => {
           moveSrcList.push(path.join(sevenZipTempDir, file));
         }
       } else {
-        extractResult = await sevenZip.extract(srcArchiveFullPath, dstFullPath, '', archivePassword, true, signal);
+        const progressCallback = (progress) => {
+          const currentProgress = (progress + (srcIndex * 100)) / fileListToDecompress.length;
+          res.write(`data: ${JSON.stringify({ currentProgress })}\n\n`);
+        };
+        extractResult = await sevenZip.extract(srcArchiveFullPath, dstFullPath, '', archivePassword, true, signal, progressCallback);
       }
 
       if (!extractResult.isOK) {
@@ -145,6 +159,8 @@ const method = async (req, res) => {
         return res.status(499).send('Client Closed Request');
       }
       return res.status(500).send(`Error handling source archive file:\n${error.message}`);
+    } finally {
+      srcIndex += 1;
     }
   }
 
@@ -156,8 +172,12 @@ const method = async (req, res) => {
         const options = `"-x*${path.sep}desktop.ini" "-x*${path.sep}.DS_Store" "-x*${path.sep}__MACOSX" "-w${tempDir}"`;
         compressResult = await winRar.add(dstArchiveFullPath, moveSrcList, options, archivePassword, signal);
       } else {
+        const progressCallback = (progress) => {
+          const currentProgress = (progress + (srcIndex * 100)) / (fileListToDecompress.length * 2);
+          res.write(`data: ${JSON.stringify({ currentProgress })}\n\n`);
+        };
         const options = `"-xr!desktop.ini" "-xr!.DS_Store" "-xr!__MACOSX" "-w${tempDir}"`;
-        compressResult = await sevenZip.add(dstArchiveFullPath, moveSrcList, options, archivePassword, signal);
+        compressResult = await sevenZip.add(dstArchiveFullPath, moveSrcList, options, archivePassword, signal, progressCallback);
       }
 
       if (!compressResult.isOK) {

@@ -1034,6 +1034,7 @@ const Folder = () => {
         refresh={refresh}
         pathname={pathname}
         messageApi={messageApi}
+        notificationApi={notificationApi}
         searchParams={searchParams}
         t={t}
       />

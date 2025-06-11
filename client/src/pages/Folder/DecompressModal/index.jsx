@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Modal, TreeSelect, Form } from 'antd';
 import handleErrorContent from '@/utils/handleErrorContent';
 import folderService from '@/services/folder';
+import axios from '@/utils/axios';
 
 const DecompressModal = (props) => {
   const { 
@@ -12,6 +13,7 @@ const DecompressModal = (props) => {
     refresh,
     pathname,
     messageApi,
+    notificationApi,
     searchParams,
     t
   } = props;
@@ -69,8 +71,32 @@ const DecompressModal = (props) => {
   const handleFormOnFinish = async (values) => {
     setConfirmLoading(true);
     try {
-      await folderService.decompress(pathname, [...new Set(selectedRowKeys)], values.dst, searchParams.get('archivePassword') ? { archivePassword: searchParams.get('archivePassword') } : {});
+      // await folderService.decompress(pathname, [...new Set(selectedRowKeys)], values.dst, searchParams.get('archivePassword') ? { archivePassword: searchParams.get('archivePassword') } : {});
       setOpen(false);
+
+      const response = await axios.post(`/decompress/${pathname}`, [...new Set(selectedRowKeys)], {
+        params: {
+          dst: values.dst, 
+          archivePassword: searchParams.get('archivePassword'),
+        },
+        responseType: 'stream',
+      });
+
+      const reader = response.data.getReader();
+      const decoder = new TextDecoder("utf-8");
+
+      let result;
+      while (!(result = await reader.read()).done) {
+        const chunk = decoder.decode(result.value, { stream: true });
+        const messages = chunk.split('\n');
+        messages.forEach(message => {
+          if (message) {
+            const data = JSON.parse(message);
+            console.log(`Received data: ${data}`);
+          }
+        });
+      }
+
       refresh();
     } catch(e) {
       console.error(e);
