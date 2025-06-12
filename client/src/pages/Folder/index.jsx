@@ -154,10 +154,17 @@ const Folder = () => {
     try {
       const res = await folderService.getList(pathname, params, signal);
       if (res?.files && Array.isArray(res.files)) {
-        setData(res.files);
-        setTotal(res.pagination.total);
-        setNeedsPwd(res.needsPassword);
-        setHasEncryption(res.needsPassword || res.files.some(file => file.encrypted));
+        if (res.files.length > 0 || (parseInt(searchParams.get('page')) || 1) === 1) {
+          setData(res.files);
+          setTotal(res.pagination.total);
+          setNeedsPwd(res.needsPassword);
+          setHasEncryption(res.needsPassword || res.files.some(file => file.encrypted));
+        } else {
+          setSearchParams((prevParams) => {
+            prevParams.set('page', (parseInt(prevParams.get('page')) - 1).toString());
+            return prevParams;
+          });
+        }
       }
     } catch(e) {
       console.error(e);
