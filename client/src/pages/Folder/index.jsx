@@ -112,6 +112,7 @@ const Folder = () => {
   const [fileToBrief, setFileToBrief] = useState('');
   const [briefHidden, setBriefHidden] = useState(true);
   const [isDragOver, setIsDragOver] = useState(false);
+  const [isDraggingLink, setIsDraggingLink] = useState(false);
 
   const allSelected = data.length > 0 && data.length === selectedRowKeys.length;
   const indeterminated = data.length > selectedRowKeys.length && selectedRowKeys.length > 0;
@@ -122,6 +123,8 @@ const Folder = () => {
     } else {
       return { title: <Link
         to={`/folder/${pathParts.slice(0, idx + 1).join('/')}`}
+        draggable={false}
+        style={{ pointerEvents: isDraggingLink ? 'none' : null }}
       >{decodeURIComponent(part)}</Link> };
     }
   });
@@ -455,17 +458,66 @@ const Folder = () => {
     setDecompressModalOpen(true);
   }
 
+  const handleDragStart = (event) => {
+    // console.log('drag start', event);
+    setIsDraggingLink(true);
+    event.dataTransfer.setData('text', event.target.href.split('/')[event.target.href.split('/').length - 1]);
+    if (event.target.classList.contains('tableRowFileNameLink')) {
+      event.target.classList.add('folder-file-link-disabled');
+    }
+  }
+
+  const handleDragEnd = (event) => {
+    // console.log('drag end', event);
+    setIsDraggingLink(false);
+    if (event.target.classList.contains('tableRowFileNameLink')) {
+      event.target.classList.remove('folder-file-link-disabled');
+    }
+  }
+
+  const handleDragEnterLink = (event) => {
+    // console.log('link drag enter', event);
+    event.preventDefault();
+    if (event.target.closest('tr')) {
+      event.target.closest('tr').style.backgroundColor = 'rgba(0, 128, 255, 0.1)';
+    }
+  }
+
+  const handleDragLeaveLink = (event) => {
+    // console.log('link drag leave', event);
+    event.preventDefault();
+    if (event.target.closest('tr')) {
+      event.target.closest('tr').style.backgroundColor = 'unset';
+    }
+  }
+
+  const handleDropLink = (event) => {
+    console.log('link drop', event.dataTransfer.getData('text'));
+    event.preventDefault();
+    if (event.target.closest('tr')) {
+      event.target.closest('tr').style.backgroundColor = 'unset';
+    }
+  }
+
+  const handleDragOverLink = (event) => {
+    // console.log('link drag over', event);
+    event.preventDefault();
+  };
+
   useEffect(() => {
     const handleDragOver = (event) => {
+      // console.log('drag over', event);
       event.preventDefault();
     };
 
     const handleDragEnter = (event) => {
+      // console.log('drag enter', event);
       event.preventDefault();
       setIsDragOver(true);
     };
 
     const handleDragLeave = (event) => {
+      // console.log('drag leave', event);
       event.preventDefault();
       if (event.target.id === 'dragging-overlay' || event.target.closest('#dragging-overlay')) {
         setIsDragOver(false);
@@ -473,125 +525,139 @@ const Folder = () => {
     };
 
     const handleDrop = async (event) => {
+      // console.log('drop', event);
       event.preventDefault();
       setIsDragOver(false);
 
       const items = event.dataTransfer.items;
-      const newFiles = [];
-
-      const readDirectory = (entry, newFiles, currentPath) => {
-        return new Promise((resolve) => {
-          const dirReader = entry.createReader();
-          dirReader.readEntries((entries) => {
-            const promises = entries.map((ent) => {
-              return new Promise((resolveEntry) => {
-                const newRelativePath = currentPath ? `${currentPath}/${ent.name}` : ent.name;
-                if (ent.isFile) {
-                  ent.file((file) => {
-                    newFiles.push({ file, relativePath: newRelativePath });
-                    resolveEntry();
-                  });
-                } else if (ent.isDirectory) {
-                  readDirectory(ent, newFiles, newRelativePath).then(resolveEntry);
-                } else {
-                  resolveEntry();
-                }
-              });
-            });
-            Promise.all(promises).then(() => resolve());
-          });
-        });
-      };
-
+      const files = [];
       for (const item of items) {
         if (item.kind === 'file') {
-          const entry = item.webkitGetAsEntry();
+          files.push(item);
+        }
+      }
+
+      if (files.length > 0) {
+        const newFiles = [];
+
+        const readDirectory = (entry, newFiles, currentPath) => {
+          return new Promise((resolve) => {
+            const dirReader = entry.createReader();
+            dirReader.readEntries((entries) => {
+              const promises = entries.map((ent) => {
+                return new Promise((resolveEntry) => {
+                  const newRelativePath = currentPath ? `${currentPath}/${ent.name}` : ent.name;
+                  if (ent.isFile) {
+                    ent.file((file) => {
+                      newFiles.push({ file, relativePath: newRelativePath });
+                      resolveEntry();
+                    });
+                  } else if (ent.isDirectory) {
+                    readDirectory(ent, newFiles, newRelativePath).then(resolveEntry);
+                  } else {
+                    resolveEntry();
+                  }
+                });
+              });
+              Promise.all(promises).then(() => resolve());
+            });
+          });
+        };
+
+        for (const file of files) {
+          const entry = file.webkitGetAsEntry();
           if (entry) {
             if (entry.isDirectory) {
               await readDirectory(entry, newFiles, entry.name);
             } else {
-              const file = item.getAsFile();
+              const file = file.getAsFile();
               newFiles.push({ file });
             }
           }
         }
+
+        const uploadFiles = async (filesToUpload) => {
+          for (const fileToUpload of filesToUpload) {
+            // console.log(fileToUpload);
+            const { file, relativePath } = fileToUpload;
+            const formData = new FormData();
+            formData.append('lastModified', file.lastModified);
+            if (relativePath) {
+              formData.append('relativePath', relativePath);
+            }
+            formData.append('file', file);
+            try {
+              const response = await axios.post(
+                `/upload/${pathname}${searchParams.get('archivePassword') ? ('?archivePassword=' + searchParams.get('archivePassword')) : ''}`,
+                formData,
+                {
+                  headers: { 'Content-Type': 'multipart/form-data' },
+                  onUploadProgress: function ({loaded, total, progress, bytes, estimated, rate, upload = true}) {
+                    if (progress === 1) {
+                      notificationApi.open({
+                        key: `${file.name}-${file.lastModified}`,
+                        message: `${t('Uploaded: ')}${t('l"')}${file.name}${t('r"')}`,
+                        description: <Progress percent={100} status="success" />,
+                        icon: <CheckCircleFilled style={{ color: '#52c41a' }} />,
+                        duration: 3,
+                        closeIcon: true,
+                        role: 'status',
+                        placement: 'bottomRight',
+                      });
+                    } else {
+                      notificationApi.open({
+                        key: `${file.name}-${file.lastModified}`,
+                        message: `${t('Uploading: ')}${t('l"')}${file.name}${t('r"')}`,
+                        description: <Progress percent={Math.round(progress * 100)} status="active" />,
+                        icon: <SyncOutlined spin style={{ color: '#1890ff' }} />,
+                        duration: null,
+                        closeIcon: false,
+                        role: 'status',
+                        placement: 'bottomRight',
+                      });
+                    }
+                  },
+                }
+              );
+            } catch(e) {
+              console.error(`Error uploading ${file.name}:`, e);
+              notificationApi.open({
+                key: `${file.name}-${file.lastModified}`,
+                message: `${t('Upload error: ')}${t('l"')}${file.name}${t('r"')}`,
+                description: <Progress percent={100} status="exception" />,
+                icon: <CloseCircleFilled style={{ color: '#ff4d4f' }} />,
+                duration: null,
+                closeIcon: true,
+                role: 'status',
+                placement: 'bottomRight',
+              });
+            }
+          }
+        };
+
+        await uploadFiles(newFiles);
+        refresh();
+      } else {
+        messageApi.error(t('Not supported'));
       }
-
-      const uploadFiles = async (filesToUpload) => {
-        for (const fileToUpload of filesToUpload) {
-          // console.log(fileToUpload);
-          const { file, relativePath } = fileToUpload;
-          const formData = new FormData();
-          formData.append('lastModified', file.lastModified);
-          if (relativePath) {
-            formData.append('relativePath', relativePath);
-          }
-          formData.append('file', file);
-          try {
-            const response = await axios.post(
-              `/upload/${pathname}${searchParams.get('archivePassword') ? ('?archivePassword=' + searchParams.get('archivePassword')) : ''}`,
-              formData,
-              {
-                headers: { 'Content-Type': 'multipart/form-data' },
-                onUploadProgress: function ({loaded, total, progress, bytes, estimated, rate, upload = true}) {
-                  if (progress === 1) {
-                    notificationApi.open({
-                      key: file.uid,
-                      message: `${t('Uploaded: ')}${t('l"')}${file.name}${t('r"')}`,
-                      description: <Progress percent={100} status="success" />,
-                      icon: <CheckCircleFilled style={{ color: '#52c41a' }} />,
-                      duration: 3,
-                      closeIcon: true,
-                      role: 'status',
-                      placement: 'bottomRight',
-                    });
-                  } else {
-                    notificationApi.open({
-                      key: file.uid,
-                      message: `${t('Uploading: ')}${t('l"')}${file.name}${t('r"')}`,
-                      description: <Progress percent={Math.round(progress * 100)} status="active" />,
-                      icon: <SyncOutlined spin style={{ color: '#1890ff' }} />,
-                      duration: null,
-                      closeIcon: false,
-                      role: 'status',
-                      placement: 'bottomRight',
-                    });
-                  }
-                },
-              }
-            );
-          } catch(e) {
-            console.error(`Error uploading ${file.name}:`, e);
-            notificationApi.open({
-              key: file.uid,
-              message: `${t('Upload error: ')}${t('l"')}${file.name}${t('r"')}`,
-              description: <Progress percent={100} status="exception" />,
-              icon: <CloseCircleFilled style={{ color: '#ff4d4f' }} />,
-              duration: null,
-              closeIcon: true,
-              role: 'status',
-              placement: 'bottomRight',
-            });
-          }
-        }
-      };
-
-      await uploadFiles(newFiles);
-      refresh();
     };
 
-    window.addEventListener('dragover', handleDragOver, true);
-    window.addEventListener('dragenter', handleDragEnter, true);
-    window.addEventListener('dragleave', handleDragLeave, true);
-    window.addEventListener('drop', handleDrop, true);
+    if (!isDraggingLink) {
+      window.addEventListener('dragover', handleDragOver, true);
+      window.addEventListener('dragenter', handleDragEnter, true);
+      window.addEventListener('dragleave', handleDragLeave, true);
+      window.addEventListener('drop', handleDrop, true);
+    }
 
     return () => {
-      window.removeEventListener("dragover", handleDragOver, true);
-      window.removeEventListener("dragenter", handleDragEnter, true);
-      window.removeEventListener("dragleave", handleDragLeave, true);
-      window.removeEventListener("drop", handleDrop, true);
+      if (!isDraggingLink) {
+        window.removeEventListener("dragover", handleDragOver, true);
+        window.removeEventListener("dragenter", handleDragEnter, true);
+        window.removeEventListener("dragleave", handleDragLeave, true);
+        window.removeEventListener("drop", handleDrop, true);
+      }
     };
-  }, [location.pathname]);
+  }, [location.pathname, isDraggingLink]);
 
   return (
     <PageContainer
@@ -632,7 +698,7 @@ const Folder = () => {
       <ProCard
         className="folderCardWrapper"
         title={<div className='folderCardTitle'>
-          {(user.scope && user.scope.includes('admin')) && <div key='upload' className='dropdownButtonGroup'>
+          {(user.scope && user.scope.includes('admin')) && <div key='upload' className='dropdownButtonGroup' style={{ pointerEvents: isDraggingLink ? 'none' : null }}>
             <Upload
               name="file"
               multiple={true}
@@ -813,10 +879,16 @@ const Folder = () => {
                           }
                           title={`${value}${record.encrypted ? ' *' : ''}`}
                           className="tableRowFileNameLink"
+                          onDragStart={handleDragStart}
+                          onDragEnd={handleDragEnd}
+                          onDragEnter={handleDragEnterLink}
+                          onDragLeave={handleDragLeaveLink}
+                          onDrop={handleDropLink}
+                          onDragOver={handleDragOverLink}
                         >
                           <Space>
-                            <FileIcon key='icon' type={record.type} />
-                            <span key='name'>{value}{record.encrypted ? ' *' : ''}</span>
+                            <FileIcon key='icon' type={record.type} style={{ pointerEvents: 'none' }} />
+                            <span key='name' style={{ pointerEvents: 'none' }}>{value}{record.encrypted ? ' *' : ''}</span>
                           </Space>
                         </Link>
                         <Link
@@ -825,6 +897,7 @@ const Folder = () => {
                           to={`${record.path.replace(/^\/(folder|view)\//, '/download/')}${searchParams.get('archivePassword') ? ('?archivePassword=' + searchParams.get('archivePassword')) : ''}`}
                           title={t('Download')}
                           className="tableRowFileNameHoverLink"
+                          draggable={false}
                         >
                           <DownloadOutlined />
                         </Link>
@@ -834,6 +907,7 @@ const Folder = () => {
                           title={t('Rename')}
                           className="tableRowFileNameHoverLink"
                           onClick={(e) => { e.preventDefault(); handleRenameClick(value); }}
+                          draggable={false}
                         ><EditOutlined /></Link>}
                         {(user.scope && user.scope.includes('admin')) && <Link
                           key={`${value}-move`}
@@ -841,6 +915,7 @@ const Folder = () => {
                           title={t('Move')}
                           className="tableRowFileNameHoverLink"
                           onClick={(e) => { e.preventDefault(); handleMoveClick(value); }}
+                          draggable={false}
                         ><ExportOutlined /></Link>}
                         {(user.scope && user.scope.includes('admin')) && <Link
                           key={`${value}-copy`}
@@ -848,6 +923,7 @@ const Folder = () => {
                           title={t('Copy')}
                           className="tableRowFileNameHoverLink"
                           onClick={(e) => { e.preventDefault(); handleCopyClick(value); }}
+                          draggable={false}
                         ><CopyOutlined /></Link>}
                         {(user.scope && user.scope.includes('admin')) && <Link
                           key={`${value}-delete`}
@@ -855,6 +931,7 @@ const Folder = () => {
                           title={t('Delete')}
                           className="tableRowFileNameHoverLink"
                           onClick={(e) => { e.preventDefault(); handleDeleteClick(value); }}
+                          draggable={false}
                         >
                           <DeleteOutlined />
                         </Link>}
@@ -864,6 +941,7 @@ const Folder = () => {
                           title={t('Info')}
                           className="tableRowFileNameHoverLink"
                           onClick={(e) => { e.preventDefault(); handleBriefClick(value); }}
+                          draggable={false}
                         ><InfoCircleOutlined /></Link>
                         {(user.scope && user.scope.includes('admin') && (record.type === 'Compressed File') && record.path.startsWith('/folder/')) && <Link
                           key={`${value}-decompress`}
@@ -871,6 +949,7 @@ const Folder = () => {
                           title={t('Decompress')}
                           className="tableRowFileNameHoverLink"
                           onClick={(e) => { e.preventDefault(); handleDecompressClick(value); }}
+                          draggable={false}
                         >
                           <FolderOpenOutlined />
                         </Link>}
@@ -941,6 +1020,12 @@ const Folder = () => {
                       handleDecompressClick={handleDecompressClick}
                       user={user}
                       t={t}
+                      handleDragStart={handleDragStart}
+                      handleDragEnd={handleDragEnd}
+                      handleDragEnterLink={handleDragEnterLink}
+                      handleDragLeaveLink={handleDragLeaveLink}
+                      handleDropLink={handleDropLink}
+                      handleDragOverLink={handleDragOverLink}
                     />)}
                   </div>
                   {/*</Flex>*/}

@@ -31,7 +31,13 @@ const ThumbnailLink = (props) => {
     handleDeleteClick,
     handleDecompressClick,
     user,
-    t
+    t,
+    handleDragStart,
+    handleDragEnd,
+    handleDragEnterLink,
+    handleDragLeaveLink,
+    handleDropLink,
+    handleDragOverLink
   } = props;
 
   const [searchParams] = useSearchParams();
@@ -152,6 +158,12 @@ const ThumbnailLink = (props) => {
           // width: `${size}px`,
           height: `${size}px`,
         }}
+        onDragStart={handleDragStart}
+        onDragEnd={handleDragEnd}
+        onDragEnter={handleDragEnterLink}
+        onDragLeave={handleDragLeaveLink}
+        onDrop={handleDropLink}
+        onDragOver={handleDragOverLink}
       >
         <img
           className={`thumbnailLayer thumbnailImg${['Image File', 'Ico File'].includes(file.type) ? ' thumbnailForImage' : ''}`}
@@ -220,6 +232,9 @@ const ThumbnailLink = (props) => {
           // width: `${size}px`,
           height: `${size}px`,
         }}
+        onDragStart={handleDragStart}
+        onDragEnd={handleDragEnd}
+        onDragOver={handleDragOverLink}
       >
         <div className="thumbnailLayer iconLayer">
           <FileIcon type={file.type} style={{ fontSize: `${size / 3}px`, transform: 'translateY(-15%)' }} />

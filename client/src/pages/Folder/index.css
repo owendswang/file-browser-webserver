@@ -97,3 +97,8 @@ a.tableRowFileNameLink:visited:hover {
   font-weight: bold;
   text-align: center;
 }
+
+.folder-file-link-disabled {
+  color: rgba(128, 128, 128, 0.3);
+  pointer-events: none;
+}

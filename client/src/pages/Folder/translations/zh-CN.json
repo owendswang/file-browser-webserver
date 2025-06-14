@@ -60,5 +60,6 @@
   "Order": "顺序",
   "Decompress": "解压",
   "Default to current directory": "默认为当前目录",
-  "Drop in to upload": "拽入上传"
+  "Drop in to upload": "拽入上传",
+  "Not supported": "不支持"
 }
