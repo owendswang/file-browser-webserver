@@ -461,41 +461,106 @@ const Folder = () => {
   const handleDragStart = (event) => {
     // console.log('drag start', event);
     setIsDraggingLink(true);
-    event.dataTransfer.setData('text', event.target.href.split('/')[event.target.href.split('/').length - 1]);
-    if (event.target.classList.contains('tableRowFileNameLink')) {
+    const fileName = decodeURIComponent(event.target.href.split('/')[event.target.href.split('/').length - 1]);
+    if (selectedRowKeys.length > 0 && selectedRowKeys.includes(fileName)) {
+      event.dataTransfer.setData('text/plain', JSON.stringify(selectedRowKeys));
+    } else {
+      setSelectedRowKeys([]);
+      event.dataTransfer.setData('text/plain', JSON.stringify([fileName]));
+    }
+    if ((searchParams.get('view') || window.localStorage.getItem('view') || defaultViewMode) === 'thumbnails') {
+      event.target.classList.add('thumbnailLink-disabled');
+      const folderLinks = document.body.querySelectorAll('.thumbnailLink');
+      const folderPathStart = `${window.location.protocol}//${window.location.host}/folder/`;
+      for (const folderLink of folderLinks) {
+        const folderName = decodeURIComponent(folderLink.href.split('/')[folderLink.href.split('/').length - 1]);
+        if (!(folderLink.href && folderLink.href.startsWith(folderPathStart) && !selectedRowKeys.includes(folderName))) {
+          folderLink.classList.add('thumbnailLink-disabled');
+        }
+      }
+    } else {
       event.target.classList.add('folder-file-link-disabled');
+      const folderLinks = document.body.querySelectorAll('.tableRowFileNameLink');
+      const folderPathStart = `${window.location.protocol}//${window.location.host}/folder/`;
+      for (const folderLink of folderLinks) {
+        const folderName = decodeURIComponent(folderLink.href.split('/')[folderLink.href.split('/').length - 1]);
+        if (!(folderLink.href && folderLink.href.startsWith(folderPathStart) && !selectedRowKeys.includes(folderName))) {
+          folderLink.classList.add('folder-file-link-disabled');
+        }
+      }
+      const folderHoverLinks = document.body.querySelectorAll('.tableRowFileNameHoverLink');
+      for (const folderHoverLink of folderHoverLinks) {
+        folderHoverLink.classList.add('folder-file-hover-link-disabled');
+      }
     }
   }
 
   const handleDragEnd = (event) => {
     // console.log('drag end', event);
     setIsDraggingLink(false);
-    if (event.target.classList.contains('tableRowFileNameLink')) {
+    if ((searchParams.get('view') || window.localStorage.getItem('view') || defaultViewMode) === 'thumbnails') {
+      event.target.classList.remove('thumbnailLink-disabled');
+      const folderLinks = document.body.querySelectorAll('.thumbnailLink');
+      const folderPathStart = `${window.location.protocol}//${window.location.host}/folder/`;
+      for (const folderLink of folderLinks) {
+        const folderName = decodeURIComponent(folderLink.href.split('/')[folderLink.href.split('/').length - 1]);
+        if (!(folderLink.href && folderLink.href.startsWith(folderPathStart) && !selectedRowKeys.includes(folderName))) {
+          folderLink.classList.remove('thumbnailLink-disabled');
+        }
+      }
+    } else {
       event.target.classList.remove('folder-file-link-disabled');
+      const folderLinks = document.body.querySelectorAll('.tableRowFileNameLink');
+      const folderPathStart = `${window.location.protocol}//${window.location.host}/folder/`;
+      for (const folderLink of folderLinks) {
+        const folderName = decodeURIComponent(folderLink.href.split('/')[folderLink.href.split('/').length - 1]);
+        if (!(folderLink.href && folderLink.href.startsWith(folderPathStart) && !selectedRowKeys.includes(folderName))) {
+          folderLink.classList.remove('folder-file-link-disabled');
+        }
+      }
+      const folderHoverLinks = document.body.querySelectorAll('.tableRowFileNameHoverLink');
+      for (const folderHoverLink of folderHoverLinks) {
+        folderHoverLink.classList.remove('folder-file-hover-link-disabled');
+      }
     }
   }
 
   const handleDragEnterLink = (event) => {
     // console.log('link drag enter', event);
     event.preventDefault();
-    if (event.target.closest('tr')) {
-      event.target.closest('tr').style.backgroundColor = 'rgba(0, 128, 255, 0.1)';
+    const tableRow = event.target.closest('tr');
+    if (tableRow) {
+      tableRow.style.backgroundColor = 'rgba(0, 145, 255, 0.1)';
+    }
+    const thumbnailLink = event.target.closest('a.thumbnailLink');
+    if (thumbnailLink) {
+      thumbnailLink.style.backgroundColor = 'rgba(0, 100, 182, 0.3)';
     }
   }
 
   const handleDragLeaveLink = (event) => {
     // console.log('link drag leave', event);
     event.preventDefault();
-    if (event.target.closest('tr')) {
-      event.target.closest('tr').style.backgroundColor = 'unset';
+    const tableRow = event.target.closest('tr');
+    if (tableRow) {
+      tableRow.style.backgroundColor = null;
+    }
+    const thumbnailLink = event.target.closest('a.thumbnailLink');
+    if (thumbnailLink) {
+      thumbnailLink.style.backgroundColor = null;
     }
   }
 
   const handleDropLink = (event) => {
     console.log('link drop', event.dataTransfer.getData('text'));
     event.preventDefault();
-    if (event.target.closest('tr')) {
-      event.target.closest('tr').style.backgroundColor = 'unset';
+    const tableRow = event.target.closest('tr');
+    if (tableRow) {
+      tableRow.style.backgroundColor = null;
+    }
+    const thumbnailLink = event.target.closest('a.thumbnailLink');
+    if (thumbnailLink) {
+      thumbnailLink.style.backgroundColor = null;
     }
   }
 
@@ -878,7 +943,8 @@ const Folder = () => {
                             record.path
                           }
                           title={`${value}${record.encrypted ? ' *' : ''}`}
-                          className="tableRowFileNameLink"
+                          className='tableRowFileNameLink'
+                          // draggable={((selectedRowKeys.length > 0) && !selectedRowKeys.includes(value)) ? false : true}
                           onDragStart={handleDragStart}
                           onDragEnd={handleDragEnd}
                           onDragEnter={handleDragEnterLink}

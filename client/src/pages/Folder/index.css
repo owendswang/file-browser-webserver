@@ -98,7 +98,13 @@ a.tableRowFileNameLink:visited:hover {
   text-align: center;
 }
 
-.folder-file-link-disabled {
+.folder-file-link-disabled,
+a:visited.folder-file-link-disabled {
   color: rgba(128, 128, 128, 0.3);
   pointer-events: none;
+}
+
+.ant-table-cell-row-hover .tableRowFileNameHoverLink.folder-file-hover-link-disabled {
+  pointer-events: none;
+  opacity: 0;
 }

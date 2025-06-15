@@ -234,6 +234,9 @@ const ThumbnailLink = (props) => {
         }}
         onDragStart={handleDragStart}
         onDragEnd={handleDragEnd}
+        onDragEnter={handleDragEnterLink}
+        onDragLeave={handleDragLeaveLink}
+        onDrop={handleDropLink}
         onDragOver={handleDragOverLink}
       >
         <div className="thumbnailLayer iconLayer">

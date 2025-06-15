@@ -1,5 +1,5 @@
 .thumbnailLink:hover {
-  background-color: rgba(0,0,0,0.3);
+  background-color: rgba(0, 0, 0, 0.3);
 }
 
 .thumbnailLink {
@@ -7,7 +7,7 @@
   overflow: hidden;
   padding: 0;
   position: relative;
-  background-color: rgba(0,0,0,0.05);
+  background-color: rgba(0, 0, 0, 0.05);
   transition: background-color 0.3s;
 }
 
@@ -16,15 +16,15 @@
 }
 
 .thumbnailLink.thumbnailLinkChecked:hover {
-  background-color: rgba(0,100,182,0.3);
+  background-color: rgba(0, 100, 182, 0.3);
 }
 
 .ant-dark .thumbnailLink {
-  background-color: rgba(255,255,255,0.05);
+  background-color: rgba(255, 255, 255, 0.05);
 }
 
 .ant-dark .thumbnailLink:hover {
-  background-color: rgba(255,255,255,0.3);
+  background-color: rgba(255, 255, 255, 0.3);
 }
 
 a.thumbnailLink:visited .thumbnailText {
@@ -43,13 +43,13 @@ a.thumbnailLink:visited .thumbnailText {
 }
 
 .thumbnailLayer.iconLayer {
-  background-color: rgba(0,0,0,0);
+  background-color: rgba(0, 0, 0, 0);
   color: gray;
-  transition: background-color 0.3s, color 0.3s;
+  transition: background-color 0.3s, color 0.3s, opacity 0.3s;
 }
 
 .thumbnailLayer.iconLayer.thumbnailMediaIcon {
-  background-color: rgba(0,0,0,0.4);
+  background-color: rgba(0, 0, 0, 0.4);
   color: white;
   opacity: 0;
   transition: opacity 0.3s;
@@ -61,7 +61,7 @@ a.thumbnailLink:visited .thumbnailText {
 }
 
 .thumbnailLink:hover .thumbnailLayer.iconLayer {
-  background-color: rgba(0,0,0,0.4);
+  background-color: rgba(0, 0, 0, 0.4);
   color: white;
 }
 
@@ -75,7 +75,7 @@ a.thumbnailLink:visited .thumbnailText {
   object-fit: cover;
   overflow: hidden;
   transform: translate(-50%, -50%);
-  transition: transform 0.3s;
+  transition: transform 0.3s, filter 0.3s;
 }
 
 .thumbnailLink:hover .thumbnailImg {
@@ -157,4 +157,23 @@ a.thumbnailLink:visited .thumbnailText {
 .thumbnailLink:hover .thumbnailLayer.clickableLayer.thumbnailMediaClickable .thumbnailDropdownBtn,
 .thumbnailLink:hover .thumbnailLayer.clickableLayer.thumbnailMediaClickable .fileSelectCheckbox:not(.ant-checkbox-wrapper-checked) {
   opacity: 1;
+}
+
+.thumbnailLink.thumbnailLink-disabled {
+  pointer-events: none;
+}
+
+.thumbnailLink.thumbnailLink-disabled .thumbnailLayer.thumbnailText {
+  color: rgba(128, 128, 128, 0.5);
+}
+
+.thumbnailLink.thumbnailLink-disabled .thumbnailLayer.iconLayer {
+  opacity: 0.5;
+  transition: opacity 0.3s;
+}
+
+.thumbnailLink.thumbnailLink-disabled .thumbnailLayer.thumbnailImg {
+  filter: grayscale(1);
+  opacity: 0.5;
+  transition: filter 0.3s, opacity 0.3s;
 }
