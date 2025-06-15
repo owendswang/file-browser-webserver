@@ -124,7 +124,7 @@ const Folder = () => {
       return { title: <Link
         to={`/folder/${pathParts.slice(0, idx + 1).join('/')}`}
         draggable={false}
-        style={{ pointerEvents: isDraggingLink ? 'none' : null }}
+        // style={{ pointerEvents: isDraggingLink ? 'none' : null }}
       >{decodeURIComponent(part)}</Link> };
     }
   });
@@ -551,8 +551,8 @@ const Folder = () => {
     }
   }
 
-  const handleDropLink = (event) => {
-    console.log('link drop', event.dataTransfer.getData('text'));
+  const handleDropLink = async (event) => {
+    // console.log('link drop', event.dataTransfer.getData('text/plain'));
     event.preventDefault();
     const tableRow = event.target.closest('tr');
     if (tableRow) {
@@ -562,6 +562,9 @@ const Folder = () => {
     if (thumbnailLink) {
       thumbnailLink.style.backgroundColor = null;
     }
+    // const folderName = decodeURIComponent(event.target.closest('a.thumbnailLink').href.split('/')[event.target.closest('a.thumbnailLink').href.split('/').length - 1]);
+    await folderService.move(pathname, JSON.parse(event.dataTransfer.getData('text/plain')), decodeURIComponent(event.target.closest('a').href.replace(new RegExp(`^${window.location.protocol}//${window.location.host}/folder/`), '')), searchParams.get('archivePassword') ? { archivePassword: searchParams.get('archivePassword') } : {});
+    refresh();
   }
 
   const handleDragOverLink = (event) => {
