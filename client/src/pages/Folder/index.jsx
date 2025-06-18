@@ -552,7 +552,7 @@ const Folder = () => {
   }
 
   const handleDropLink = async (event) => {
-    // console.log('link drop', event.dataTransfer.getData('text/plain'));
+    console.log('link drop', event.dataTransfer.getData('text/plain'));
     event.preventDefault();
     const tableRow = event.target.closest('tr');
     if (tableRow) {
@@ -766,7 +766,7 @@ const Folder = () => {
       <ProCard
         className="folderCardWrapper"
         title={<div className='folderCardTitle'>
-          {(user.scope && user.scope.includes('admin')) && <div key='upload' className='dropdownButtonGroup' style={{ pointerEvents: isDraggingLink ? 'none' : null }}>
+          {(user.scope && user.scope.includes('admin')) && <div key='operation' className='dropdownButtonGroup' style={{ pointerEvents: isDraggingLink ? 'none' : null }}>
             <Upload
               name="file"
               multiple={true}

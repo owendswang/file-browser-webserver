@@ -2,6 +2,10 @@
   background-color: rgba(0, 0, 0, 0.3);
 }
 
+.thumbnailLink-disabled.thumbnailLink:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
 .thumbnailLink {
   display: block;
   overflow: hidden;
@@ -19,12 +23,20 @@
   background-color: rgba(0, 100, 182, 0.3);
 }
 
+.thumbnailLink-disabled.thumbnailLink.thumbnailLinkChecked:hover {
+  background-color: rgba(0, 145, 255, 0.1);
+}
+
 .ant-dark .thumbnailLink {
   background-color: rgba(255, 255, 255, 0.05);
 }
 
 .ant-dark .thumbnailLink:hover {
   background-color: rgba(255, 255, 255, 0.3);
+}
+
+.ant-dark .thumbnailLink-disabled.thumbnailLink:hover {
+  background-color: rgba(255, 255, 255, 0.05);
 }
 
 a.thumbnailLink:visited .thumbnailText {
@@ -57,7 +69,10 @@ a.thumbnailLink:visited .thumbnailText {
 
 .thumbnailLink:hover .thumbnailLayer.iconLayer.thumbnailMediaIcon {
   opacity: 1;
-  transition: opacity 0.3s;
+}
+
+.thumbnailLink-disabled.thumbnailLink:hover .thumbnailLayer.iconLayer.thumbnailMediaIcon {
+  opacity: 0;
 }
 
 .thumbnailLink:hover .thumbnailLayer.iconLayer {
@@ -65,8 +80,17 @@ a.thumbnailLink:visited .thumbnailText {
   color: white;
 }
 
+.thumbnailLink-disabled.thumbnailLink:hover .thumbnailLayer.iconLayer {
+  background-color: rgba(0, 0, 0, 0);
+  color: gray;
+}
+
 .thumbnailLink:hover .thumbnailLayer.thumbnailText.thumbnailMediaText {
   opacity: 1;
+}
+
+.thumbnailLink-disabled.thumbnailLink:hover .thumbnailLayer.thumbnailText.thumbnailMediaText {
+  opacity: 0;
 }
 
 .thumbnailLayer.thumbnailImg {
@@ -80,6 +104,10 @@ a.thumbnailLink:visited .thumbnailText {
 
 .thumbnailLink:hover .thumbnailImg {
   transform: translate(-50%, -50%) scale(1.2);
+}
+
+.thumbnailLink-disabled.thumbnailLink:hover .thumbnailImg {
+  transform: translate(-50%, -50%) scale(1);
 }
 
 .thumbnailLayer.thumbnailText {
@@ -103,6 +131,10 @@ a.thumbnailLink:visited .thumbnailText {
 
 .thumbnailLink:hover .thumbnailLayer.thumbnailText {
   color: white;
+}
+
+.thumbnailLink-disabled.thumbnailLink:hover .thumbnailLayer.thumbnailText {
+  color: unset;
 }
 
 .thumbnailLayer.iconLayer,
@@ -148,6 +180,10 @@ a.thumbnailLink:visited .thumbnailText {
   color: white;
 }
 
+.thumbnailLink-disabled.thumbnailLink:hover .thumbnailLayer.clickableLayer .thumbnailDropdownBtn {
+  color: black;
+}
+
 .thumbnailLink .thumbnailLayer.clickableLayer.thumbnailMediaClickable .thumbnailDropdownBtn,
 .thumbnailLink .thumbnailLayer.clickableLayer.thumbnailMediaClickable .fileSelectCheckbox:not(.ant-checkbox-wrapper-checked) {
   opacity: 0;
@@ -157,6 +193,11 @@ a.thumbnailLink:visited .thumbnailText {
 .thumbnailLink:hover .thumbnailLayer.clickableLayer.thumbnailMediaClickable .thumbnailDropdownBtn,
 .thumbnailLink:hover .thumbnailLayer.clickableLayer.thumbnailMediaClickable .fileSelectCheckbox:not(.ant-checkbox-wrapper-checked) {
   opacity: 1;
+}
+
+.thumbnailLink-disabled.thumbnailLink:hover .thumbnailLayer.clickableLayer.thumbnailMediaClickable .thumbnailDropdownBtn,
+.thumbnailLink-disabled.thumbnailLink:hover .thumbnailLayer.clickableLayer.thumbnailMediaClickable .fileSelectCheckbox:not(.ant-checkbox-wrapper-checked) {
+  opacity: 0;
 }
 
 .thumbnailLink.thumbnailLink-disabled {
