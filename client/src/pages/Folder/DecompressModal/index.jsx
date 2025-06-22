@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Modal, TreeSelect, Form } from 'antd';
+import { Modal, TreeSelect, Form, Progress } from 'antd';
+import { SyncOutlined, CheckCircleFilled, CloseCircleFilled } from '@ant-design/icons';
 import handleErrorContent from '@/utils/handleErrorContent';
 import folderService from '@/services/folder';
 import axios from '@/utils/axios';
@@ -70,37 +71,151 @@ const DecompressModal = (props) => {
 
   const handleFormOnFinish = async (values) => {
     setConfirmLoading(true);
+    const fileNames = [...new Set(selectedRowKeys)];
+    const fileNamesStr = fileNames.join(', ');
     try {
+      // 不显示进度
       // await folderService.decompress(pathname, [...new Set(selectedRowKeys)], values.dst, searchParams.get('archivePassword') ? { archivePassword: searchParams.get('archivePassword') } : {});
       setOpen(false);
 
-      const response = await axios.post(`/decompress/${pathname}`, [...new Set(selectedRowKeys)], {
+      // axios 方法，显示进度
+      const response = await axios.post(`/decompress/${pathname}`, fileNames, {
         params: {
           dst: values.dst, 
           archivePassword: searchParams.get('archivePassword'),
         },
         responseType: 'stream',
+        // onDownloadProgress: function (axiosProgressEvent) {
+        //   console.log(axiosProgressEvent);
+        // }
       });
 
-      const reader = response.data.getReader();
-      const decoder = new TextDecoder("utf-8");
+      const stream = response.data;
+      const reader = stream.pipeThrough(new TextDecoderStream('utf-8')).getReader();
 
-      let result;
-      while (!(result = await reader.read()).done) {
-        const chunk = decoder.decode(result.value, { stream: true });
-        const messages = chunk.split('\n');
-        messages.forEach(message => {
-          if (message) {
-            const data = JSON.parse(message);
-            console.log(`Received data: ${data}`);
+      let hasError;
+      while (true) {
+        const { value, done } = await reader.read();
+        if (value) {
+          for (const event of value.split('\n').filter(Boolean)) {
+            const data = JSON.parse(event.replace(/^data: /, ''));
+            // console.log('data:', data);
+            const { progress, error } = data;
+            if (error) {
+              hasError = error
+              await reader.cancel(); // 主动关闭流，防止挂起
+            } else if (typeof(progress) === 'number') {
+              notificationApi.open({
+                key: fileNamesStr,
+                message: `${t('Decompressing: ')}${t('l"')}${fileNamesStr}${t('r"')}`,
+                description: <Progress percent={Math.round(progress)} status="active" />,
+                icon: <SyncOutlined spin style={{ color: '#1890ff' }} />,
+                duration: null,
+                closeIcon: false,
+                role: 'status',
+                placement: 'bottomRight',
+              });
+            }
           }
-        });
+        }
+        if (done) {
+          if (hasError) {
+            notificationApi.open({
+              key: fileNamesStr,
+              message: `${t('Decompress error: ')}${t('l"')}${fileNamesStr}${t('r"')}`,
+              description: handleErrorContent(hasError),
+              icon: <CloseCircleFilled style={{ color: '#ff4d4f' }} />,
+              duration: null,
+              // closeIcon: true,
+              role: 'status',
+              placement: 'bottomRight',
+            });
+          } else {
+            notificationApi.open({
+              key: fileNamesStr,
+              message: `${t('Decompressed: ')}${t('l"')}${fileNamesStr}${t('r"')}`,
+              description: <Progress percent={100} status="success" />,
+              icon: <CheckCircleFilled style={{ color: '#52c41a' }} />,
+              duration: 3,
+              // closeIcon: true,
+              role: 'status',
+              placement: 'bottomRight',
+            });
+          }
+          break;
+        }
+      }
+/*
+      // fetch 方法，显示进度
+      const response = await fetch(`/api/decompress/${pathname}${searchParams.get('archivePassword') ? `?archivePassword=${searchParams.get('archivePassword')}` : ''}`, {
+        method: 'post',
+        headers: {
+          'Accept': 'text/event-stream',
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify([...new Set(selectedRowKeys)]),
+        responseType: 'text',
+      });
+
+      // 检查响应是否有效
+      if (!response.ok) {
+        throw new Error(`Network response was not ok: ${response.statusText}`);
       }
 
+      // 获取响应流
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder("utf-8");
+
+      // 处理流数据
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) {
+          notificationApi.open({
+            key: fileNamesStr,
+            message: `${t('Decompressed: ')}${t('l"')}${fileNamesStr}${t('r"')}`,
+            description: <Progress percent={100} status="success" />,
+            icon: <CheckCircleFilled style={{ color: '#52c41a' }} />,
+            duration: 3,
+            // closeIcon: true,
+            role: 'status',
+            placement: 'bottomRight',
+          });
+          break; // 流结束时退出
+        }
+
+        const chunk = decoder.decode(value, { stream: true });
+        const events = chunk.split('\n').filter(line => line.startsWith('data:'));
+
+        for (const event of events) {
+          const data = JSON.parse(event.replace(/^data: /, ''));
+          notificationApi.open({
+            key: fileNamesStr,
+            message: `${t('Decompressing: ')}${t('l"')}${fileNamesStr}${t('r"')}`,
+            description: <Progress percent={Math.round(data.progress)} status="active" />,
+            icon: <SyncOutlined spin style={{ color: '#1890ff' }} />,
+            duration: null,
+            closeIcon: false,
+            role: 'status',
+            placement: 'bottomRight',
+          });
+          // console.log('Received event:', data);
+        }
+      }
+*/
       refresh();
     } catch(e) {
       console.error(e);
-      messageApi.error(`${t('Decompress failed: ')}${handleErrorContent(e)}`);
+      // messageApi.error(`${t('Decompress failed: ')}${handleErrorContent(e)}`);
+      notificationApi.open({
+        key: fileNamesStr,
+        message: `${t('Decompress error: ')}${t('l"')}${fileNamesStr}${t('r"')}`,
+        description: handleErrorContent(e),
+        icon: <CloseCircleFilled />,
+        duration: null,
+        // closeIcon: true,
+        role: 'status',
+        placement: 'bottomRight',
+      });
     } finally {
       setConfirmLoading(false);
     }

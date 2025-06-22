@@ -61,5 +61,7 @@
   "Decompress": "解压",
   "Default to current directory": "默认为当前目录",
   "Drop in to upload": "拽入上传",
-  "Not supported": "不支持"
+  "Not supported": "不支持",
+  "Decompressing: ": "正在解压：",
+  "Decompressed: ": "解压完成："
 }

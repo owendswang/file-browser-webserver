@@ -61,5 +61,7 @@
   "Decompress": "Decompress",
   "Default to current directory": "Default to current directory",
   "Drop in to upload": "Drop in to upload",
-  "Not supported": "Not supported"
+  "Not supported": "Not supported",
+  "Decompressing: ": "Decompressing: ",
+  "Decompressed: ": "Decompressed: "
 }

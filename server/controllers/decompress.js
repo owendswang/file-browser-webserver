@@ -106,6 +106,7 @@ const method = async (req, res) => {
   res.setHeader('Content-Type', 'text/event-stream');
   res.setHeader('Cache-Control', 'no-cache');
   res.setHeader('Connection', 'keep-alive');
+  res.flushHeaders();
 
   const sevenZip = new SevenZip(sevenZipPath);
   const sevenZipTempDir = path.join(tempDir, randomBytes(16).toString('hex'));
@@ -132,19 +133,15 @@ const method = async (req, res) => {
       if (dstIsInArchive) {
         const progressCallback = (progress) => {
           const currentProgress = (progress + (srcIndex * 100)) / (fileListToDecompress.length * 2);
-          res.write(`data: ${JSON.stringify({ currentProgress })}\n\n`);
+          res.write(`data: ${JSON.stringify({ progress: currentProgress })}\n\n`);
+          res.flush();
         };
         extractResult = await sevenZip.extract(srcArchiveFullPath, path.join(sevenZipTempDir, dstArchiveInternalPath), '', archivePassword, true, signal, progressCallback);
-
-        // 解压后的文件夹路径
-        const files = fs.readdirSync(sevenZipTempDir);
-        for (const file of files) {
-          moveSrcList.push(path.join(sevenZipTempDir, file));
-        }
       } else {
         const progressCallback = (progress) => {
           const currentProgress = (progress + (srcIndex * 100)) / fileListToDecompress.length;
-          res.write(`data: ${JSON.stringify({ currentProgress })}\n\n`);
+          res.write(`data: ${JSON.stringify({ progress: currentProgress })}\n\n`);
+          res.flush();
         };
         extractResult = await sevenZip.extract(srcArchiveFullPath, dstFullPath, '', archivePassword, true, signal, progressCallback);
       }
@@ -165,6 +162,12 @@ const method = async (req, res) => {
   }
 
   if (dstIsInArchive) {
+    // 解压后的文件夹路径
+    const files = fs.readdirSync(sevenZipTempDir);
+    for (const file of files) {
+      moveSrcList.push(path.join(sevenZipTempDir, file));
+    }
+
     try {
       let compressResult;
       if (dstArchiveFileName.endsWith('.rar') && ['x86', 'x64'].includes(os.arch())) {
@@ -174,21 +177,28 @@ const method = async (req, res) => {
       } else {
         const progressCallback = (progress) => {
           const currentProgress = (progress + (srcIndex * 100)) / (fileListToDecompress.length * 2);
-          res.write(`data: ${JSON.stringify({ currentProgress })}\n\n`);
+          res.write(`data: ${JSON.stringify({ progress: currentProgress })}\n\n`);
+          res.flush();
         };
-        const options = `"-xr!desktop.ini" "-xr!.DS_Store" "-xr!__MACOSX" "-w${tempDir}"`;
+        const options = `"-xr!desktop.ini" "-xr!.DS_Store" "-xr!__MACOSX" "-w${tempDir}" -y`;
         compressResult = await sevenZip.add(dstArchiveFullPath, moveSrcList, options, archivePassword, signal, progressCallback);
       }
 
       if (!compressResult.isOK) {
-        return res.status(500).send(`Failed to add file to destination archive:\n${compressResult.error}`);
+        // return res.status(500).send(`Failed to add file to destination archive:\n${compressResult.error}`);
+        res.write(`data: ${JSON.stringify({ error: 'Failed to add file to destination archive:\n' + compressResult.error })}`);
+        res.flush();
       }
     } catch (error) {
       console.error('Error handling destination archive file:', error);
       if (error.message === 'AbortError') {
-        return res.status(499).send('Client Closed Request');
+        // return res.status(499).send('Client Closed Request');
+        res.write(`data: ${JSON.stringify({ error: 'Client Closed Request' })}`);
+        res.flush();
       }
-      return res.status(500).send(`Error handling destination archive file:\n${error.message}`);
+      // return res.status(500).send(`Error handling destination archive file:\n${error.message}`);
+      res.write(`data: ${JSON.stringify({ error: 'Error handling destination archive file:\n' + error.message })}`);
+      res.flush();
     }
   }
 

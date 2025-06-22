@@ -3,6 +3,7 @@ const router = express.Router();
 const bodyParser = require('body-parser');
 const cookieParser = require('cookie-parser');
 const cors = require('cors');
+const compression = require('compression')
 const Thumbnails = require('./utils/thumbnails');
 const homeRouter = require('./controllers/home');
 const folderRouter = require('./controllers/folder');
@@ -43,6 +44,9 @@ router.use(bodyParser.json());
 
 // create application/x-www-form-urlencoded parser
 router.use(bodyParser.urlencoded({ extended: false }));
+
+// enable compression and res.flush()
+router.use(compression());
 
 // pass db object to methods
 const dbMiddleWare = (req, res, next) => {
