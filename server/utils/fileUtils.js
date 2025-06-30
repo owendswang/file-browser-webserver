@@ -340,6 +340,96 @@ function encodeURIComponentForPath(path) {
   return encodeURIComponent(path).replace(/%2F/g, '/'); // 不编码"/"符号
 }
 
+async function copy(source, destination, options = {}, progressCallback = () => {}, abortSignal = null) {
+  progressCallback(0);
+
+  const { retainSource = true, overwrite = true } = options;
+  let totalSize = 0, copiedSize = 0;
+
+  function calculateTotalSize(src) {
+    if (abortSignal && abortSignal.aborted) throw new Error('Copy operation aborted');
+
+    const stats = fs.statSync(src);
+    if (stats.isDirectory()) {
+      const items = fs.readdirSync(src);
+      for (const item of items) {
+        calculateTotalSize(path.join(src, item));
+      }
+    } else {
+      totalSize += stats.size;
+    }
+  }
+
+  function copyFileWithProgress(src, dest) {
+    if (abortSignal && abortSignal.aborted) throw new Error('Copy operation aborted');
+
+    if (fs.existsSync(dest) && !overwrite) {
+      const stats = fs.statSync(src);
+      copiedSize += stats.size;
+      progressCallback(copiedSize / totalSize);
+      return;
+    }
+
+    const stats = fs.statSync(src);
+    const bufferSize = fileSize > 100 * 1024 * 1024 ? 1024 * 1024 : 64 * 1024;
+    const readStream = fs.createReadStream(src, { highWaterMark: bufferSize });
+    const writeStream = fs.createWriteStream(dest, { highWaterMark: bufferSize });
+
+    return new Promise((resolve) => {
+      readStream.on('data', (chunk) => {
+        if (abortSignal && abortSignal.aborted) {
+          readStream.destroy();
+          writeStream.destroy();
+          fs.unlinkSync(dest);
+          return reject(new Error('Copy operation aborted'));
+        }
+
+        copiedSize += chunk.length;
+        progressCallback(copiedSize / totalSize);
+      });
+
+      readStream.on('end', () => {
+        fs.utimesSync(dest, stats.atime, stats.mtime);
+        resolve();
+      });
+
+      readStream.pipe(writeStream);
+    });
+  }
+
+  async function copyRecursive(src, dest) {
+    if (abortSignal && abortSignal.aborted) throw new Error('Copy operation aborted');
+
+    if (!retainSource) {
+      try {
+        fs.renameSync(src, dest);
+        progressCallback(100);
+        return;
+      } catch (err) {
+        // No-op, fallback to copy process if rename fails.
+      }
+    }
+
+    const stats = fs.statSync(src);
+    if (stats.isDirectory()) {
+      if (!fs.existsSync(dest)) fs.mkdirSync(dest);
+      const items = fs.readdirSync(src);
+      for (const item of items) {
+        await copyRecursive(path.join(src, item), path.join(dest, item));
+      }
+    } else {
+      await copyFileWithProgress(src, dest);
+    }
+  }
+
+  calculateTotalSize(source);
+  await copyRecursive(source, destination);
+
+  if (!retainSource && !(abortSignal && abortSignal.aborted)) {
+    fs.rmSync(source, { recursive: true, force: true });
+  }
+}
+
 module.exports = {
   getFileIcon,
   getFileType,
@@ -353,5 +443,6 @@ module.exports = {
   formatSize,
   deleteFolderRecursive,
   encodeURIComponentForPath,
-  rm
+  rm,
+  copy
 };

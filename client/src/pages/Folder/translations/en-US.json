@@ -63,5 +63,12 @@
   "Drop in to upload": "Drop in to upload",
   "Not supported": "Not supported",
   "Decompressing: ": "Decompressing: ",
-  "Decompressed: ": "Decompressed: "
+  "Decompressed: ": "Decompressed: ",
+  "Decompress error: ": "Decompress error: ",
+  "Copying: ": "Copying: ",
+  "Copy error: ": "Copy error: ",
+  "Copied: ": "Copied: ",
+  "Moving: ": "Moving: ",
+  "Move error: ": "Move error: ",
+  "Moved: ": "Moved: "
 }

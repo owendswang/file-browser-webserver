@@ -76,8 +76,8 @@ const DecompressModal = (props) => {
     try {
       // 不显示进度
       // await folderService.decompress(pathname, [...new Set(selectedRowKeys)], values.dst, searchParams.get('archivePassword') ? { archivePassword: searchParams.get('archivePassword') } : {});
-      setOpen(false);
 
+      setOpen(false);
       // axios 方法，显示进度
       const response = await axios.post(`/decompress/${pathname}`, fileNames, {
         params: {
@@ -202,7 +202,6 @@ const DecompressModal = (props) => {
         }
       }
 */
-      refresh();
     } catch(e) {
       console.error(e);
       // messageApi.error(`${t('Decompress failed: ')}${handleErrorContent(e)}`);
@@ -217,6 +216,7 @@ const DecompressModal = (props) => {
         placement: 'bottomRight',
       });
     } finally {
+      refresh();
       setConfirmLoading(false);
     }
   }

@@ -23,7 +23,7 @@ const method = async (req, res) => {
     basePaths,
     tempDir
   } = getConfig();
-  
+
   const abortController = new AbortController();
   const { signal } = abortController;
   req.on('close', () => {
@@ -125,7 +125,8 @@ const method = async (req, res) => {
       const listResult = await sevenZip.list(srcArchiveFullPath, true, '', archivePassword, signal);
 
       if (!listResult.isOK) {
-        return res.status(500).send(`Failed to read source from archive content:\n${listResult.error}`);
+        res.write(`data: ${JSON.stringify({ error: `Failed to read source from archive content:\n${listResult.error}` })}`);
+        return res.end();
       }
 
       // 使用 7-Zip 解压指定文件
@@ -147,15 +148,18 @@ const method = async (req, res) => {
       }
 
       if (!extractResult.isOK) {
-        return res.status(500).send(`Failed to extract source from archive:\n${extractResult.error}`);
+        res.write(`data: ${JSON.stringify({ error: `Failed to extract source from archive:\n${extractResult.error}` })}`);
+        return res.end();
       }
 
     } catch (error) {
       console.error('Error handling source archive file:', error);
       if (error.message === 'AbortError') {
-        return res.status(499).send('Client Closed Request');
+        res.write(`data: ${JSON.stringify({ error: 'Client Closed Request' })}`);
+        return res.end();
       }
-      return res.status(500).send(`Error handling source archive file:\n${error.message}`);
+      res.write(`data: ${JSON.stringify({ error: `Error handling source archive file:\n${error.message}` })}`);
+      return res.end();
     } finally {
       srcIndex += 1;
     }

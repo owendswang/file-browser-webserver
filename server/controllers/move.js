@@ -4,7 +4,7 @@ const path = require('path');
 const { randomBytes } = require('crypto');
 const SevenZip = require('@/utils/7zip');
 const WinRar = require('@/utils/winRar');
-const { isArchive, rm } = require('@/utils/fileUtils');
+const { isArchive, rm, copy } = require('@/utils/fileUtils');
 const getConfig = require('@/utils/getConfig');
 
 const method = async (req, res) => {
@@ -92,6 +92,11 @@ const method = async (req, res) => {
     }
   }
 
+  res.setHeader('Content-Type', 'text/event-stream');
+  res.setHeader('Cache-Control', 'no-cache');
+  res.setHeader('Connection', 'keep-alive');
+  res.flushHeaders();
+
   const sevenZip = new SevenZip(sevenZipPath);
   const sevenZipTempDir = path.join(tempDir, randomBytes(16).toString('hex'));
   // 处理完成后删除临时目录
@@ -107,7 +112,8 @@ const method = async (req, res) => {
       const listResult = await sevenZip.list(srcArchiveFullPath, true, '', archivePassword, signal);
 
       if (!listResult.isOK) {
-        return res.status(500).send(`Failed to read source from archive content:\n${listResult.error}`);
+        res.write(`data: ${JSON.stringify({ error: `Failed to read source from archive content:\n${listResult.error}` })}`);
+        return res.end();
       }
 
       for (const fn of fileList) {
@@ -115,7 +121,8 @@ const method = async (req, res) => {
         const targetFile = listResult.files.find(f => f.Path ===  path.join(srcArchiveInternalPath, fn));
 
         if (!targetFile) {
-          return res.status(404).send('Source not found in archive');
+          res.write(`data: ${JSON.stringify({ error: 'Source not found in archive' })}`);
+          return res.end();
         }
       }
 
@@ -123,7 +130,12 @@ const method = async (req, res) => {
       const options = fileList.map((fn) => `"-i!${path.join(srcArchiveInternalPath, fn)}"`).join(' '); // 指定要解压的文件
       let extractResult = {};
       if (dstIsInArchive) {
-        extractResult = await sevenZip.extract(srcArchiveFullPath, sevenZipTempDir, options, archivePassword, true, signal);
+        const progressCallback = (progress) => {
+          const currentProgress = progress * 0.9 / (parseInt(keepSrc) ? 2 : 3);
+          res.write(`data: ${JSON.stringify({ progress: currentProgress })}\n\n`);
+          res.flush();
+        };
+        extractResult = await sevenZip.extract(srcArchiveFullPath, sevenZipTempDir, options, archivePassword, true, signal, progressCallback);
 
         if (dstArchiveInternalPath) {
           fs.mkdirSync(path.join(sevenZipTempDir, dstArchiveInternalPath), { recursive: true, });
@@ -138,37 +150,57 @@ const method = async (req, res) => {
             moveSrcList.push(moveSrc);
           }
         }
+        res.write(`data: ${JSON.stringify({ progress: parseInt(keepSrc) ? 50 : 33.33 })}\n\n`);
+        res.flush();
       } else {
-        extractResult = await sevenZip.extract(srcArchiveFullPath, dstFullPath, options, archivePassword, true, signal);
+        const progressCallback = (progress) => {
+          const currentProgress = progress * 0.9 / (parseInt(keepSrc) ? 1 : 2);
+          res.write(`data: ${JSON.stringify({ progress: currentProgress })}\n\n`);
+          res.flush();
+        };
+        extractResult = await sevenZip.extract(srcArchiveFullPath, dstFullPath, options, archivePassword, true, signal, progressCallback);
         if (srcArchiveInternalPath) {
           for (const fn of fileList) {
             fs.renameSync(path.join(dstFullPath, srcArchiveInternalPath, fn), path.join(dstFullPath, fn));
           }
           fs.rmSync(path.join(dstFullPath, srcArchiveInternalPath.split(path.sep)[0]), { recursive: true, force: false });
         }
+        res.write(`data: ${JSON.stringify({ progress: parseInt(keepSrc) ? 100 : 50 })}\n\n`);
+        res.flush();
       }
 
       if (!extractResult.isOK) {
-        return res.status(500).send(`Failed to extract source from archive:\n${extractResult.error}`);
+        res.write(`data: ${JSON.stringify({ error: `Failed to extract source from archive:\n${extractResult.error}`})}`);
+        return res.end();
       }
 
     } catch (error) {
       console.error('Error handling source archive file:', error);
       if (error.message === 'AbortError') {
-        return res.status(499).send('Client Closed Request');
+        res.write(`data: ${JSON.stringify({ error: 'Client Closed Request' })}`);
+        return res.end();
       }
-      return res.status(500).send(`Error handling source archive file:\n${error.message}`);
+      res.write(`data: ${JSON.stringify({ error: `Error handling source archive file:\n${error.message}` })}`);
+      return res.end();
     }
   } else {
     if (fs.existsSync(srcFolderPath)) {
       if (dstArchiveInternalPath) {
         fs.mkdirSync(path.join(sevenZipTempDir, dstArchiveInternalPath), { recursive: true });
+        let i = 0;
         for (const fn of fileList) {
-          fs.cpSync(
-            path.join(srcFolderPath, fn),
-            path.join(sevenZipTempDir, dstArchiveInternalPath, fn),
-            { errorOnExist: true, force: false, preserveTimestamps: true, recursive: true }
-          );
+          // fs.cpSync(
+          //   path.join(srcFolderPath, fn),
+          //   path.join(sevenZipTempDir, dstArchiveInternalPath, fn),
+          //   { errorOnExist: true, force: false, preserveTimestamps: true, recursive: true }
+          // );
+          const progressCallback = (progress) => {
+            const currentProgress = (progress + i * 100) / fileList.length / (parseInt(keepSrc) ? 2 : 3) + (parseInt(keepSrc) ? 50 : 33.33);
+            res.write(`data: ${JSON.stringify({ progress: currentProgress })}\n\n`);
+            res.flush();
+          };
+          await cp(path.join(srcFolderPath, fn), path.join(sevenZipTempDir, dstArchiveInternalPath, fn), progressCallback);
+          i += 1;
         }
         const moveSrc = path.join(sevenZipTempDir, dstArchiveInternalPath.split(path.sep)[0]);
         moveSrcList.push(moveSrc);
@@ -177,9 +209,12 @@ const method = async (req, res) => {
           const moveSrc = path.join(srcFolderPath, fn);
           moveSrcList.push(moveSrc);
         }
+        res.write(`data: ${JSON.stringify({ progress: parseInt(keepSrc) ? 100 : 50 })}\n\n`);
+        res.flush();
       }
     } else {
-      return res.status(404).send('Source not found');
+      res.write(`data: ${JSON.stringify({ error: 'Source not found' })}`);
+      return res.end();
     }
   }
 
@@ -198,14 +233,17 @@ const method = async (req, res) => {
       }
 
       if (!compressResult.isOK) {
-        return res.status(500).send(`Failed to add file to destination archive:\n${compressResult.error}`);
+        res.write(`data: ${JSON.stringify({ error: `Failed to add file to destination archive:\n${compressResult.error}` })}`);
+        return res.end();
       }
     } catch (error) {
       console.error('Error handling destination archive file:', error);
       if (error.message === 'AbortError') {
-        return res.status(499).send('Client Closed Request');
+        res.write(`data: ${JSON.stringify({ error: 'Client Closed Request' })}`);
+        return res.end();
       }
-      return res.status(500).send(`Error handling destination archive file:\n${error.message}`);
+      res.write(`data: ${JSON.stringify({ error: `Error handling destination archive file:\n${error.message}` })}`);
+      return res.end();
     }
   } else if (!srcIsInArchive) {
     try {
@@ -218,7 +256,8 @@ const method = async (req, res) => {
       }
     } catch(error) {
       console.error('Error copying', error);
-      return res.status(500).send(`Error copying:\n${error.message}`);
+      res.write(`data: ${JSON.stringify({ error: `Error copying:\n${error.message}` })}`);
+      return res.end();
     }
   }
 
@@ -237,14 +276,17 @@ const method = async (req, res) => {
         }
   
         if (!deleteResult.isOK) {
-          return res.status(500).send(`Failed to delete from srouce archive file:\n${deleteResult.error}`);
+          res.write(`data: ${JSON.stringify({ error: `Failed to delete from srouce archive file:\n${deleteResult.error}` })}`);
+          return res.end();
         }
       } catch (error) {
         console.error('Error deleting from source archive file:', error);
         if (error.message === 'AbortError') {
-          return res.status(499).send('Client Closed Request');
+          res.write(`data: ${JSON.stringify({ error: 'Client Closed Request' })}`);
+          return res.end();
         }
-        return res.status(500).send(`Error deleting from source archive file:\n${error.message}`);
+        res.write(`data: ${JSON.stringify({ error: `Error deleting from source archive file:\n${error.message}` })}`);
+        return res.end();
       }
     } else {
       for (const fn of fileList) {

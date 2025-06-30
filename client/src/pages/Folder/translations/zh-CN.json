@@ -63,5 +63,12 @@
   "Drop in to upload": "拽入上传",
   "Not supported": "不支持",
   "Decompressing: ": "正在解压：",
-  "Decompressed: ": "解压完成："
+  "Decompressed: ": "解压完成：",
+  "Decompress error: ": "解压出错：",
+  "Copying: ": "正在复制：",
+  "Copy error: ": "复制出错：",
+  "Copied: ": "复制完成：",
+  "Moving: ": "正在移动：",
+  "Move error: ": "移动出错：",
+  "Moved: ": "移动完成："
 }

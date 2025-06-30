@@ -69,22 +69,107 @@ const MoveModal = (props) => {
 
   const handleFormOnFinish = async (values) => {
     setConfirmLoading(true);
+    const fileNames = [...new Set(selectedRowKeys)];
+    const fileNamesStr = fileNames.join(', ');
     try {
+      // 不显示进度
+/*
       if (title.includes('Move')) {
-        await folderService.move(pathname, [...new Set(selectedRowKeys)], values.dst, searchParams.get('archivePassword') ? { archivePassword: searchParams.get('archivePassword') } : {});
+        await folderService.move(pathname, fileNames values.dst, searchParams.get('archivePassword') ? { archivePassword: searchParams.get('archivePassword') } : {});
         setOpen(false);
         refresh();
       } else if (title.includes('Copy')) {
-        await folderService.copy(pathname, [...new Set(selectedRowKeys)], values.dst, searchParams.get('archivePassword') ? { archivePassword: searchParams.get('archivePassword') } : {});
+        await folderService.copy(pathname, fileNames, values.dst, searchParams.get('archivePassword') ? { archivePassword: searchParams.get('archivePassword') } : {});
         setOpen(false);
         refresh();
       } else {
         throw new Error(`${t('Invalid operation: ')}${title}`);
       }
+*/
+      setOpen(false);
+      // axios 方法，显示进度
+      const params = {
+        dst: values.dst,
+        keepSrc: title.includes('Copy') ? 1 : 0,
+      };
+      if (searchParams.get('archivePassword')) {
+        params['archivePassword'] = searchParams.get('archivePassword');
+      }
+      const response = await axios.post(`/move/${pathname}`, fileNames, {
+        params,
+        responseType: 'stream',
+      });
+
+      const stream = response.data;
+      const reader = stream.pipeThrough(new TextDecoderStream('utf-8')).getReader();
+
+      let hasError;
+      while (true) {
+        const { value, done } = await reader.read();
+        if (value) {
+          for (const event of value.split('\n').filter(Boolean)) {
+            const data = JSON.parse(event.replace(/^data: /, ''));
+            // console.log('data:', data);
+            const { progress, error } = data;
+            if (error) {
+              hasError = error
+              await reader.cancel(); // 主动关闭流，防止挂起
+            } else if (typeof(progress) === 'number') {
+              notificationApi.open({
+                key: fileNamesStr,
+                message: `${t(title.includes('Copy') ? 'Copying: ' : 'Moving: ')}${t('l"')}${fileNamesStr}${t('r"')}`,
+                description: <Progress percent={Math.round(progress)} status="active" />,
+                icon: <SyncOutlined spin style={{ color: '#1890ff' }} />,
+                duration: null,
+                closeIcon: false,
+                role: 'status',
+                placement: 'bottomRight',
+              });
+            }
+          }
+        }
+        if (done) {
+          if (hasError) {
+            notificationApi.open({
+              key: fileNamesStr,
+              message: `${t(title.includes('Copy') ? 'Copy error: ' : 'Move error: ')}${t('l"')}${fileNamesStr}${t('r"')}`,
+              description: handleErrorContent(hasError),
+              icon: <CloseCircleFilled style={{ color: '#ff4d4f' }} />,
+              duration: null,
+              // closeIcon: true,
+              role: 'status',
+              placement: 'bottomRight',
+            });
+          } else {
+            notificationApi.open({
+              key: fileNamesStr,
+              message: `${t(title.includes('Copy') ? 'Copied: ' : 'Moved: ')}${t('l"')}${fileNamesStr}${t('r"')}`,
+              description: <Progress percent={100} status="success" />,
+              icon: <CheckCircleFilled style={{ color: '#52c41a' }} />,
+              duration: 3,
+              // closeIcon: true,
+              role: 'status',
+              placement: 'bottomRight',
+            });
+          }
+          break;
+        }
+      }
     } catch(e) {
       console.error(e);
-      messageApi.error(`${t('Move failed: ')}${handleErrorContent(e)}`);
+      // messageApi.error(`${t('Move failed: ')}${handleErrorContent(e)}`);
+      notificationApi.open({
+        key: fileNamesStr,
+        message: `${t(title.includes('Copy') ? 'Copy error: ' : 'Move error: ')}${t('l"')}${fileNamesStr}${t('r"')}`,
+        description: handleErrorContent(e),
+        icon: <CloseCircleFilled />,
+        duration: null,
+        // closeIcon: true,
+        role: 'status',
+        placement: 'bottomRight',
+      });
     } finally {
+      refresh();
       setConfirmLoading(false);
     }
   }
