@@ -105,10 +105,10 @@ class SevenZip {
   }
 
   // 1. 添加文件到压缩包
-  async add(archivePath, files, options = '', password = '', signal) {
+  async add(archivePath, files, options = '', password = '', signal, progressCallback) {
     const fileList = files.map(file => `"${path.resolve(file)}"`);
     const args = ['a', options, '-ssp', ...(password ? [`-p"${password}"`] : []), `"${archivePath}"`, ...fileList];
-    return this._handleCommand(args, signal);
+    return this._handleCommand(args, signal, null, false, progressCallback);
   }
 
   // 2. 解压文件到指定目录
@@ -275,23 +275,23 @@ class SevenZip {
   }
 
   // 6. 删除压缩包中的文件
-  async delete(archivePath, files, options = '', password = '', signal) {
+  async delete(archivePath, files, options = '', password = '', signal, progressCallback) {
     const fileList = files.map(file => `"${file}"`);
     const args = ['d', options, ...(password ? [`-p"${password}"`] : []), `"${archivePath}"`, ...fileList];
-    return this._handleCommand(args, signal);
+    return this._handleCommand(args, signal, null, false, progressCallback);
   }
 
   // 7. 更新压缩包内容
-  async update(archivePath, files, options = '', password = '', signal) {
+  async update(archivePath, files, options = '', password = '', signal, progressCallback) {
     const fileList = files.map(file => `"${file}"`);
     const args = ['u', options, ...(password ? [`-p"${password}"`] : []), `"${archivePath}"`, ...fileList];
-    return this._handleCommand(args, signal);
+    return this._handleCommand(args, signal, null, false, progressCallback);
   }
 
   // 8. 重命名压缩包内的文件
-  async rename(archivePath, oldName, newName, options = '', password = '', signal) {
+  async rename(archivePath, oldName, newName, options = '', password = '', signal, progressCallback) {
     const args = ['rn', options, ...(password ? [`-p"${password}"`] : []), `"${archivePath}"`, `"${oldName}"`, `"${newName}"`];
-    return this._handleCommand(args, signal);
+    return this._handleCommand(args, signal, null, false, progressCallback);
   }
 
   // 9. 自定义命令执行

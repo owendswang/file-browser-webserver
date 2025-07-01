@@ -29,28 +29,26 @@ const FolderServices = {
     return res.data;
   },
 
-  async move(pathname, fileList, dst, params = {}, keepSrc = 0) {
+  async move(pathname, fileList, dst, params = {}) {
     const res = await axios.request({
       method: 'post',
       url: `/move/${pathname}`,
       params: {
         ...params,
         dst,
-        keepSrc,
       },
       data: fileList,
     });
     return res.data;
   },
 
-  async copy(pathname, fileList, dst, params = {}, keepSrc = 1) {
+  async copy(pathname, fileList, dst, params = {}) {
     const res = await axios.request({
       method: 'post',
-      url: `/move/${pathname}`,
+      url: `/copy/${pathname}`,
       params: {
         ...params,
         dst,
-        keepSrc,
       },
       data: fileList,
     });

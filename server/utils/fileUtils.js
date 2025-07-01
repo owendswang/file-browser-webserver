@@ -371,7 +371,7 @@ async function copy(source, destination, options = {}, progressCallback = () => 
     }
 
     const stats = fs.statSync(src);
-    const bufferSize = fileSize > 100 * 1024 * 1024 ? 1024 * 1024 : 64 * 1024;
+    const bufferSize = stats.size > 100 * 1024 * 1024 ? 1024 * 1024 : 64 * 1024;
     const readStream = fs.createReadStream(src, { highWaterMark: bufferSize });
     const writeStream = fs.createWriteStream(dest, { highWaterMark: bufferSize });
 

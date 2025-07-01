@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Modal, TreeSelect, Form } from 'antd';
+import { Modal, TreeSelect, Form, Progress } from 'antd';
+import { SyncOutlined, CheckCircleFilled, CloseCircleFilled } from '@ant-design/icons';
 import handleErrorContent from '@/utils/handleErrorContent';
 import folderService from '@/services/folder';
+import axios from '@/utils/axios';
 
 const MoveModal = (props) => {
   const { 
@@ -13,6 +15,7 @@ const MoveModal = (props) => {
     refresh,
     pathname,
     messageApi,
+    notificationApi,
     searchParams,
     t
   } = props;
@@ -90,12 +93,11 @@ const MoveModal = (props) => {
       // axios 方法，显示进度
       const params = {
         dst: values.dst,
-        keepSrc: title.includes('Copy') ? 1 : 0,
       };
       if (searchParams.get('archivePassword')) {
         params['archivePassword'] = searchParams.get('archivePassword');
       }
-      const response = await axios.post(`/move/${pathname}`, fileNames, {
+      const response = await axios.post(`/${title.includes('Copy') ? 'copy' : 'move'}/${pathname}`, fileNames, {
         params,
         responseType: 'stream',
       });
@@ -109,7 +111,7 @@ const MoveModal = (props) => {
         if (value) {
           for (const event of value.split('\n').filter(Boolean)) {
             const data = JSON.parse(event.replace(/^data: /, ''));
-            // console.log('data:', data);
+            console.log('data:', data);
             const { progress, error } = data;
             if (error) {
               hasError = error

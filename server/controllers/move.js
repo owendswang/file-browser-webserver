@@ -9,7 +9,7 @@ const getConfig = require('@/utils/getConfig');
 
 const method = async (req, res) => {
   // 获取查询参数
-  const { archivePassword = '', dst = '', keepSrc = '0' } = req.query;
+  const { archivePassword = '', dst = '' } = req.query;
   const fileList = req.body;
 
   const {
@@ -131,7 +131,7 @@ const method = async (req, res) => {
       let extractResult = {};
       if (dstIsInArchive) {
         const progressCallback = (progress) => {
-          const currentProgress = progress * 0.9 / (parseInt(keepSrc) ? 2 : 3);
+          const currentProgress = progress * 0.9 / 3;
           res.write(`data: ${JSON.stringify({ progress: currentProgress })}\n\n`);
           res.flush();
         };
@@ -150,11 +150,11 @@ const method = async (req, res) => {
             moveSrcList.push(moveSrc);
           }
         }
-        res.write(`data: ${JSON.stringify({ progress: parseInt(keepSrc) ? 50 : 33.33 })}\n\n`);
+        res.write(`data: ${JSON.stringify({ progress: 33.33 })}\n\n`);
         res.flush();
       } else {
         const progressCallback = (progress) => {
-          const currentProgress = progress * 0.9 / (parseInt(keepSrc) ? 1 : 2);
+          const currentProgress = progress * 0.9 / 2;
           res.write(`data: ${JSON.stringify({ progress: currentProgress })}\n\n`);
           res.flush();
         };
@@ -165,7 +165,7 @@ const method = async (req, res) => {
           }
           fs.rmSync(path.join(dstFullPath, srcArchiveInternalPath.split(path.sep)[0]), { recursive: true, force: false });
         }
-        res.write(`data: ${JSON.stringify({ progress: parseInt(keepSrc) ? 100 : 50 })}\n\n`);
+        res.write(`data: ${JSON.stringify({ progress: 50 })}\n\n`);
         res.flush();
       }
 
@@ -195,11 +195,16 @@ const method = async (req, res) => {
           //   { errorOnExist: true, force: false, preserveTimestamps: true, recursive: true }
           // );
           const progressCallback = (progress) => {
-            const currentProgress = (progress + i * 100) / fileList.length / (parseInt(keepSrc) ? 2 : 3) + (parseInt(keepSrc) ? 50 : 33.33);
+            const currentProgress = (progress + i * 100) / fileList.length / 3;
             res.write(`data: ${JSON.stringify({ progress: currentProgress })}\n\n`);
             res.flush();
           };
-          await cp(path.join(srcFolderPath, fn), path.join(sevenZipTempDir, dstArchiveInternalPath, fn), progressCallback);
+          await copy(
+            path.join(srcFolderPath, fn),
+            path.join(sevenZipTempDir, dstArchiveInternalPath, fn),
+            {},
+            progressCallback
+          );
           i += 1;
         }
         const moveSrc = path.join(sevenZipTempDir, dstArchiveInternalPath.split(path.sep)[0]);
@@ -209,8 +214,6 @@ const method = async (req, res) => {
           const moveSrc = path.join(srcFolderPath, fn);
           moveSrcList.push(moveSrc);
         }
-        res.write(`data: ${JSON.stringify({ progress: parseInt(keepSrc) ? 100 : 50 })}\n\n`);
-        res.flush();
       }
     } else {
       res.write(`data: ${JSON.stringify({ error: 'Source not found' })}`);
@@ -225,11 +228,14 @@ const method = async (req, res) => {
         const winRar = new WinRar(winRarPath, true, winRarLang);
         const options = `"-x*${path.sep}desktop.ini" "-x*${path.sep}.DS_Store" "-x*${path.sep}__MACOSX" "-w${tempDir}"`;
         compressResult = await winRar.add(dstArchiveFullPath, moveSrcList, options, archivePassword, signal);
-        console.log(compressResult);
       } else {
         const options = `"-xr!desktop.ini" "-xr!.DS_Store" "-xr!__MACOSX" "-w${tempDir}"`;
-        console.log(moveSrcList);
-        compressResult = await sevenZip.add(dstArchiveFullPath, moveSrcList, options, archivePassword, signal);
+        const progressCallback = (progress) => {
+          const currentProgress = progress / 3 + 33.33;
+          res.write(`data: ${JSON.stringify({ progress: currentProgress })}\n\n`);
+          res.flush();
+        };
+        compressResult = await sevenZip.add(dstArchiveFullPath, moveSrcList, options, archivePassword, signal, progressCallback);
       }
 
       if (!compressResult.isOK) {
@@ -247,12 +253,25 @@ const method = async (req, res) => {
     }
   } else if (!srcIsInArchive) {
     try {
+      let i = 0;
       for (const moveSrc of moveSrcList) {
-        fs.cpSync(
+        // fs.cpSync(
+        //   moveSrc,
+        //   path.join(dstFullPath, path.basename(moveSrc)),
+        //   { errorOnExist: true, force: false, preserveTimestamps: true, recursive: true }
+        // );
+        const progressCallback = (progress) => {
+          const currentProgress = (progress + i * 100) / moveSrcList.length;
+          res.write(`data: ${JSON.stringify({ progress: currentProgress })}\n\n`);
+          res.flush();
+        };
+        await copy(
           moveSrc,
           path.join(dstFullPath, path.basename(moveSrc)),
-          { errorOnExist: true, force: false, preserveTimestamps: true, recursive: true }
+          {},
+          progressCallback
         );
+        i += 1;
       }
     } catch(error) {
       console.error('Error copying', error);
@@ -261,40 +280,44 @@ const method = async (req, res) => {
     }
   }
 
-  if (!parseInt(keepSrc)) {
-    if (srcIsInArchive) {
-      try {
-        const options = `"-w${tempDir}"`;
+  if (srcIsInArchive) {
+    try {
+      const options = `"-w${tempDir}"`;
 
-        let deleteResult;
-        const srcArchiveInternalDeletePathList = fileList.map((fn) => path.join(srcArchiveInternalPath, fn));
-        if (srcArchiveFullPath.endsWith('.rar') && ['x86', 'x64'].includes(os.arch())) {
-          const winRar = new WinRar(winRarPath, true, winRarLang);
-          deleteResult = await winRar.delete(srcArchiveFullPath, srcArchiveInternalDeletePathList, options, archivePassword, signal);
-        } else {
-          deleteResult = await sevenZip.delete(srcArchiveFullPath, srcArchiveInternalDeletePathList, options, archivePassword, signal);
-        }
-  
-        if (!deleteResult.isOK) {
-          res.write(`data: ${JSON.stringify({ error: `Failed to delete from srouce archive file:\n${deleteResult.error}` })}`);
-          return res.end();
-        }
-      } catch (error) {
-        console.error('Error deleting from source archive file:', error);
-        if (error.message === 'AbortError') {
-          res.write(`data: ${JSON.stringify({ error: 'Client Closed Request' })}`);
-          return res.end();
-        }
-        res.write(`data: ${JSON.stringify({ error: `Error deleting from source archive file:\n${error.message}` })}`);
+      let deleteResult;
+      const srcArchiveInternalDeletePathList = fileList.map((fn) => path.join(srcArchiveInternalPath, fn));
+      if (srcArchiveFullPath.endsWith('.rar') && ['x86', 'x64'].includes(os.arch())) {
+        const winRar = new WinRar(winRarPath, true, winRarLang);
+        deleteResult = await winRar.delete(srcArchiveFullPath, srcArchiveInternalDeletePathList, options, archivePassword, signal);
+      } else {
+        const progressCallback = (progress) => {
+          const currentProgress = progress / 3 + 66.67;
+          res.write(`data: ${JSON.stringify({ progress: currentProgress })}\n\n`);
+          res.flush();
+        };
+        deleteResult = await sevenZip.delete(srcArchiveFullPath, srcArchiveInternalDeletePathList, options, archivePassword, signal, progressCallback);
+      }
+
+      if (!deleteResult.isOK) {
+        res.write(`data: ${JSON.stringify({ error: `Failed to delete from srouce archive file:\n${deleteResult.error}` })}`);
         return res.end();
       }
-    } else {
-      for (const fn of fileList) {
-        fs.rmSync(path.join(srcFolderPath, fn), { recursive: true, force: false });
+    } catch (error) {
+      console.error('Error deleting from source archive file:', error);
+      if (error.message === 'AbortError') {
+        res.write(`data: ${JSON.stringify({ error: 'Client Closed Request' })}`);
+        return res.end();
       }
+      res.write(`data: ${JSON.stringify({ error: `Error deleting from source archive file:\n${error.message}` })}`);
+      return res.end();
+    }
+  } else {
+    for (const fn of fileList) {
+      fs.rmSync(path.join(srcFolderPath, fn), { recursive: true, force: false });
     }
   }
 
+  res.write(`data: ${JSON.stringify({ progress: 100 })}\n\n`);
   return res.end();
 }
 

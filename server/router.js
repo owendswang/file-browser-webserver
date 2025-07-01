@@ -109,6 +109,9 @@ router.post('/api/delete/*', oauth.authenticate({ scope: ['admin'] }), deleteRou
 // File move route
 router.post('/api/move/*', oauth.authenticate({ scope: ['admin'] }), moveRouter);
 
+// File copy route
+router.post('/api/copy/*', oauth.authenticate({ scope: ['admin'] }), moveRouter);
+
 // Archive file decompress route
 router.post('/api/decompress/*', oauth.authenticate({ scope: ['admin'] }), decompressRouter);
 
