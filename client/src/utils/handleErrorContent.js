@@ -12,8 +12,17 @@ const handleErrorContent = (error) => {
     } else {
       return error.response.data;
     }
-  } else {
+  } else if (typeof(error) === 'string') {
+    const index = error.indexOf(':');
+    if (index > -1) {
+      return error.slice(index + 1).trim();
+    } else {
+      return error;
+    }
+  } else if (error instanceof Error) {
     return error.message;
+  } else {
+    return error;
   }
 }
 

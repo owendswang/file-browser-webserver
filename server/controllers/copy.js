@@ -4,7 +4,7 @@ const path = require('path');
 const { randomBytes } = require('crypto');
 const SevenZip = require('@/utils/7zip');
 const WinRar = require('@/utils/winRar');
-const { isArchive, rm, copy } = require('@/utils/fileUtils');
+const { isArchive, copy } = require('@/utils/fileUtils');
 const getConfig = require('@/utils/getConfig');
 
 const method = async (req, res) => {
@@ -102,7 +102,7 @@ const method = async (req, res) => {
   // 处理完成后删除临时目录
   res.on('close', () => {
     if (fs.existsSync(sevenZipTempDir)) {
-      rm(sevenZipTempDir);
+      fs.rmSync(sevenZipTempDir, { recursive: true, force: true });
     }
   });
 
@@ -131,21 +131,18 @@ const method = async (req, res) => {
       let extractResult = {};
       if (dstIsInArchive) {
         const progressCallback = (progress) => {
-          const currentProgress = progress * 0.9 / 2;
+          const currentProgress = progress / 2;
           res.write(`data: ${JSON.stringify({ progress: currentProgress })}\n\n`);
           res.flush();
         };
-        extractResult = await sevenZip.extract(srcArchiveFullPath, sevenZipTempDir, options, archivePassword, true, signal, progressCallback);
+        const extractDir = path.join(sevenZipTempDir, dstArchiveInternalPath);
+        fs.mkdirSync(extractDir, { recursive: true });
+        extractResult = await sevenZip.extract(srcArchiveFullPath, extractDir, options, archivePassword, true, signal, progressCallback);
 
         if (dstArchiveInternalPath) {
-          fs.mkdirSync(path.join(sevenZipTempDir, dstArchiveInternalPath), { recursive: true, });
-          for (const fn of fileList) {
-            fs.renameSync(path.join(sevenZipTempDir, srcArchiveInternalPath, fn), path.join(sevenZipTempDir, dstArchiveInternalPath, fn));
-          }
           moveSrcList.push(path.join(sevenZipTempDir, dstArchiveInternalPath.split(path.sep)[0]));
         } else {
           for (const fn of fileList) {
-            // 解压后的文件夹路径
             const moveSrc = path.join(sevenZipTempDir, srcArchiveInternalPath, fn);
             moveSrcList.push(moveSrc);
           }
@@ -154,7 +151,7 @@ const method = async (req, res) => {
         res.flush();
       } else {
         const progressCallback = (progress) => {
-          const currentProgress = progress * 0.9;
+          const currentProgress = progress;
           res.write(`data: ${JSON.stringify({ progress: currentProgress })}\n\n`);
           res.flush();
         };
@@ -194,6 +191,7 @@ const method = async (req, res) => {
           //   path.join(sevenZipTempDir, dstArchiveInternalPath, fn),
           //   { errorOnExist: true, force: false, preserveTimestamps: true, recursive: true }
           // );
+
           const progressCallback = (progress) => {
             const currentProgress = (progress + i * 100) / fileList.length / 2;
             res.write(`data: ${JSON.stringify({ progress: currentProgress })}\n\n`);
@@ -203,12 +201,16 @@ const method = async (req, res) => {
             path.join(srcFolderPath, fn),
             path.join(sevenZipTempDir, dstArchiveInternalPath, fn),
             {},
-            progressCallback
+            progressCallback,
+            signal
           );
           i += 1;
         }
         const moveSrc = path.join(sevenZipTempDir, dstArchiveInternalPath.split(path.sep)[0]);
         moveSrcList.push(moveSrc);
+
+        res.write(`data: ${JSON.stringify({ progress: 50 })}\n\n`);
+        res.flush();
       } else {
         for (const fn of fileList) {
           const moveSrc = path.join(srcFolderPath, fn);
@@ -231,7 +233,7 @@ const method = async (req, res) => {
       } else {
         const options = `"-xr!desktop.ini" "-xr!.DS_Store" "-xr!__MACOSX" "-w${tempDir}"`;
         const progressCallback = (progress) => {
-          const currentProgress = progress / 2 + 50;
+          const currentProgress = (!dstArchiveInternalPath && !srcIsInArchive) ? (progress) : (progress / 2 + 50);
           res.write(`data: ${JSON.stringify({ progress: currentProgress })}\n\n`);
           res.flush();
         };
@@ -255,6 +257,11 @@ const method = async (req, res) => {
     try {
       let i = 0;
       for (const moveSrc of moveSrcList) {
+        // fs.cpSync(
+        //   moveSrc,
+        //   path.join(dstFullPath, path.basename(moveSrc)),
+        //   { errorOnExist: true, force: false, preserveTimestamps: true, recursive: true }
+        // );
         const progressCallback = (progress) => {
           const currentProgress = (progress + i * 100) / moveSrcList.length;
           res.write(`data: ${JSON.stringify({ progress: currentProgress })}\n\n`);
@@ -263,8 +270,9 @@ const method = async (req, res) => {
         await copy(
           moveSrc,
           path.join(dstFullPath, path.basename(moveSrc)),
-          { retainSource: false },
-          progressCallback
+          {},
+          progressCallback,
+          signal
         );
         i += 1;
       }

@@ -343,7 +343,7 @@ function encodeURIComponentForPath(path) {
 async function copy(source, destination, options = {}, progressCallback = () => {}, abortSignal = null) {
   progressCallback(0);
 
-  const { retainSource = true, overwrite = true } = options;
+  const { retainSource = true, overwrite = false } = options;
   let totalSize = 0, copiedSize = 0;
 
   function calculateTotalSize(src) {
@@ -365,9 +365,10 @@ async function copy(source, destination, options = {}, progressCallback = () => 
 
     if (fs.existsSync(dest) && !overwrite) {
       const stats = fs.statSync(src);
-      copiedSize += stats.size;
-      progressCallback(copiedSize / totalSize);
-      return;
+      // copiedSize += stats.size;
+      // progressCallback(copiedSize / totalSize);
+      // return;
+      throw new Error('File exists with the same name');
     }
 
     const stats = fs.statSync(src);
@@ -388,7 +389,7 @@ async function copy(source, destination, options = {}, progressCallback = () => 
         progressCallback(copiedSize / totalSize);
       });
 
-      readStream.on('end', () => {
+      writeStream.on('finish', () => {
         fs.utimesSync(dest, stats.atime, stats.mtime);
         resolve();
       });
@@ -400,7 +401,7 @@ async function copy(source, destination, options = {}, progressCallback = () => 
   async function copyRecursive(src, dest) {
     if (abortSignal && abortSignal.aborted) throw new Error('Copy operation aborted');
 
-    if (!retainSource) {
+    if (!retainSource && overwrite) {
       try {
         fs.renameSync(src, dest);
         progressCallback(100);
@@ -412,7 +413,11 @@ async function copy(source, destination, options = {}, progressCallback = () => 
 
     const stats = fs.statSync(src);
     if (stats.isDirectory()) {
-      if (!fs.existsSync(dest)) fs.mkdirSync(dest);
+      if (!fs.existsSync(dest)) {
+        fs.mkdirSync(dest);
+        const stats = fs.statSync(src);
+        fs.utimesSync(dest, stats.atime, stats.mtime);
+      }
       const items = fs.readdirSync(src);
       for (const item of items) {
         await copyRecursive(path.join(src, item), path.join(dest, item));

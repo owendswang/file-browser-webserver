@@ -83,11 +83,11 @@ class SevenZip {
       });
 
       // 检查请求是否被中断
-      signal.addEventListener('abort', () => {
+      signal.onabort = () => {
         child.kill('SIGTERM'); // 发送 SIGTERM 信号以中止子进程
         // reject(new Error('AbortError'));
         reject('AbortError');
-      });
+      };
     });
   }
 
@@ -146,10 +146,10 @@ class SevenZip {
     });
 
     // 检查请求是否被中断
-    signal.addEventListener('abort', () => {
+    signal.onabort = () => {
       child.kill('SIGTERM'); // 发送 SIGTERM 信号以中止子进程
       console.error('AbortError');
-    });
+    };
 
     return child.stdout; // 返回输出流
   }
