@@ -35,11 +35,13 @@
   "Enable hardware acceleration": "开启硬件加速",
   "Hardware vendor": "硬件厂商",
   "Acceleration device": "加速设备",
-  "It's better to leave it empty if you don't know what this is.": "建议留空，除非你知道了解这个选项的用途。",
+  "It's better to leave it empty if you don't know what this is.": "建议留空，除非你知晓并了解这个选项的用途。",
   "E.g. '0', '1'. Or leave it empty": "例如：“0”、“1”，或留空不填",
   "Save": "保存",
   "Reset": "重置",
   "Enable thumbnail animation": "启用可动缩略图",
   "It would take a lot of efforts to create animated thumbnails for videos and GIFs.": "为视频和 GIF 创建可动缩略图会消耗很多资源和时间。",
-  "Save successfully!": "保存成功！"
+  "Save successfully!": "保存成功！",
+  "Enable recycle bin": "启用回收站",
+  "Deleted items would be kept in the folder called 'FB Recycle Bin' in the root of the path where they were.": "被删除的文件会存在所在路径的根目录下的 “FB Recycle Bin” 文件夹中。"
 }

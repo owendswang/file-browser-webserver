@@ -349,6 +349,96 @@ const Folder = () => {
     },
   };
 
+  const handleProgressDelete = async (name) => {
+    let fileNames = [];
+    if (name) {
+      fileNames = [name];
+    } else {
+      fileNames = [...new Set(selectedRowKeys)];
+    }
+    const fileNamesStr = fileNames.join(', ');
+    try {
+      const params = {};
+      if (searchParams.get('archivePassword')) {
+        params['archivePassword'] = searchParams.get('archivePassword');
+      }
+      const response = await axios.post(`/delete/${pathname}`, fileNames, {
+        params,
+        responseType: 'stream',
+      });
+
+      const stream = response.data;
+      const reader = stream.pipeThrough(new TextDecoderStream('utf-8')).getReader();
+
+      let hasError;
+      while (true) {
+        const { value, done } = await reader.read();
+        if (value) {
+          for (const event of value.split('\n').filter(Boolean)) {
+            const data = JSON.parse(event.replace(/^data: /, ''));
+            const { progress, error } = data;
+            if (error) {
+              hasError = error
+              await reader.cancel(); // 主动关闭流，防止挂起
+            } else if (typeof(progress) === 'number') {
+              notificationApi.open({
+                key: fileNamesStr,
+                message: `${t('Deleting: ')}${t('l"')}${fileNamesStr}${t('r"')}`,
+                description: <Progress percent={Math.round(progress)} status="active" />,
+                icon: <SyncOutlined spin style={{ color: '#1890ff' }} />,
+                duration: null,
+                closeIcon: false,
+                role: 'status',
+                placement: 'bottomRight',
+              });
+            }
+          }
+        }
+        if (done) {
+          if (hasError) {
+            notificationApi.open({
+              key: fileNamesStr,
+              message: `${t('Delete error: ')}${t('l"')}${fileNamesStr}${t('r"')}`,
+              description: handleErrorContent(hasError),
+              icon: <CloseCircleFilled style={{ color: '#ff4d4f' }} />,
+              duration: null,
+              // closeIcon: true,
+              role: 'status',
+              placement: 'bottomRight',
+            });
+          } else {
+            notificationApi.open({
+              key: fileNamesStr,
+              message: `${t('Deleted: ')}${t('l"')}${fileNamesStr}${t('r"')}`,
+              description: <Progress percent={100} status="success" />,
+              icon: <CheckCircleFilled style={{ color: '#52c41a' }} />,
+              duration: 3,
+              // closeIcon: true,
+              role: 'status',
+              placement: 'bottomRight',
+            });
+          }
+          break;
+        }
+      }
+    } catch(e) {
+      console.error(e);
+      // messageApi.error(`${t('Move failed: ')}${handleErrorContent(e)}`);
+      notificationApi.open({
+        key: fileNamesStr,
+        message: `${t(title.includes('Copy') ? 'Copy error: ' : 'Move error: ')}${t('l"')}${fileNamesStr}${t('r"')}`,
+        description: handleErrorContent(e),
+        icon: <CloseCircleFilled />,
+        duration: null,
+        // closeIcon: true,
+        role: 'status',
+        placement: 'bottomRight',
+      });
+    } finally {
+      refresh();
+    }
+  }
+
   const handleDeleteClick = (name) => {
     // console.log(pn);
     setSelectedRowKeys([name]);
@@ -358,16 +448,21 @@ const Folder = () => {
       closable: true,
       maskClosable: true,
       onOk: async () => {
-        try {
+        // axios 方法，显示进度
+        handleProgressDelete(name);
+
+        // 不显示进度
+        /*try {
           if (!name) {
             throw new Error(t('Nothing to delete'));
           }
           await folderService.delete(pathname, [name], searchParams.get('archivePassword') ? { archivePassword: searchParams.get('archivePassword') } : {});
-          refresh();
         } catch(e) {
           console.error(e);
           messageApi.error(`${t('Delete failed: ')}${handleErrorContent(e)}`);
-        }
+        } finally {
+          refresh();
+        }*/
       },
       onCancel: () => {
         setSelectedRowKeys([]);
@@ -383,13 +478,18 @@ const Folder = () => {
       closable: true,
       maskClosable: true,
       onOk: async () => {
-        try {
+        // axios 方法，显示进度
+        handleProgressDelete();
+
+        // 不显示进度
+        /*try {
           await folderService.delete(pathname, selectedRowKeys, searchParams.get('archivePassword') ? { archivePassword: searchParams.get('archivePassword') } : {});
-          refresh();
         } catch(e) {
           console.error(e);
           messageApi.error(`${t('Delete failed: ')}${handleErrorContent(e)}`);
-        }
+        } finally {
+          refresh();
+        }*/
       }
     });
   }

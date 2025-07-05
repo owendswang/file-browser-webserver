@@ -70,5 +70,8 @@
   "Copied: ": "Copied: ",
   "Moving: ": "Moving: ",
   "Move error: ": "Move error: ",
-  "Moved: ": "Moved: "
+  "Moved: ": "Moved: ",
+  "Deleting: ": "Deleting: ",
+  "Delete error: ": "Delete error: ",
+  "Deleted: ": "Deleted: "
 }

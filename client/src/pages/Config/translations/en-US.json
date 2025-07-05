@@ -41,5 +41,7 @@
   "Reset": "Reset",
   "Enable thumbnail animation": "Enable thumbnail animation",
   "It would take a lot of efforts to create animated thumbnails for videos and GIFs.": "It would take a lot of efforts to create animated thumbnails for videos and GIFs.",
-  "Save successfully!": "Save successfully!"
+  "Save successfully!": "Save successfully!",
+  "Enable recycle bin": "Enable recycle bin",
+  "Deleted items would be kept in the folder called 'FB Recycle Bin' in the root of the path where they were.": "Deleted items would be kept in the folder called 'FB Recycle Bin' in the root of the path where they were."
 }

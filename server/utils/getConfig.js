@@ -49,6 +49,10 @@ const getConfig = () => {
     config.dbPath = path.resolve(__dirname, '..', 'db', 'db.sqlite');
   }
 
+  if (config.enableRecycleBin === undefined) {
+    config.enableRecycleBin = true;
+  }
+
   return config;
 }
 

@@ -198,6 +198,14 @@ const Config = () => {
             >
               <Switch />
             </Form.Item>
+            <Form.Item
+              label={t("Enable recycle bin")}
+              name="enableRecycleBin"
+              valuePropName="checked"
+              tooltip={t("Deleted items would be kept in the folder called 'FB Recycle Bin' in the root of the path where they were.")}
+            >
+              <Switch />
+            </Form.Item>
             <Divider orientation="left"><h4>{t("Archive")}</h4></Divider>
             <Form.Item
               label={t("7-zip executable file path")}

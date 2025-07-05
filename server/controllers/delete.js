@@ -3,8 +3,10 @@ const fs = require('fs');
 const path = require('path');
 const SevenZip = require('@/utils/7zip');
 const WinRar = require('@/utils/winRar');
-const { isArchive, rm } = require('@/utils/fileUtils');
+const { isArchive } = require('@/utils/fileUtils');
 const getConfig = require('@/utils/getConfig');
+
+const recycleFolderName = 'FB Recycle Bin';
 
 const method = async (req, res) => {
   // 获取查询参数
@@ -19,7 +21,8 @@ const method = async (req, res) => {
     sevenZipPath,
     winRarPath,
     basePaths,
-    tempDir
+    tempDir,
+    enableRecycleBin
   } = getConfig();
   
   const abortController = new AbortController();
@@ -58,6 +61,84 @@ const method = async (req, res) => {
     }
   }
 
+  res.setHeader('Content-Type', 'text/event-stream');
+  res.setHeader('Cache-Control', 'no-cache');
+  res.setHeader('Connection', 'keep-alive');
+  res.flushHeaders();
+
+  const sevenZip = new SevenZip(sevenZipPath);
+
+  if (enableRecycleBin) {
+    const recycleDirPath = path.join(basePaths[folderName], recycleFolderName, Date.now().toString());
+    if (!fs.existsSync(recycleDirPath)) {
+      fs.mkdirSync(recycleDirPath, { recursive: true });
+    }
+
+    if (isInArchive) {
+      try {
+        const progressCallback = (progress) => {
+          const currentProgress = progress / 2;
+          res.write(`data: ${JSON.stringify({ progress: currentProgress })}\n\n`);
+          res.flush();
+        };
+        const options = fileList.map((fn) => `"-i!${path.join(archiveInternalPath, fn)}"`).join(' ');
+        extractResult = await sevenZip.extract(archiveFullPath, recycleDirPath, options, archivePassword, true, signal, progressCallback);
+        if (archiveInternalPath) {
+          for (const fn of fileList) {
+            fs.renameSync(path.join(recycleDirPath, archiveInternalPath, fn), path.join(recycleDirPath, fn));
+          }
+          fs.rmSync(path.join(recycleDirPath, archiveInternalPath.split(path.sep)[0]), { recursive: true, force: false });
+        }
+
+        if (!extractResult.isOK) {
+          res.write(`data: ${JSON.stringify({ error: `Failed to extract from archive:\n${extractResult.error}`})}`);
+          return res.end();
+        }
+
+        res.write(`data: ${JSON.stringify({ progress: 50 })}\n\n`);
+        res.flush();
+      } catch (error) {
+        console.error('Error extracting from archive file:', error);
+        if (error.message === 'AbortError') {
+          res.write(`data: ${JSON.stringify({ error: 'Client Closed Request' })}`);
+          return res.end();
+        }
+        res.write(`data: ${JSON.stringify({ error: `Error extracting from archive file:\n${error.message}` })}`);
+        return res.end();
+      }
+    } else {
+      let i = 0;
+      for (const fn of fileList) {
+        const fullPath = path.join(folderPath, fn);
+        const recyclePath = path.join(recycleDirPath, fn);
+
+        fs.renameSync(fullPath, recyclePath);
+
+        const currentProgress = i * 100 / fileList.length;
+        res.write(`data: ${JSON.stringify({ progress: currentProgress })}\n\n`);
+        res.flush();
+
+        i += 1;
+      }
+    }
+  } else {
+    if (!isInArchive) {
+      // 如果不是压缩包内部文件，直接删除
+      let i = 0;
+      for (const fn of fileList) {
+        const fullPath = path.join(folderPath, fn);
+
+        fs.rmSync(fullPath, { recursive: true, force: true });
+
+        const currentProgress = i * 100 / fileList.length;
+        res.write(`data: ${JSON.stringify({ progress: currentProgress })}\n\n`);
+        res.flush();
+
+        i += 1;
+      }
+    }
+  }
+
   if (isInArchive) {
     try {
       const options = `"-w${tempDir}"`;
@@ -68,8 +149,12 @@ const method = async (req, res) => {
         const winRar = new WinRar(winRarPath, true);
         deleteResult = await winRar.delete(archiveFullPath, archiveInternalFileList, options, archivePassword, signal);
       } else {
-        const sevenZip = new SevenZip(sevenZipPath);
-        deleteResult = await sevenZip.delete(archiveFullPath, archiveInternalFileList, options, archivePassword, signal);
+        const progressCallback = (progress) => {
+          const currentProgress = enableRecycleBin ? (progress / 2 + 50) : progress;
+          res.write(`data: ${JSON.stringify({ progress: currentProgress })}\n\n`);
+          res.flush();
+        };
+        deleteResult = await sevenZip.delete(archiveFullPath, archiveInternalFileList, options, archivePassword, signal, progressCallback);
       }
 
       if (!deleteResult.isOK) {
@@ -78,25 +163,15 @@ const method = async (req, res) => {
     } catch (error) {
       console.error('Error deleting from archive file:', error);
       if (error.message === 'AbortError') {
-        return res.status(499).send('Client Closed Request');
+        res.write(`data: ${JSON.stringify({ error: 'Client Closed Request' })}`);
+        return res.end();
       }
-      return res.status(500).send(`Error deleting from archive file:\n${error.message}`);
-    }
-  } else {
-    // 如果不是压缩包内部文件，直接删除
-    let noOneExists = true;
-    for (const fn of fileList) {
-      const fullPath = path.join(folderPath, fn);
-      if (fs.existsSync(fullPath)) {
-        noOneExists = false;
-        await rm(fullPath);
-      }
-    }
-
-    if (noOneExists) {
-      return res.status(404).send('Nothing to delete');
+      res.write(`data: ${JSON.stringify({ error: `Error deleting from archive file:\n${error.message}` })}`);
+      return res.end();
     }
   }
+
+  res.write(`data: ${JSON.stringify({ progress: 100 })}\n\n`);
   return res.end();
 }
 

@@ -14,6 +14,8 @@ const {
 } = require('@/utils/fileUtils');
 const getConfig = require('@/utils/getConfig');
 
+const recycleFolderName = 'FB Recycle Bin';
+
 const method = async (req, res) => {
   const {
     sevenZipPath,
@@ -187,7 +189,9 @@ const method = async (req, res) => {
       return hidden ? null : file;
     }));
 
-    files = files.filter(file => file !== null);
+    files = files.filter(file => (file !== null));
+
+    files = files.filter(file => !((urlPath === folderName) && (file.name === recycleFolderName)));
 
     if (type === 'video') {
       files = files.filter(file => file.type === 'Video File');

@@ -127,7 +127,7 @@ const method = async (req, res) => {
       }
 
       // 使用 7-Zip 解压指定文件
-      const options = fileList.map((fn) => `"-i!${path.join(srcArchiveInternalPath, fn)}"`).join(' '); // 指定要解压的文件
+      const options = fileList.map((fn) => `"-i!${path.join(srcArchiveInternalPath, fn)}"`).join(' ') + ` "-w${tempDir}"`; // 指定要解压的文件
       let extractResult = {};
       if (dstIsInArchive) {
         const progressCallback = (progress) => {
@@ -325,7 +325,7 @@ const method = async (req, res) => {
     for (const fn of fileList) {
       fs.rmSync(path.join(srcFolderPath, fn), { recursive: true, force: true });
 
-      const currentProgress = dstArchiveInternalPath ?  (i / fileList.length / 3 + 66.67) : (i / fileList.length / 2 + 50);
+      const currentProgress = dstArchiveInternalPath ?  (i * 100 / fileList.length / 3 + 66.67) : (i / fileList.length / 2 + 50);
       res.write(`data: ${JSON.stringify({ progress: currentProgress })}\n\n`);
       res.flush();
 

@@ -127,7 +127,7 @@ const method = async (req, res) => {
       }
 
       // 使用 7-Zip 解压指定文件
-      const options = fileList.map((fn) => `"-i!${path.join(srcArchiveInternalPath, fn)}"`).join(' '); // 指定要解压的文件
+      const options = fileList.map((fn) => `"-i!${path.join(srcArchiveInternalPath, fn)}"`).join(' ') + ` "-w${tempDir}"`; // 指定要解压的文件
       let extractResult = {};
       if (dstIsInArchive) {
         const progressCallback = (progress) => {
