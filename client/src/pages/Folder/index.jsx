@@ -552,7 +552,7 @@ const Folder = () => {
   }
 
   const handleDropLink = async (event) => {
-    console.log('link drop', event.dataTransfer.getData('text/plain'));
+    // console.log('link drop', event.dataTransfer.getData('text/plain'));
     event.preventDefault();
     const tableRow = event.target.closest('tr');
     if (tableRow) {

@@ -111,7 +111,6 @@ const MoveModal = (props) => {
         if (value) {
           for (const event of value.split('\n').filter(Boolean)) {
             const data = JSON.parse(event.replace(/^data: /, ''));
-            // console.log('data:', data);
             const { progress, error } = data;
             if (error) {
               hasError = error

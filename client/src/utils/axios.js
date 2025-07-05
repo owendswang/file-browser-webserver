@@ -60,7 +60,7 @@ axiosInstance.interceptors.response.use(
         return axiosInstance(originalRequest);
       } catch(e) {
         // 处理刷新 token 的错误，例如 token 已失效
-        console.log('Refresh token failed:', e);
+        console.error('Refresh token failed:', e);
         return Promise.reject(e);
       }
     }

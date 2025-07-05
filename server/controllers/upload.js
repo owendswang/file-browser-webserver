@@ -76,7 +76,7 @@ const method = async (req, res) => {
   
     bb.on('file', (name, file, info) => {
       const { filename, encoding, mimeType } = info;
-      console.log(`File [%j]: filename: %j, encoding: %j, mimeType: %j`, name, filename, encoding, mimeType);
+      // console.log(`File [%j]: filename: %j, encoding: %j, mimeType: %j`, name, filename, encoding, mimeType);
       saveTo = relativePath ? path.resolve(uploadFolderPath, relativePath) : path.resolve(uploadFolderPath, filename);
       if (!fs.existsSync(path.dirname(saveTo))) fs.mkdirSync(path.dirname(saveTo), { recursive: true });
       const fileWriteStream = fs.createWriteStream(saveTo);
@@ -105,7 +105,7 @@ const method = async (req, res) => {
   
     bb.on('field', (name, val, info) => {
       const { nameTruncated, valueTruncated, encoding, mimeType } = info;
-      console.log(`Field [%j]: value: %j, encoding: %j, mimeType: %j`, name, val, encoding, mimeType);
+      // console.log(`Field [%j]: value: %j, encoding: %j, mimeType: %j`, name, val, encoding, mimeType);
       if (name === 'relativePath') {
         relativePath = val;
       } else if (name === 'lastModified') {

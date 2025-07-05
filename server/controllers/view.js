@@ -78,7 +78,6 @@ const method = async (req, res) => {
     }
 
     // 找到目标文件的信息
-    console.log(result.files.map(f => f.Path), archiveInternalPath);
     const targetFile = result.files.find(
       (f) => f.Path === archiveInternalPath
     );

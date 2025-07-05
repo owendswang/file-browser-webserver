@@ -8,7 +8,7 @@ const method = async (req, res) => {
     ...req.body,
   }, null, '  '), 'utf8', (err) => {
     if (err) {
-      console.log(err);
+      console.error(err);
       return res.status(500).send(`Error writing to config file:\n${err.message}`);
     }
     return res.end();

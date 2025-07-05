@@ -94,7 +94,6 @@ const method = async (req, res) => {
     }
   } else {
     // 如果不是压缩包内部文件，直接创建文件夹
-    console.log(path.join(fullPath, dir));
     fs.mkdir(path.join(fullPath, dir), { recursive: false }, (err) => {
       if (err) {
         console.error(err);
