@@ -3,7 +3,7 @@ import { Link, useSearchParams, useNavigate, useOutletContext } from "react-rout
 import { Helmet } from "react-helmet";
 import { PageContainer, ProCard } from '@ant-design/pro-components';
 import { Table, message, Progress, Space, Button, Empty, Typography, Spin } from 'antd';
-import { ReloadOutlined, FolderOpenOutlined, MoonOutlined } from '@ant-design/icons';
+import { ReloadOutlined, FolderOpenOutlined, MoonOutlined, DeleteOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import handleErrorContent from '@/utils/handleErrorContent';
 import homeService from '@/services/home';
@@ -27,6 +27,7 @@ const Home = () => {
   const [loading, setLoading] = useState(true);
   const [sleepBtnloading, setSleepBtnloading] = useState(false);
   const [sleepable, setSleepable] = useState(false);
+  const [recycleBinEnabled, setRecycleBinEnabled] = useState(false);
 
   const fetchData = async (signal) => {
     setLoading(true);
@@ -36,6 +37,7 @@ const Home = () => {
       if (res && res.folders && Array.isArray(res.folders)) {
         setData(res.folders);
         setSleepable(res.sleepable);
+        setRecycleBinEnabled(res.recycleBinEnabled);
       }
     } catch(e) {
       console.error(e);
@@ -45,6 +47,11 @@ const Home = () => {
     }
     setLoading(false);
   }
+
+  const handleRecycleBtnClick = (e) => {
+    e.preventDefault();
+    navigate('/recycle');
+  };
 
   const handleSleepBtnClick = async (e) => {
     setSleepBtnloading(true);
@@ -81,6 +88,15 @@ const Home = () => {
       {contextHolder}
       <ProCard
         extra={<Space>
+          {(user.scope && user.scope.includes('admin') && recycleBinEnabled) && <Button
+            key="recycle"
+            type="link"
+            icon={<DeleteOutlined />}
+            size="small"
+            title={t("Recycle Bin")}
+            href="/recycle"
+            onClick={handleRecycleBtnClick}
+          ></Button>}
           {(user.scope && user.scope.includes('admin')) && <Button
             key="sleep"
             type="link"

@@ -14,13 +14,12 @@ const {
 } = require('@/utils/fileUtils');
 const getConfig = require('@/utils/getConfig');
 
-const recycleFolderName = 'FB Recycle Bin';
-
 const method = async (req, res) => {
   const {
     sevenZipPath,
     basePaths,
-    enableDirSizeChk
+    enableDirSizeChk,
+    recycleFolderName
   } = getConfig();
 
   const abortController = new AbortController();
@@ -228,7 +227,6 @@ const method = async (req, res) => {
       if (order === 'asc') {
         return (compareA < compareB) ? -1 : (compareA > compareB) ? 1 : 0;
       } else {
-        files.sort((a, b) => { return a[sortBy] - b[sortBy]; }).reverse();
         return (compareB < compareA) ? -1 : (compareB > compareA) ? 1 : 0;
       }
     }

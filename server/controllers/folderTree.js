@@ -13,7 +13,8 @@ const getConfig = require('@/utils/getConfig');
 const method = async (req, res) => {
   const {
     sevenZipPath,
-    basePaths
+    basePaths,
+    recycleFolderName
   } = getConfig();
   
   const abortController = new AbortController();
@@ -130,6 +131,7 @@ const method = async (req, res) => {
                     filePath,
                   };
                 })
+                .filter((item) => !((urlPath === folderName) && (item.name === recycleFolderName)))
                 .filter((item) => (item.type === 'Folder' || (isArchive(item.filePath) && fs.existsSync(item.filePath) && fs.lstatSync(item.filePath).isFile())))
                 .filter((item) => !(['lost+found', '__MACOSX'].includes(item.name) || item.name.startsWith('.') || item.name.endsWith('.lnk')));
   }

@@ -1,0 +1,110 @@
+.folderCardWrapper .ant-pro-card-title {
+  width: 100%;
+}
+
+.folderCardTitle {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.tableWrapper table tbody tr td.ant-table-cell {
+  white-space: nowrap;
+}
+
+a.tableRowFileNameLink {
+  transition: color 0.3s;
+  margin-right: 0.5rem;
+}
+
+a.tableRowFileNameLink:visited {
+  color: #4b2feb;
+}
+
+a.tableRowFileNameLink:visited:hover {
+  color: #7e6ddf;
+}
+
+.tableRowFileNameHoverLink {
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s, color 0.3s;
+}
+
+.ant-table-cell-row-hover .tableRowFileNameHoverLink {
+  opacity: 1;
+  pointer-events: unset;
+}
+
+.dropdownButtonGroup {
+  display: flex;
+  flex-wrap: nowrap;
+}
+
+.dropdownButtonGroup .dropdownButtonGroupLeft {
+  margin-right: -1px;
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+}
+
+.dropdownButtonGroup .dropdownButtonGroupRight:hover,
+.dropdownButtonGroup .dropdownButtonGroupRight:active,
+.dropdownButtonGroup .dropdownButtonGroupLeft:hover,
+.dropdownButtonGroup .dropdownButtonGroupLeft:active {
+  z-index: 1;
+}
+
+.dropdownButtonGroup > .dropdownButtonGroupRight {
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+}
+
+.thumbnailContainer {
+  display: grid;
+  grid-gap: 8px;
+  justify-content: space-between;
+}
+
+#dragging-overlay {
+  position: fixed;
+  left: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 100;
+  padding: 2rem;
+  background: radial-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.65));
+}
+
+#dragging-overlay .dropin-box {
+  width: 100%;
+  height: 100%;
+  border-style: dashed;
+  border-color: white;
+  color: white;
+  border-width: 0.5rem;
+  border-radius: 3rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  pointer-events: none;
+}
+
+#dragging-overlay .dropin-box .dropin-text {
+  font-size: 3rem;
+  font-weight: bold;
+  text-align: center;
+}
+
+.folder-file-link-disabled,
+a:visited.folder-file-link-disabled {
+  color: rgba(128, 128, 128, 0.3);
+  pointer-events: none;
+}
+
+.ant-table-cell-row-hover .tableRowFileNameHoverLink.folder-file-hover-link-disabled {
+  pointer-events: none;
+  opacity: 0;
+}

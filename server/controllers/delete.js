@@ -6,11 +6,9 @@ const WinRar = require('@/utils/winRar');
 const { isArchive } = require('@/utils/fileUtils');
 const getConfig = require('@/utils/getConfig');
 
-const recycleFolderName = 'FB Recycle Bin';
-
 const method = async (req, res) => {
   // 获取查询参数
-  const { archivePassword = '' } = req.query;
+  const { archivePassword = '', permanent = 'false' } = req.query;
   const fileList = req.body;
 
   if (!fileList || !Array.isArray(fileList)) {
@@ -22,7 +20,9 @@ const method = async (req, res) => {
     winRarPath,
     basePaths,
     tempDir,
-    enableRecycleBin
+    enableRecycleBin,
+    recycleFolderName,
+    recycleInfoFileName
   } = getConfig();
   
   const abortController = new AbortController();
@@ -68,11 +68,16 @@ const method = async (req, res) => {
 
   const sevenZip = new SevenZip(sevenZipPath);
 
-  if (enableRecycleBin) {
+  if (enableRecycleBin && (permanent !== 'true')) {
     const recycleDirPath = path.join(basePaths[folderName], recycleFolderName, Date.now().toString());
     if (!fs.existsSync(recycleDirPath)) {
       fs.mkdirSync(recycleDirPath, { recursive: true });
     }
+    fs.writeFileSync(path.join(recycleDirPath, recycleInfoFileName), JSON.stringify({
+      deletedFrom: folderPath,
+      deletedUrl: urlPath,
+      archivePassword
+    }));
 
     if (isInArchive) {
       try {
@@ -150,7 +155,7 @@ const method = async (req, res) => {
         deleteResult = await winRar.delete(archiveFullPath, archiveInternalFileList, options, archivePassword, signal);
       } else {
         const progressCallback = (progress) => {
-          const currentProgress = enableRecycleBin ? (progress / 2 + 50) : progress;
+          const currentProgress = (enableRecycleBin && (permanent !== 'true')) ? (progress / 2 + 50) : progress;
           res.write(`data: ${JSON.stringify({ progress: currentProgress })}\n\n`);
           res.flush();
         };

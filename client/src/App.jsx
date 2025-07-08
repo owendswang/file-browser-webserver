@@ -13,6 +13,7 @@ import Config from './pages/Config';
 import Login from './pages/Login';
 import User from './pages/User';
 import Users from './pages/Users';
+import Recycle from './pages/Recycle';
 
 const App = () => {
   return (
@@ -29,6 +30,7 @@ const App = () => {
         <Route path='vaplay/*' element={<Play />} />
         <Route path='disk/:diskId' element={<Disk />} />
         <Route path="users" element={<Users />} />
+        <Route path="recycle" element={<Recycle />} />
         <Route path='*' element={<NotFound />} />
       </Route>
     </Routes>

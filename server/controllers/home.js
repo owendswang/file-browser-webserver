@@ -9,7 +9,8 @@ const getConfig = require('@/utils/getConfig');
 const method = async (req, res) => {
   const {
     smartctlPath,
-    basePaths
+    basePaths,
+    enableRecycleBin
   } = getConfig();
   
   const folders = await Promise.all(Object.keys(basePaths).map(async folderName => {
@@ -47,7 +48,7 @@ const method = async (req, res) => {
 
   const sleepable = (os.platform() === 'linux') && !!(fs.readdirSync('/dev').find(dev => dev.match(/^sd[a-z]+$/)));
 
-  res.json({ folders, sleepable });
+  res.json({ folders, sleepable, recycleBinEnabled: enableRecycleBin });
 }
 
 module.exports = method;

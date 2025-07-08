@@ -33,7 +33,7 @@ const tokenRouter = require('./controllers/token');
 const usersRouter = require('./controllers/users');
 const updateUserRouter = require('./controllers/updateUser');
 const deleteUserRouter = require('./controllers/deleteUser');
-//const test7zRouter = require('./controllers/test7z');
+const recycleRouter = require('./controllers/recycle');
 const db = require('./db');
 const OAuth2Server = require('./oauth2');
 const getConfig = require('./utils/getConfig');
@@ -187,7 +187,7 @@ router.post('/api/users/:id', nocacheMiddleware, oauth.authenticate({ scope: ['a
 // delete specific user
 router.delete('/api/users/:id', nocacheMiddleware, oauth.authenticate({ scope: ['admin'] }), dbMiddleWare, deleteUserRouter);
 
-// test 7z function
-//router.get('/api/test7z/*', test7zRouter);
+// list items in all recycle bins
+router.get('/api/recycle', nocacheMiddleware, oauth.authenticate({ scope: ['admin'] }), recycleRouter);
 
 module.exports = router;

@@ -52,6 +52,12 @@ const getConfig = () => {
   if (config.enableRecycleBin === undefined) {
     config.enableRecycleBin = true;
   }
+  config.recycleFolderName = 'FB Recycle Bin';
+  config.recycleInfoFileName = 'recycle.json';
+
+  if (config.enableDirSizeChk === undefined) {
+    config.enableDirSizeChk = false;
+  }
 
   return config;
 }
