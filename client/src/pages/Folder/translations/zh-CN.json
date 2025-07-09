@@ -73,5 +73,6 @@
   "Moved: ": "移动完成：",
   "Deleting: ": "正在删除：",
   "Delete error: ": "删除出错：",
-  "Deleted: ": "删除完成："
+  "Deleted: ": "删除完成：",
+  "No Data": "无数据"
 }

@@ -69,14 +69,16 @@ const method = async (req, res) => {
   const sevenZip = new SevenZip(sevenZipPath);
 
   if (enableRecycleBin && (permanent !== 'true')) {
-    const recycleDirPath = path.join(basePaths[folderName], recycleFolderName, Date.now().toString());
+    const now = new Date();
+    const recycleDirPath = path.join(basePaths[folderName], recycleFolderName, now.getTime().toString());
     if (!fs.existsSync(recycleDirPath)) {
       fs.mkdirSync(recycleDirPath, { recursive: true });
     }
     fs.writeFileSync(path.join(recycleDirPath, recycleInfoFileName), JSON.stringify({
       deletedFrom: folderPath,
       deletedUrl: urlPath,
-      archivePassword
+      archivePassword,
+      deletedAt: now.toISOString()
     }));
 
     if (isInArchive) {

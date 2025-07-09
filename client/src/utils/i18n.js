@@ -11,6 +11,7 @@ import zhPlay from '../pages/Play/translations/zh-CN.json';
 import zhUser from '../pages/User/translations/zh-CN.json';
 import zhUsers from '../pages/Users/translations/zh-CN.json';
 import zhView from '../pages/View/translations/zh-CN.json';
+import zhRecycle from '../pages/Recycle/translations/zh-CN.json';
 import zhNotFound from '../components/NotFound/translations/zh-CN.json';
 import zhErrorPage from '../components/ErrorPage/translations/zh-CN.json';
 
@@ -24,6 +25,7 @@ import enPlay from '../pages/Play/translations/en-US.json';
 import enUser from '../pages/User/translations/en-US.json';
 import enUsers from '../pages/Users/translations/en-US.json';
 import enView from '../pages/View/translations/en-US.json';
+import enRecycle from '../pages/Recycle/translations/en-US.json';
 import enNotFound from '../components/NotFound/translations/en-US.json';
 import enErrorPage from '../components/ErrorPage/translations/en-US.json';
 
@@ -44,6 +46,7 @@ i18n
         User: zhUser,
         Users: zhUsers,
         View: zhView,
+        Recycle: zhRecycle,
         NotFound: zhNotFound,
         ErrorPage: zhErrorPage,
       },
@@ -58,6 +61,7 @@ i18n
         User: enUser,
         Users: enUsers,
         View: enView,
+        Recycle: enRecycle,
         NotFound: enNotFound,
         ErrorPage: enErrorPage,
       }

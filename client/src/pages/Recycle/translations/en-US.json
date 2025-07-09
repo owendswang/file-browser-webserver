@@ -73,5 +73,8 @@
   "Moved: ": "Moved: ",
   "Deleting: ": "Deleting: ",
   "Delete error: ": "Delete error: ",
-  "Deleted: ": "Deleted: "
+  "Deleted: ": "Deleted: ",
+  "Deleted Time": "Deleted Time",
+  "Recycle Bin": "Recycle Bin",
+  "No Data": "No Data"
 }

@@ -30,7 +30,7 @@ const method = async (req, res) => {
 
   const recycleItems = [];
 
-  for (const basePath of basePaths) {
+  for (const [baseName, basePath] of Object.entries(basePaths)) {
     const recycleDirPath = path.join(basePath, recycleFolderName);
     if (fs.existsSync(recycleDirPath) && fs.statSync(recycleDirPath).isDirectory()) {
       for (const deletedTimeStamp of fs.readdirSync(recycleDirPath)) {
@@ -43,7 +43,8 @@ const method = async (req, res) => {
               const recycleInfoStr = fs.readFileSync(recycleInfoFilePath);
               recycleInfo = JSON.parse(recycleInfoStr);
             } catch (e) {
-              console.error(e);
+              // console.error(e);
+              console.error('Skipped invalid recycle info file.');
             }
           }
 
@@ -52,17 +53,22 @@ const method = async (req, res) => {
             const itemStats = fs.statSync(itemPath);
 
             if (!((itemName === recycleInfoFileName) && itemStats.isFile())) {
-              let itemSize = '-';
-              let itemSizeInBytes;
-              if (enableDirSizeChk && (sortBy === 'size')) {
-                const sizeInBytes = await getFolderSize(recycleDirPath, signal);
+              let itemSize = '--';
+              let itemSizeInBytes = 0;
+              if (enableDirSizeChk && (sortBy === 'size') && itemStats.isDirectory()) {
+                const sizeInBytes = await getFolderSize(itemPath, signal);
+                itemSizeInBytes = sizeInBytes;
+                itemSize = formatSize(sizeInBytes);
+              }
+              if (itemStats.isFile()) {
+                const sizeInBytes = itemStats.size;
                 itemSizeInBytes = sizeInBytes;
                 itemSize = formatSize(sizeInBytes);
               }
 
               recycleItems.push({
                 name: itemName,
-                path: '/' + [basePath, recycleFolderName, deletedTimeStamp, itemName].join('/'),
+                path: '/' + [baseName, recycleFolderName, deletedTimeStamp, itemName].join('/'),
                 type: itemStats.isDirectory() ? 'Folder' : getFileType(itemName),
                 icon: getFileIcon(itemName, itemStats.isDirectory()),
                 deletedAt: (new Date(parseInt(deletedTimeStamp, 10))).toISOString(),

@@ -1030,7 +1030,7 @@ const Folder = () => {
                   className='tableWrapper'
                 >
                   <Column
-                    title="Name"
+                    title={t('Name')}
                     dataIndex="name"
                     key="name"
                     align="left"
@@ -1235,7 +1235,7 @@ const Folder = () => {
               }
               description={needsPwd ?
                 <Button onClick={() => setArchivePasswordModalVisible(true)}>Input Password</Button> :
-                <Paragraph style={{ marginBottom: '16px' }}><Text type="secondary">No Data</Text></Paragraph>
+                <Paragraph style={{ marginBottom: '16px' }}><Text type="secondary">{t('No Data')}</Text></Paragraph>
               }
             />
           </div>}

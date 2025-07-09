@@ -1,50 +1,32 @@
 import React, { useState, useEffect, Fragment } from 'react';
-import { Link, useParams, useSearchParams, useLocation, useNavigate, useOutletContext } from "react-router";
+import { Link, useSearchParams, useLocation, useOutletContext } from "react-router";
 import { Helmet } from "react-helmet";
 import { PageContainer, ProCard } from '@ant-design/pro-components';
 import {
   Table,
   message,
   Modal,
-  Form,
   Input,
-  Segmented,
   Space,
-  Flex,
   Empty,
-  Slider,
   Pagination,
   Button,
   Typography,
-  Switch,
-  Select,
   FloatButton,
-  Upload,
-  Dropdown,
   Checkbox,
   notification,
   Progress,
-  Spin,
-  Grid
+  Spin
 } from 'antd';
 import {
-  AppstoreOutlined,
-  BarsOutlined,
-  LockOutlined,
   FolderOpenOutlined,
   ReloadOutlined,
   DownloadOutlined,
-  UploadOutlined,
-  DownOutlined,
   DeleteOutlined,
   ExportOutlined,
-  CopyOutlined,
-  FolderAddOutlined,
-  InfoCircleOutlined,
   SyncOutlined,
   CheckCircleFilled,
-  CloseCircleFilled,
-  EditOutlined
+  CloseCircleFilled
 } from '@ant-design/icons';
 import * as dayjs from 'dayjs';
 import { useTranslation } from 'react-i18next';
@@ -52,7 +34,7 @@ import recycleService from '@/services/recycle';
 import handleErrorContent from '@/utils/handleErrorContent';
 import axios from '@/utils/axios';
 import FileIcon from '@/pages/Folder/FileIcon';
-import MoveModal from '@/pages/Folder/MoveModal';
+import MoveModal from '@/pages/Recycle/MoveModal';
 import './index.css';
 
 const { Text, Paragraph } = Typography;
@@ -65,17 +47,14 @@ const defaultOrder = 'desc';
 const Recycle = () => {
   const location = useLocation();
 
-  const navigate = useNavigate();
-
   const [searchParams, setSearchParams] = useSearchParams();
 
-  const { t } = useTranslation('Folder');
+  const { t } = useTranslation('Recycle');
 
 
   const [messageApi, messageContextHolder] = message.useMessage();
   const [notificationApi, notificationContextHolder] = notification.useNotification();
   const [modalApi, modalContextHolder] = Modal.useModal();
-  const [formRef] = Form.useForm();
 
   const [user] = useOutletContext();
 
@@ -95,16 +74,16 @@ const Recycle = () => {
     setSelectedRowKeys([]);
     const params = {
       page: parseInt(searchParams.get('page')) || 1,
-      pageSize: parseInt(searchParams.get('pageSize')) || parseInt(window.localStorage.getItem("pageSize")) || defaultPageSize,
-      sortBy: searchParams.get('sortBy') || window.localStorage.getItem("sortBy") || defaultSortBy,
-      order: searchParams.get('order') || window.localStorage.getItem("order") || defaultOrder,
+      pageSize: parseInt(searchParams.get('pageSize')) || parseInt(defaultPageSize),
+      sortBy: searchParams.get('sortBy') || defaultSortBy,
+      order: searchParams.get('order') || defaultOrder,
       search: searchParams.get('search') || '',
     };
     try {
       const res = await recycleService.getList(params, signal);
-      if (res?.files && Array.isArray(res.files)) {
-        if (res.files.length > 0 || (parseInt(searchParams.get('page')) || 1) === 1) {
-          setData(res.files);
+      if (res?.recycleItems && Array.isArray(res.recycleItems)) {
+        if (res.recycleItems.length > 0 || (parseInt(searchParams.get('page')) || 1) === 1) {
+          setData(res.recycleItems);
           setTotal(res.pagination.total);
         } else {
           setSearchParams((prevParams) => {
@@ -127,7 +106,6 @@ const Recycle = () => {
       Object.entries(params).forEach(([key, value]) => {
         if (value === null || value === undefined || value === '') {
           prevParams.delete(key);
-          window.localStorage.removeItem(key);
         } else {
           prevParams.set(key, String(value));
         }
@@ -169,10 +147,7 @@ const Recycle = () => {
   useEffect(() => {
     const controller = new AbortController();
     fetchData(controller.signal);
-    setViewerjsVisible(false);
-    
-    setBriefHidden(true);
-    setFileToBrief('');
+
     return () => {
       controller.abort();
     }
@@ -186,17 +161,23 @@ const Recycle = () => {
     refreshTag
   ]);
 
-  const handleProgressDelete = async (name) => {
+  const handleProgressDelete = async (name, pathname) => {
     let fileNames = [];
+    let filePathnames = [];
     if (name) {
       fileNames = [name];
     } else {
-      fileNames = [...new Set(selectedRowKeys)];
+      fileNames = [...new Set(selectedRowKeys)].map((path) => path.split('/')[path.split('/').length - 1]);
+    }
+    if (pathname) {
+      filePathnames = [pathname];
+    } else {
+      filePathnames = [...new Set(selectedRowKeys)];
     }
     const fileNamesStr = fileNames.join(', ');
     try {
       const params = {};
-      const response = await axios.post(`/delete/${pathname}`, fileNames, {
+      const response = await axios.post(`/delete`, filePathnames, {
         params,
         responseType: 'stream',
       });
@@ -273,9 +254,9 @@ const Recycle = () => {
     }
   }
 
-  const handleDeleteClick = (name) => {
+  const handleDeleteClick = (name, pathname) => {
     // console.log(pn);
-    setSelectedRowKeys([name]);
+    setSelectedRowKeys([pathname]);
     modalApi.confirm({
       title: t('Delete'),
       content: t('Are you sure to delete it?'),
@@ -283,7 +264,7 @@ const Recycle = () => {
       maskClosable: true,
       onOk: async () => {
         // axios 方法，显示进度
-        handleProgressDelete(name);
+        handleProgressDelete(name, pathname);
 
         // 不显示进度
         /*try {
@@ -328,9 +309,9 @@ const Recycle = () => {
     });
   }
 
-  const handleMoveClick = (name) => {
+  const handleMoveClick = (pathname) => {
     // console.log(name);
-    setSelectedRowKeys([name]);
+    setSelectedRowKeys([pathname]);
     setMoveModalOpen(true);
     setMoveModalTitle('Move');
   }
@@ -345,7 +326,7 @@ const Recycle = () => {
     if (allSelected) {
       setSelectedRowKeys([]);
     } else {
-      setSelectedRowKeys(data.map((item) => item.name));
+      setSelectedRowKeys(data.map((item) => item.path));
     }
   }
 
@@ -376,7 +357,7 @@ const Recycle = () => {
             disabled={selectedRowKeys.length === 0}
             onClick={handleBulkDelete}
           >{t('Delete')}</Button>}
-          {((searchParams.get('view') || window.localStorage.getItem("view") || defaultViewMode) === 'thumbnails') && <Checkbox
+          {((searchParams.get('view') || defaultViewMode) === 'thumbnails') && <Checkbox
             key="selectAll"
             onChange={handleSelectAll}
             checked={allSelected}
@@ -389,7 +370,7 @@ const Recycle = () => {
             onSearch={onInputSearchSubmit}
             defaultValue={searchParams.get('search') || ''}
             allowClear={true}
-            style={{ width: '200px', marginLeft: ((searchParams.get('view') || window.localStorage.getItem('view')) === 'thumbnails') ? undefined : 'auto' }}
+            style={{ width: '200px', marginLeft: (searchParams.get('view') === 'thumbnails') ? undefined : 'auto' }}
             title={t("Search")}
           />
           <Button
@@ -406,23 +387,23 @@ const Recycle = () => {
         <Spin spinning={loading}>
           {data.length > 0 ? <Fragment>
             <ProCard ghost={true}>
-              {(data.length < Math.min((parseInt(searchParams.get('page')) || 1) * (parseInt(searchParams.get('pageSize')) || parseInt(window.localStorage.getItem("pageSize")) || defaultPageSize), total)) && <Button
+              {(data.length < Math.min((parseInt(searchParams.get('page')) || 1) * (parseInt(searchParams.get('pageSize')) || parseInt(defaultPageSize)), total)) && <Button
                 onClick={handleLoadPreviousClick}
                 block={true}
                 variant="outlined"
                 style={{ marginBottom: '16px' }}
               >{t('Previous Page')}</Button>}
-              {(searchParams.get('view') || window.localStorage.getItem('view')) !== 'thumbnails' && <Table
+              {searchParams.get('view') !== 'thumbnails' && <Table
                 dataSource={data}
                 // loading={loading}
-                rowKey='name'
+                rowKey='path'
                 // size='small'
                 bordered={false}
                 pagination={false}
                 onChange={handleTableChange}
                 rowSelection={{
                   selectedRowKeys,
-                  onChange: setSelectedRowKeys,
+                  onChange: (e) => { /*console.log(e);*/ setSelectedRowKeys(e); },
                   selections: [Table.SELECTION_ALL, Table.SELECTION_INVERT, Table.SELECTION_NONE],
                 }}
                 scroll={{
@@ -432,20 +413,25 @@ const Recycle = () => {
                 className='tableWrapper'
               >
                 <Column
-                  title="Name"
+                  title='Path'
+                  dataIndex='path'
+                  hidden={true}
+                />
+                <Column
+                  title={t('Name')}
                   dataIndex="name"
-                  key="name"
                   align="left"
                   sorter={true}
-                  sortOrder={(searchParams.get('sortBy') || window.localStorage.getItem('sortBy') || defaultSortBy) === 'name' ? ((searchParams.get('order') || window.localStorage.getItem('order') || defaultOrder) + 'end') : null}
+                  sortOrder={(searchParams.get('sortBy') || defaultSortBy) === 'name' ? ((searchParams.get('order') || defaultOrder) + 'end') : null}
                   render={(value, record, index) => (
                     <Space>
                       <Link
                         key={`${value}`}
-                        target={record.path.startsWith('/download/') ? '_blank' : '_self'}
-                        to={record.path}
-                        title={`${value}${record.encrypted ? ' *' : ''}`}
-                        className='tableRowFileNameLink'
+                        target={'_blank'}
+                        to={record.type === 'Folder' ? ('/folder' + record.path) : ('/download' + record.path)}
+                        title={value}
+                        className='tableRowRecycleFileNameLink'
+                        onClick={(e) => { e.preventDefault(); }}
                       >
                         <Space>
                           <FileIcon key='icon' type={record.type} style={{ pointerEvents: 'none' }} />
@@ -455,7 +441,7 @@ const Recycle = () => {
                       <Link
                         key={`${value}-download`}
                         target='_blank'
-                        to={`${record.path.replace(/^\/(folder|view)\//, '/download/')}`}
+                        to={'/download' + record.path}
                         title={t('Download')}
                         className="tableRowFileNameHoverLink"
                         draggable={false}
@@ -464,18 +450,18 @@ const Recycle = () => {
                       </Link>
                       {(user.scope && user.scope.includes('admin')) && <Link
                         key={`${value}-move`}
-                        to={`${record.path.replace(/^\/(folder|view|download)\//, '/move/')}`}
+                        to={'/move' + record.path}
                         title={t('Move')}
                         className="tableRowFileNameHoverLink"
-                        onClick={(e) => { e.preventDefault(); handleMoveClick(value); }}
+                        onClick={(e) => { e.preventDefault(); handleMoveClick(record.path); }}
                         draggable={false}
                       ><ExportOutlined /></Link>}
                       {(user.scope && user.scope.includes('admin')) && <Link
                         key={`${value}-delete`}
-                        to={`${record.path.replace(/^\/(folder|view|download)\//, '/delete/')}`}
+                        to={'/delete' + record.path}
                         title={t('Delete')}
                         className="tableRowFileNameHoverLink"
-                        onClick={(e) => { e.preventDefault(); handleDeleteClick(value); }}
+                        onClick={(e) => { e.preventDefault(); handleDeleteClick(value, record.path); }}
                         draggable={false}
                       >
                         <DeleteOutlined />
@@ -486,35 +472,32 @@ const Recycle = () => {
                 <Column
                   title={t("Type")}
                   dataIndex="type"
-                  key="type"
                   align="center"
                   sorter={true}
-                  sortOrder={(searchParams.get('sortBy') || window.localStorage.getItem('sortBy') || defaultSortBy) === 'type' ? ((searchParams.get('order') || window.localStorage.getItem('order') || defaultOrder) + 'end') : null}
+                  sortOrder={(searchParams.get('sortBy') || defaultSortBy) === 'type' ? ((searchParams.get('order') || defaultOrder) + 'end') : null}
                   width={200}
                 />
                 <Column
                   title={t("Size")}
                   dataIndex="size"
-                  key="size"
                   align="center"
                   sorter={true}
-                  sortOrder={(searchParams.get('sortBy') || window.localStorage.getItem('sortBy') || defaultSortBy) === 'size' ? ((searchParams.get('order') || window.localStorage.getItem('order') || defaultOrder) + 'end') : null}
+                  sortOrder={(searchParams.get('sortBy') || defaultSortBy) === 'size' ? ((searchParams.get('order') || defaultOrder) + 'end') : null}
                   width={130}
                 />
                 <Column
                   title={t("Deleted Time")}
                   dataIndex="deletedAt"
-                  key="deletedAt"
                   align="center"
                   sorter={true}
-                  sortOrder={(searchParams.get('sortBy') || window.localStorage.getItem('sortBy') || defaultSortBy) === 'deletedAt' ? ((searchParams.get('order') || window.localStorage.getItem('order') || defaultOrder) + 'end') : null}
+                  sortOrder={(searchParams.get('sortBy') || defaultSortBy) === 'deletedAt' ? ((searchParams.get('order') || defaultOrder) + 'end') : null}
                   width={180}
                   render={(value, record, index) =>
-                    record.modifiedTime ? dayjs(record.modifiedTime).format('YYYY-MM-DD HH:mm:ss') : '-'
+                    record.deletedAt ? dayjs(record.deletedAt).format('YYYY-MM-DD HH:mm:ss') : '-'
                   }
                 />
               </Table>}
-              {((parseInt(searchParams.get('page')) || 1) * (parseInt(searchParams.get('pageSize')) || parseInt(window.localStorage.getItem("pageSize")) || defaultPageSize) < total) && <Button
+              {((parseInt(searchParams.get('page')) || 1) * (parseInt(searchParams.get('pageSize')) || parseInt(defaultPageSize)) < total) && <Button
                 onClick={handleLoadMoreClick}
                 block={true}
                 variant="outlined"
@@ -525,7 +508,7 @@ const Recycle = () => {
                 showSizeChanger={true}
                 total={total}
                 current={parseInt(searchParams.get('page')) || 1}
-                pageSize={parseInt(searchParams.get('pageSize')) || parseInt(window.localStorage.getItem("pageSize")) || defaultPageSize}
+                pageSize={parseInt(searchParams.get('pageSize')) || parseInt(defaultPageSize)}
                 onChange={(page, pageSize) => {
                   updateSearchParams({ page, pageSize });
                 }}
@@ -536,7 +519,7 @@ const Recycle = () => {
             <Empty
               style={{ maxWidth: '400px' }}
               image={<FolderOpenOutlined style={{ fontSize: '100px', color: 'rgba(0,0,0,0.25)' }} />}
-              description={<Paragraph style={{ marginBottom: '16px' }}><Text type="secondary">No Data</Text></Paragraph>}
+              description={<Paragraph style={{ marginBottom: '16px' }}><Text type="secondary">{t('No Data')}</Text></Paragraph>}
             />
           </div>}
         </Spin>
@@ -548,7 +531,6 @@ const Recycle = () => {
         selectedRowKeys={selectedRowKeys}
         setSelectedKeys={setSelectedRowKeys}
         refresh={refresh}
-        pathname={pathname}
         messageApi={messageApi}
         notificationApi={notificationApi}
         searchParams={searchParams}

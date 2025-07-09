@@ -3,6 +3,7 @@ import { Modal, TreeSelect, Form, Progress } from 'antd';
 import { SyncOutlined, CheckCircleFilled, CloseCircleFilled } from '@ant-design/icons';
 import handleErrorContent from '@/utils/handleErrorContent';
 import folderService from '@/services/folder';
+// import recycleService from '@/services/recycle';
 import axios from '@/utils/axios';
 
 const MoveModal = (props) => {
@@ -13,7 +14,6 @@ const MoveModal = (props) => {
     selectedRowKeys,
     setSelectedKeys,
     refresh,
-    pathname,
     messageApi,
     notificationApi,
     searchParams,
@@ -72,17 +72,18 @@ const MoveModal = (props) => {
 
   const handleFormOnFinish = async (values) => {
     setConfirmLoading(true);
-    const fileNames = [...new Set(selectedRowKeys)];
+    const filePathnames = [...new Set(selectedRowKeys)];
+    const fileNames = filePathnames.map((path) => path.split('/')[path.split('/').length - 1]);
     const fileNamesStr = fileNames.join(', ');
     try {
       // 不显示进度
 /*
       if (title.includes('Move')) {
-        await folderService.move(pathname, fileNames values.dst, searchParams.get('archivePassword') ? { archivePassword: searchParams.get('archivePassword') } : {});
+        await recycleService.move(filePathnames values.dst, searchParams.get('archivePassword') ? { archivePassword: searchParams.get('archivePassword') } : {});
         setOpen(false);
         refresh();
       } else if (title.includes('Copy')) {
-        await folderService.copy(pathname, fileNames, values.dst, searchParams.get('archivePassword') ? { archivePassword: searchParams.get('archivePassword') } : {});
+        await recycleService.copy(filePathnames, values.dst, searchParams.get('archivePassword') ? { archivePassword: searchParams.get('archivePassword') } : {});
         setOpen(false);
         refresh();
       } else {
@@ -97,7 +98,7 @@ const MoveModal = (props) => {
       if (searchParams.get('archivePassword')) {
         params['archivePassword'] = searchParams.get('archivePassword');
       }
-      const response = await axios.post(`/${title.includes('Copy') ? 'copy' : 'move'}/${pathname}`, fileNames, {
+      const response = await axios.post(`/${title.includes('Copy') ? 'copy' : 'move'}`, filePathnames, {
         params,
         responseType: 'stream',
       });

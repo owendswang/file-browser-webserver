@@ -34,6 +34,8 @@ const usersRouter = require('./controllers/users');
 const updateUserRouter = require('./controllers/updateUser');
 const deleteUserRouter = require('./controllers/deleteUser');
 const recycleRouter = require('./controllers/recycle');
+const recycleMoveRouter = require('./controllers/recycleMove');
+const recycleDeleteRouter = require('./controllers/recycleDelete');
 const db = require('./db');
 const OAuth2Server = require('./oauth2');
 const getConfig = require('./utils/getConfig');
@@ -107,8 +109,14 @@ router.post('/api/upload/*', oauth.authenticate({ scope: ['admin'] }), uploadRou
 // File delete route
 router.post('/api/delete/*', oauth.authenticate({ scope: ['admin'] }), deleteRouter);
 
+// File delete route
+router.post('/api/delete', oauth.authenticate({ scope: ['admin'] }), recycleDeleteRouter);
+
 // File move route
 router.post('/api/move/*', oauth.authenticate({ scope: ['admin'] }), moveRouter);
+
+// File move route
+router.post('/api/move', oauth.authenticate({ scope: ['admin'] }), recycleMoveRouter);
 
 // File copy route
 router.post('/api/copy/*', oauth.authenticate({ scope: ['admin'] }), copyRouter);
