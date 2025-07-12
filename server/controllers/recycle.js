@@ -28,7 +28,7 @@ const method = async (req, res) => {
   const pageSizeInt = parseInt(pageSize, 10) || 50;
   const currentPageInt = parseInt(page, 10) || 1;
 
-  const recycleItems = [];
+  let recycleItems = [];
 
   for (const [baseName, basePath] of Object.entries(basePaths)) {
     const recycleDirPath = path.join(basePath, recycleFolderName);

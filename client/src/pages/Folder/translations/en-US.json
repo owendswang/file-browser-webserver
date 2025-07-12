@@ -74,5 +74,7 @@
   "Deleting: ": "Deleting: ",
   "Delete error: ": "Delete error: ",
   "Deleted: ": "Deleted: ",
-  "No Data": "No Data"
+  "No Data": "No Data",
+  "Permanent delete": "Permanent delete",
+  "Recycle Bin": "Recycle Bin"
 }

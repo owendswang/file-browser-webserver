@@ -20,5 +20,7 @@
   },
   "winRarPath": "C:\\Program Files\\WinRAR\\Rar.exe",
   "winRarLang": "zh-CN",
-  "enablePlayVideoHardwareAcceleration": false
+  "enablePlayVideoHardwareAcceleration": false,
+  "enableRecycleBin": true,
+  "enablePreviewAnimation": false
 }

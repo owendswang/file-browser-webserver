@@ -18,5 +18,7 @@
     "clientSecret": "self",
     "clientUserId": "self"
   },
-  "enablePlayVideoHardwareAcceleration": false
+  "enablePlayVideoHardwareAcceleration": false,
+  "enableRecycleBin": true,
+  "enablePreviewAnimation": false
 }

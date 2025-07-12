@@ -88,7 +88,8 @@ const Folder = () => {
   const [messageApi, messageContextHolder] = message.useMessage();
   const [notificationApi, notificationContextHolder] = notification.useNotification();
   const [modalApi, modalContextHolder] = Modal.useModal();
-  const [formRef] = Form.useForm();
+  const [pwdFormRef] = Form.useForm();
+  const [delFormRef] = Form.useForm();
   const screens = useBreakpoint();
 
   const [user] = useOutletContext();
@@ -113,6 +114,7 @@ const Folder = () => {
   const [briefHidden, setBriefHidden] = useState(true);
   const [isDragOver, setIsDragOver] = useState(false);
   const [isDraggingLink, setIsDraggingLink] = useState(false);
+  const [recycleBinEnabled, setRecycleBinEnabled] = useState(true);
 
   const allSelected = data.length > 0 && data.length === selectedRowKeys.length;
   const indeterminated = data.length > selectedRowKeys.length && selectedRowKeys.length > 0;
@@ -157,11 +159,12 @@ const Folder = () => {
     try {
       const res = await folderService.getList(pathname, params, signal);
       if (res?.files && Array.isArray(res.files)) {
-        if (res.files.length > 0 || (parseInt(searchParams.get('page')) || 1) === 1) {
+        if ((res.files.length > 0) || ((parseInt(searchParams.get('page')) || 1) === 1)) {
           setData(res.files);
           setTotal(res.pagination.total);
           setNeedsPwd(res.needsPassword);
           setHasEncryption(res.needsPassword || res.files.some(file => file.encrypted));
+          setRecycleBinEnabled(res.enableRecycleBin);
         } else {
           setSearchParams((prevParams) => {
             prevParams.set('page', (parseInt(prevParams.get('page')) - 1).toString());
@@ -239,7 +242,7 @@ const Folder = () => {
   };
 
   const handleArchivePasswordModalOk = () => {
-    const archivePassword = formRef.getFieldValue('archivePassword');
+    const archivePassword = pwdFormRef.getFieldValue('archivePassword');
     updateSearchParams({ archivePassword });
     setArchivePasswordModalVisible(false);
     setRefreshTag(refreshTag + 1);
@@ -362,6 +365,9 @@ const Folder = () => {
       if (searchParams.get('archivePassword')) {
         params['archivePassword'] = searchParams.get('archivePassword');
       }
+      if (delFormRef.getFieldValue('permanent')) {
+        params['permanent'] = 'true';
+      }
       const response = await axios.post(`/delete/${pathname}`, fileNames, {
         params,
         responseType: 'stream',
@@ -442,9 +448,24 @@ const Folder = () => {
   const handleDeleteClick = (name) => {
     // console.log(pn);
     setSelectedRowKeys([name]);
+    delFormRef.setFieldValue('permanent', false);
     modalApi.confirm({
       title: t('Delete'),
-      content: t('Are you sure to delete it?'),
+      content: <>
+        <p>{t('Are you sure to delete it?')}</p>
+        {recycleBinEnabled && <Form
+          form={delFormRef}
+          disabled={loading}
+        >
+          <Form.Item
+            label={null}
+            name="permanent"
+            valuePropName="checked"
+          >
+            <Checkbox>{t('Permanent delete')}</Checkbox>
+          </Form.Item>
+        </Form>}
+      </>,
       closable: true,
       maskClosable: true,
       onOk: async () => {
@@ -472,9 +493,24 @@ const Folder = () => {
 
   const handleBulkDelete = (e) => {
     // console.log('trying to delete: ', selectedRowKeys);
+    delFormRef.setFieldValue('permanent', false);
     modalApi.confirm({
       title: t('Delete'),
-      content: t('Are you sure to delete them?'),
+      content: <>
+        <p>{t('Are you sure to delete them?')}</p>
+        {recycleBinEnabled && <Form
+          form={delFormRef}
+          disabled={loading}
+        >
+          <Form.Item
+            label={null}
+            name="permanent"
+            valuePropName="checked"
+          >
+            <Checkbox>{t('Permanent delete')}</Checkbox>
+          </Form.Item>
+        </Form>}
+      </>,
       closable: true,
       maskClosable: true,
       onOk: async () => {
@@ -833,6 +869,18 @@ const Folder = () => {
       breadcrumb={{ items: breadcrumbItems }}
       onBack={() => navigate(-1)}
       extra={<Space wrap={screens.md ? false : true}>
+        <Button
+          key="recycle"
+          type="link"
+          icon={<DeleteOutlined />}
+          href="/recycle"
+          onClick={(e) => {
+            e.preventDefault();
+            navigate('/recycle');
+          }}
+        >
+          {t('Recycle Bin')}
+        </Button>
         <div
           key='sliderLabel'
           style={{ display: (searchParams.get('view') || window.localStorage.getItem("view")) === 'thumbnails' ? 'block' : 'none' }}
@@ -1260,7 +1308,7 @@ const Folder = () => {
         confirmLoading={loading}
       >
         <Form
-          form={formRef}
+          form={pwdFormRef}
           disabled={loading}
         >
           <Form.Item

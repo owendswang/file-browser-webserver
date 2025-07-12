@@ -1,5 +1,5 @@
 import React, { useState, useEffect, Fragment } from 'react';
-import { Link, useSearchParams, useLocation, useOutletContext } from "react-router";
+import { Link, useSearchParams, useLocation, useNavigate, useOutletContext } from "react-router";
 import { Helmet } from "react-helmet";
 import { PageContainer, ProCard } from '@ant-design/pro-components';
 import {
@@ -13,7 +13,6 @@ import {
   Button,
   Typography,
   FloatButton,
-  Checkbox,
   notification,
   Progress,
   Spin
@@ -47,10 +46,11 @@ const defaultOrder = 'desc';
 const Recycle = () => {
   const location = useLocation();
 
+  const navigate = useNavigate();
+
   const [searchParams, setSearchParams] = useSearchParams();
 
   const { t } = useTranslation('Recycle');
-
 
   const [messageApi, messageContextHolder] = message.useMessage();
   const [notificationApi, notificationContextHolder] = notification.useNotification();
@@ -65,9 +65,6 @@ const Recycle = () => {
   const [refreshTag, setRefreshTag] = useState(0);
   const [moveModalOpen, setMoveModalOpen] = useState(false);
   const [moveModalTitle, setMoveModalTitle] = useState('');
-
-  const allSelected = data.length > 0 && data.length === selectedRowKeys.length;
-  const indeterminated = data.length > selectedRowKeys.length && selectedRowKeys.length > 0;
 
   const fetchData = async (signal) => {
     setLoading(true);
@@ -322,18 +319,11 @@ const Recycle = () => {
     setMoveModalTitle('Move');
   }
 
-  const handleSelectAll = (e) => {
-    if (allSelected) {
-      setSelectedRowKeys([]);
-    } else {
-      setSelectedRowKeys(data.map((item) => item.path));
-    }
-  }
-
   return (
     <PageContainer
       title={t('Recycle Bin')}
       breadcrumb={{}}
+      onBack={() => navigate(-1)}
     >
       <Helmet>
         <title>{t('Recycle Bin')} - {t('File Browser')}</title>
@@ -357,20 +347,13 @@ const Recycle = () => {
             disabled={selectedRowKeys.length === 0}
             onClick={handleBulkDelete}
           >{t('Delete')}</Button>}
-          {((searchParams.get('view') || defaultViewMode) === 'thumbnails') && <Checkbox
-            key="selectAll"
-            onChange={handleSelectAll}
-            checked={allSelected}
-            indeterminate={indeterminated}
-            style={{ marginLeft: 'auto' }}
-          >{t('Select All')}</Checkbox>}
           <Input.Search
             key='search'
             loading={loading}
             onSearch={onInputSearchSubmit}
             defaultValue={searchParams.get('search') || ''}
             allowClear={true}
-            style={{ width: '200px', marginLeft: (searchParams.get('view') === 'thumbnails') ? undefined : 'auto' }}
+            style={{ width: '200px', marginLeft: 'auto' }}
             title={t("Search")}
           />
           <Button
@@ -393,7 +376,7 @@ const Recycle = () => {
                 variant="outlined"
                 style={{ marginBottom: '16px' }}
               >{t('Previous Page')}</Button>}
-              {searchParams.get('view') !== 'thumbnails' && <Table
+              <Table
                 dataSource={data}
                 // loading={loading}
                 rowKey='path'
@@ -496,7 +479,7 @@ const Recycle = () => {
                     record.deletedAt ? dayjs(record.deletedAt).format('YYYY-MM-DD HH:mm:ss') : '-'
                   }
                 />
-              </Table>}
+              </Table>
               {((parseInt(searchParams.get('page')) || 1) * (parseInt(searchParams.get('pageSize')) || parseInt(defaultPageSize)) < total) && <Button
                 onClick={handleLoadMoreClick}
                 block={true}

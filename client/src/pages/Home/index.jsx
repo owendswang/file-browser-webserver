@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link, useSearchParams, useNavigate, useOutletContext } from "react-router";
 import { Helmet } from "react-helmet";
 import { PageContainer, ProCard } from '@ant-design/pro-components';
-import { Table, message, Progress, Space, Button, Empty, Typography, Spin } from 'antd';
+import { Table, message, Progress, Space, Button, Empty, Typography, Spin, Grid } from 'antd';
 import { ReloadOutlined, FolderOpenOutlined, MoonOutlined, DeleteOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import handleErrorContent from '@/utils/handleErrorContent';
@@ -11,6 +11,7 @@ import FileIcon from '@/pages/Folder/FileIcon';
 
 const { Text, Paragraph } = Typography;
 const { Column } = Table;
+const { useBreakpoint } = Grid;
 
 const Home = () => {
   const navigate = useNavigate();
@@ -20,6 +21,7 @@ const Home = () => {
   const { t } = useTranslation('Home');
 
   const [messageApi, contextHolder] = message.useMessage();
+  const screens = useBreakpoint();
 
   const [user] = useOutletContext();
 
@@ -81,6 +83,20 @@ const Home = () => {
         breadcrumb: {},
       }}
       ghost={true}
+      extra={<Space wrap={screens.md ? false : true}>
+        <Button
+          key="recycle"
+          type="link"
+          icon={<DeleteOutlined />}
+          href="/recycle"
+          onClick={(e) => {
+            e.preventDefault();
+            navigate('/recycle');
+          }}
+        >
+          {t('Recycle Bin')}
+        </Button>
+      </Space>}
     >
       <Helmet>
         <title>{t('Home')} - {t('File Browser')}</title>
@@ -88,7 +104,7 @@ const Home = () => {
       {contextHolder}
       <ProCard
         extra={<Space>
-          {(user.scope && user.scope.includes('admin') && recycleBinEnabled) && <Button
+          {/*(user.scope && user.scope.includes('admin') && recycleBinEnabled) && <Button
             key="recycle"
             type="link"
             icon={<DeleteOutlined />}
@@ -96,7 +112,7 @@ const Home = () => {
             title={t("Recycle Bin")}
             href="/recycle"
             onClick={handleRecycleBtnClick}
-          ></Button>}
+          ></Button>*/}
           {(user.scope && user.scope.includes('admin')) && <Button
             key="sleep"
             type="link"

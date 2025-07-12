@@ -19,7 +19,8 @@ const method = async (req, res) => {
     sevenZipPath,
     basePaths,
     enableDirSizeChk,
-    recycleFolderName
+    recycleFolderName,
+    enableRecycleBin
   } = getConfig();
 
   const abortController = new AbortController();
@@ -291,7 +292,8 @@ const method = async (req, res) => {
   const responseData = {
     files: paginatedFiles,
     pagination,
-    needsPassword: false
+    needsPassword: false,
+    enableRecycleBin
   };
 
   res.json(responseData);
