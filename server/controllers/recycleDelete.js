@@ -15,7 +15,7 @@ const method = async (req, res) => {
     recycleFolderName,
     recycleInfoFileName
   } = getConfig();
-  
+
   res.setHeader('Content-Type', 'text/event-stream');
   res.setHeader('Cache-Control', 'no-cache');
   res.setHeader('Connection', 'keep-alive');

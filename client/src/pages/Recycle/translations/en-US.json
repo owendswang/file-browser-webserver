@@ -76,5 +76,11 @@
   "Deleted: ": "Deleted: ",
   "Deleted Time": "Deleted Time",
   "Recycle Bin": "Recycle Bin",
-  "No Data": "No Data"
+  "No Data": "No Data",
+  "Empty Recycle Bin": "Empty Recycle Bin",
+  "Are you sure to empty the recycle bin?": "Are you sure to empty the recycle bin?",
+  "Empty failed: ": "Empty failed: ",
+  "Emptying: ": "Emptying: ",
+  "Empty error: ": "Empty error: ",
+  "Emptied: ": "Emptied: "
 }

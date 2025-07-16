@@ -319,6 +319,107 @@ const Recycle = () => {
     setMoveModalTitle('Move');
   }
 
+  const handleProgressEmptyRecycleBin = async () => {
+    try {
+      const response = await axios.delete(`/recycle`, {
+        responseType: 'stream',
+      });
+
+      const stream = response.data;
+      const reader = stream.pipeThrough(new TextDecoderStream('utf-8')).getReader();
+
+      let hasError;
+      while (true) {
+        const { value, done } = await reader.read();
+        if (value) {
+          for (const event of value.split('\n').filter(Boolean)) {
+            const data = JSON.parse(event.replace(/^data: /, ''));
+            const { progress, error } = data;
+            if (error) {
+              hasError = error
+              await reader.cancel(); // 主动关闭流，防止挂起
+            } else if (typeof(progress) === 'number') {
+              notificationApi.open({
+                key: 'emptyRecycleBin',
+                message: `${t('Emptying: ')}`,
+                description: <Progress percent={Math.round(progress)} status="active" />,
+                icon: <SyncOutlined spin style={{ color: '#1890ff' }} />,
+                duration: null,
+                closeIcon: false,
+                role: 'status',
+                placement: 'bottomRight',
+              });
+            }
+          }
+        }
+        if (done) {
+          if (hasError) {
+            notificationApi.open({
+              key: 'emptyRecycleBin',
+              message: `${t('Empty error: ')}`,
+              description: handleErrorContent(hasError),
+              icon: <CloseCircleFilled style={{ color: '#ff4d4f' }} />,
+              duration: null,
+              // closeIcon: true,
+              role: 'status',
+              placement: 'bottomRight',
+            });
+          } else {
+            notificationApi.open({
+              key: 'emptyRecycleBin',
+              message: `${t('Emptied: ')}`,
+              description: <Progress percent={100} status="success" />,
+              icon: <CheckCircleFilled style={{ color: '#52c41a' }} />,
+              duration: 3,
+              // closeIcon: true,
+              role: 'status',
+              placement: 'bottomRight',
+            });
+          }
+          break;
+        }
+      }
+    } catch(e) {
+      console.error(e);
+      // messageApi.error(`${t('Move failed: ')}${handleErrorContent(e)}`);
+      notificationApi.open({
+        key: 'emptyRecycleBin',
+        message: `${t('Empty error: ')}`,
+        description: handleErrorContent(e),
+        icon: <CloseCircleFilled />,
+        duration: null,
+        // closeIcon: true,
+        role: 'status',
+        placement: 'bottomRight',
+      });
+    } finally {
+      refresh();
+    }
+  }
+
+  const handleEmptyRecycleBin = (e) => {
+    modalApi.confirm({
+      title: t('Empty Recycle Bin'),
+      content: t('Are you sure to empty the recycle bin?'),
+      closable: true,
+      maskClosable: true,
+      onOk: async () => {
+        // axios 方法，显示进度
+        handleProgressEmptyRecycleBin();
+
+        // 不显示进度
+        /*try {
+          await recycleService.delete();
+        } catch(e) {
+          console.error(e);
+          messageApi.error(`${t('Empty failed: ')}${handleErrorContent(e)}`);
+        } finally {
+          refresh();
+        }*/
+      }
+    });
+  }
+
   return (
     <PageContainer
       title={t('Recycle Bin')}
@@ -347,6 +448,12 @@ const Recycle = () => {
             disabled={selectedRowKeys.length === 0}
             onClick={handleBulkDelete}
           >{t('Delete')}</Button>}
+          {(user.scope && user.scope.includes('admin')) && <Button
+            key='emptyRecycleBin'
+            icon={<DeleteOutlined />}
+            disabled={data.length === 0}
+            onClick={handleEmptyRecycleBin}
+          >{t('Empty Recycle Bin')}</Button>}
           <Input.Search
             key='search'
             loading={loading}
