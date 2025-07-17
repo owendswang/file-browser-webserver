@@ -15,7 +15,7 @@ import {
   FloatButton,
   notification,
   Progress,
-  Spin
+  Spin,
 } from 'antd';
 import {
   FolderOpenOutlined,
@@ -501,6 +501,7 @@ const Recycle = () => {
                   scrollToFirstRowOnChange: true
                 }}
                 className='tableWrapper'
+                tableLayout='fixed'
               >
                 <Column
                   title='Path'
@@ -558,6 +559,15 @@ const Recycle = () => {
                       </Link>}
                     </Space>
                   )}
+                />
+                <Column
+                  title={t("Deleted From")}
+                  dataIndex="deletedUrl"
+                  align="center"
+                  sorter={true}
+                  sortOrder={(searchParams.get('sortBy') || defaultSortBy) === 'deletedUrl' ? ((searchParams.get('order') || defaultOrder) + 'end') : null}
+                  width={200}
+                  render={(value, record, index) => <Text code={true} ellipsis={true} title={value} style={{ maxWidth: '200px' }}>{value}</Text>}
                 />
                 <Column
                   title={t("Type")}

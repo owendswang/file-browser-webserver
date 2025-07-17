@@ -72,8 +72,8 @@ const method = async (req, res) => {
                 type: itemStats.isDirectory() ? 'Folder' : getFileType(itemName),
                 icon: getFileIcon(itemName, itemStats.isDirectory()),
                 deletedAt: (new Date(parseInt(deletedTimeStamp, 10))).toISOString(),
-                // deletedFrom: recycleInfo.deletedFrom || '-',
-                deletedUrl: recycleInfo.deletedUrl || '-',
+                // deletedFrom: `/${recycleInfo.deletedFrom}/${itemName}` || '-',
+                deletedUrl: `/${recycleInfo.deletedUrl}/${itemName}================================` || '-',
                 size: itemSize,
                 sizeInBytes: itemSizeInBytes
               });
