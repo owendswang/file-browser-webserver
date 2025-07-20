@@ -25,7 +25,8 @@ import {
   ExportOutlined,
   SyncOutlined,
   CheckCircleFilled,
-  CloseCircleFilled
+  CloseCircleFilled,
+  UndoOutlined
 } from '@ant-design/icons';
 import * as dayjs from 'dayjs';
 import { useTranslation } from 'react-i18next';
@@ -194,7 +195,7 @@ const Recycle = () => {
               await reader.cancel(); // 主动关闭流，防止挂起
             } else if (typeof(progress) === 'number') {
               notificationApi.open({
-                key: fileNamesStr,
+                key: fileNamesStr + '-delete',
                 message: `${t('Deleting: ')}${t('l"')}${fileNamesStr}${t('r"')}`,
                 description: <Progress percent={Math.round(progress)} status="active" />,
                 icon: <SyncOutlined spin style={{ color: '#1890ff' }} />,
@@ -209,7 +210,7 @@ const Recycle = () => {
         if (done) {
           if (hasError) {
             notificationApi.open({
-              key: fileNamesStr,
+              key: fileNamesStr + '-delete',
               message: `${t('Delete error: ')}${t('l"')}${fileNamesStr}${t('r"')}`,
               description: handleErrorContent(hasError),
               icon: <CloseCircleFilled style={{ color: '#ff4d4f' }} />,
@@ -220,7 +221,7 @@ const Recycle = () => {
             });
           } else {
             notificationApi.open({
-              key: fileNamesStr,
+              key: fileNamesStr + '-delete',
               message: `${t('Deleted: ')}${t('l"')}${fileNamesStr}${t('r"')}`,
               description: <Progress percent={100} status="success" />,
               icon: <CheckCircleFilled style={{ color: '#52c41a' }} />,
@@ -237,8 +238,8 @@ const Recycle = () => {
       console.error(e);
       // messageApi.error(`${t('Move failed: ')}${handleErrorContent(e)}`);
       notificationApi.open({
-        key: fileNamesStr,
-        message: `${t(title.includes('Copy') ? 'Copy error: ' : 'Move error: ')}${t('l"')}${fileNamesStr}${t('r"')}`,
+        key: fileNamesStr + '-delete',
+        message: `${t('Delete error: ')}${t('l"')}${fileNamesStr}${t('r"')}`,
         description: handleErrorContent(e),
         icon: <CloseCircleFilled />,
         duration: null,
@@ -268,7 +269,7 @@ const Recycle = () => {
           if (!name) {
             throw new Error(t('Nothing to delete'));
           }
-          await folderService.delete(pathname, [name], {});
+          await recycleService.delete([name], {});
         } catch(e) {
           console.error(e);
           messageApi.error(`${t('Delete failed: ')}${handleErrorContent(e)}`);
@@ -295,10 +296,182 @@ const Recycle = () => {
 
         // 不显示进度
         /*try {
-          await folderService.delete(pathname, selectedRowKeys, {});
+          await recycleService.delete(selectedRowKeys, {});
         } catch(e) {
           console.error(e);
           messageApi.error(`${t('Delete failed: ')}${handleErrorContent(e)}`);
+        } finally {
+          refresh();
+        }*/
+      }
+    });
+  }
+
+  const handleProgressRestore = async (name, pathname, deletedUrl) => {
+    let fileNames = [];
+    let files = [];
+    if (name) {
+      fileNames = [name];
+      files = [{
+        deletedFile: pathname,
+        deletedUrl: deletedUrl
+      }];
+    } else {
+      fileNames = [...new Set(selectedRowKeys)].map((path) => path.split('/')[path.split('/').length - 1]);
+      for (const pathname of selectedRowKeys) {
+        for (const file of data) {
+          if (file.path === pathname) {
+            files.push({
+              deletedFile: pathname,
+              deletedUrl: file.deletedUrl
+            });
+          }
+        }
+      }
+    }
+    const fileNamesStr = fileNames.join(', ');
+    try {
+      const params = {};
+      const response = await axios.post(`/restore`, files, {
+        params,
+        responseType: 'stream',
+      });
+
+      const stream = response.data;
+      const reader = stream.pipeThrough(new TextDecoderStream('utf-8')).getReader();
+
+      let hasError;
+      while (true) {
+        const { value, done } = await reader.read();
+        if (value) {
+          for (const event of value.split('\n').filter(Boolean)) {
+            const data = JSON.parse(event.replace(/^data: /, ''));
+            const { progress, error } = data;
+            if (error) {
+              hasError = error
+              await reader.cancel(); // 主动关闭流，防止挂起
+            } else if (typeof(progress) === 'number') {
+              notificationApi.open({
+                key: fileNamesStr + '-restore',
+                message: `${t('Restoring: ')}${t('l"')}${fileNamesStr}${t('r"')}`,
+                description: <Progress percent={Math.round(progress)} status="active" />,
+                icon: <SyncOutlined spin style={{ color: '#1890ff' }} />,
+                duration: null,
+                closeIcon: false,
+                role: 'status',
+                placement: 'bottomRight',
+              });
+            }
+          }
+        }
+        if (done) {
+          if (hasError) {
+            notificationApi.open({
+              key: fileNamesStr + '-restore',
+              message: `${t('Restore error: ')}${t('l"')}${fileNamesStr}${t('r"')}`,
+              description: handleErrorContent(hasError),
+              icon: <CloseCircleFilled style={{ color: '#ff4d4f' }} />,
+              duration: null,
+              // closeIcon: true,
+              role: 'status',
+              placement: 'bottomRight',
+            });
+          } else {
+            notificationApi.open({
+              key: fileNamesStr + '-restore',
+              message: `${t('Restored: ')}${t('l"')}${fileNamesStr}${t('r"')}`,
+              description: <Progress percent={100} status="success" />,
+              icon: <CheckCircleFilled style={{ color: '#52c41a' }} />,
+              duration: 3,
+              // closeIcon: true,
+              role: 'status',
+              placement: 'bottomRight',
+            });
+          }
+          break;
+        }
+      }
+    } catch(e) {
+      console.error(e);
+      // messageApi.error(`${t('Move failed: ')}${handleErrorContent(e)}`);
+      notificationApi.open({
+        key: fileNamesStr + '-restore',
+        message: `${t('Restore error: ')}${t('l"')}${fileNamesStr}${t('r"')}`,
+        description: handleErrorContent(e),
+        icon: <CloseCircleFilled />,
+        duration: null,
+        // closeIcon: true,
+        role: 'status',
+        placement: 'bottomRight',
+      });
+    } finally {
+      refresh();
+    }
+  }
+
+  const handleRestoreClick = (name, pathname, deletedUrl) => {
+    // console.log(pn);
+    setSelectedRowKeys([pathname]);
+    // const files = [{
+    //   deletedFile: pathname,
+    //   deletedUrl,
+    // }];
+    modalApi.confirm({
+      title: t('Restore'),
+      content: t('Are you sure to restore it?'),
+      closable: true,
+      maskClosable: true,
+      onOk: async () => {
+        // axios 方法，显示进度
+        handleProgressRestore(name, pathname, deletedUrl);
+
+        // 不显示进度
+        /*try {
+          if (!name) {
+            throw new Error(t('Nothing to restore'));
+          }
+          await recycleService.restore(files);
+        } catch(e) {
+          console.error(e);
+          messageApi.error(`${t('Restore failed: ')}${handleErrorContent(e)}`);
+        } finally {
+          refresh();
+        }*/
+      },
+      onCancel: () => {
+        setSelectedRowKeys([]);
+      }
+    });
+  }
+
+  const handleBulkRestore = (e) => {
+    // console.log('trying to restore: ', selectedRowKeys);
+    const files = [];
+    // for (const pathname of selectedRowKeys) {
+    //   for (const file of data) {
+    //     if (file.path === pathname) {
+    //       files.push({
+    //         deletedFile: pathname,
+    //         deletedUrl: file.deletedUrl
+    //       });
+    //     }
+    //   }
+    // }
+    modalApi.confirm({
+      title: t('Restore'),
+      content: t('Are you sure to restore them?'),
+      closable: true,
+      maskClosable: true,
+      onOk: async () => {
+        // axios 方法，显示进度
+        handleProgressRestore();
+
+        // 不显示进度
+        /*try {
+          await recycleService.restore(files);
+        } catch(e) {
+          console.error(e);
+          messageApi.error(`${t('Restore failed: ')}${handleErrorContent(e)}`);
         } finally {
           refresh();
         }*/
@@ -436,11 +609,16 @@ const Recycle = () => {
         className="folderCardWrapper"
         title={<div className='folderCardTitle'>
           {(user.scope && user.scope.includes('admin')) && <Button
+            key='bulkRestore'
+            icon={<UndoOutlined />}
+            disabled={selectedRowKeys.length === 0}
+            onClick={handleBulkRestore}
+          >{t('Restore')}</Button>}
+          {(user.scope && user.scope.includes('admin')) && <Button
             key='bulkMove'
             icon={<ExportOutlined />}
             disabled={selectedRowKeys.length === 0}
             onClick={handleBulkMove}
-            className='dropdownButtonGroupLeft'
           >{t('Move')}</Button>}
           {(user.scope && user.scope.includes('admin')) && <Button
             key='bulkDelete'
@@ -539,6 +717,17 @@ const Recycle = () => {
                       >
                         <DownloadOutlined />
                       </Link>
+                      {(user.scope && user.scope.includes('admin')) && <Link
+                        key={`${value}-restore`}
+                        target='_blank'
+                        to={'/restore' + record.deletedUrl}
+                        title={t('Restore')}
+                        className="tableRowFileNameHoverLink"
+                        onClick={(e) => { e.preventDefault(); handleRestoreClick(value, record.path, record.deletedUrl); }}
+                        draggable={false}
+                      >
+                        <UndoOutlined />
+                      </Link>}
                       {(user.scope && user.scope.includes('admin')) && <Link
                         key={`${value}-move`}
                         to={'/move' + record.path}

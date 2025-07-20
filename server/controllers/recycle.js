@@ -73,7 +73,7 @@ const method = async (req, res) => {
                 icon: getFileIcon(itemName, itemStats.isDirectory()),
                 deletedAt: (new Date(parseInt(deletedTimeStamp, 10))).toISOString(),
                 // deletedFrom: `/${recycleInfo.deletedFrom}/${itemName}` || '-',
-                deletedUrl: `/${recycleInfo.deletedUrl}/${itemName}================================` || '-',
+                deletedUrl: `/${recycleInfo.deletedUrl}/${itemName}` || '-',
                 size: itemSize,
                 sizeInBytes: itemSizeInBytes
               });

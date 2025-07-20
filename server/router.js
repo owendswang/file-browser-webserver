@@ -37,6 +37,7 @@ const recycleRouter = require('./controllers/recycle');
 const recycleMoveRouter = require('./controllers/recycleMove');
 const recycleDeleteRouter = require('./controllers/recycleDelete');
 const emptyRecycleRouter = require('./controllers/emptyRecycle');
+const restoreRouter = require('./controllers/restore');
 const db = require('./db');
 const OAuth2Server = require('./oauth2');
 const getConfig = require('./utils/getConfig');
@@ -201,5 +202,8 @@ router.get('/api/recycle', nocacheMiddleware, oauth.authenticate({ scope: ['admi
 
 // empty items in all recycle bins
 router.delete('/api/recycle', nocacheMiddleware, oauth.authenticate({ scope: ['admin'] }), emptyRecycleRouter);
+
+// restore deleted files from recycle bins
+router.post('/api/restore', nocacheMiddleware, oauth.authenticate({ scope: ['admin'] }), restoreRouter);
 
 module.exports = router;

@@ -82,5 +82,12 @@
   "Empty failed: ": "清空失败：",
   "Emptying: ": "正在清空：",
   "Empty error: ": "清空出错：",
-  "Emptied: ": "清空完成："
+  "Emptied: ": "清空完成：",
+  "Restore": "还原",
+  "Are you sure to restore it?": "您确定要还原它吗？",
+  "Are you sure to restore them?": "您确定要还原它们吗？",
+  "Restore failed: ": "还原失败：",
+  "Restoring: ": "正在还原：",
+  "Restore error: ": "还原出错：",
+  "Restored: ": "还原完成："
 }

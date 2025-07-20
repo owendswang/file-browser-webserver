@@ -82,5 +82,12 @@
   "Empty failed: ": "Empty failed: ",
   "Emptying: ": "Emptying: ",
   "Empty error: ": "Empty error: ",
-  "Emptied: ": "Emptied: "
+  "Emptied: ": "Emptied: ",
+  "Restore": "Restore",
+  "Are you sure to restore it?": "Are you sure to restore it?",
+  "Are you sure to restore them?": "Are you sure to restore them?",
+  "Restore failed: ": "Restore failed: ",
+  "Restoring: ": "Restoring: ",
+  "Restore error: ": "Restore error: ",
+  "Restored: ": "Restored: "
 }

@@ -52,7 +52,7 @@ const method = async (req, res) => {
       dstArchiveFullPath = path.join(dstArchivePath, dstArchiveFileName);
 
       if (!fs.existsSync(dstArchiveFullPath)) {
-        return res.status(404).send('Source not found');
+        return res.status(404).send('Destination path not found');
       }
 
       if (fs.statSync(dstArchiveFullPath).isFile()) {

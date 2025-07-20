@@ -33,6 +33,18 @@ const RecycleServices = {
     return res.data;
   },
 
+  async restore(fileList, params = {}) {
+    const res = await axios.request({
+      method: 'post',
+      url: `/restore`,
+      params: {
+        ...params,
+      },
+      data: fileList,
+    });
+    return res.data;
+  },
+
 };
 
 export default RecycleServices;
