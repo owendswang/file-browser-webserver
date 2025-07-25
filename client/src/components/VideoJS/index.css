@@ -1,0 +1,12 @@
+.vjs-rotate-left-btn,
+.vjs-rotate-right-btn {
+  cursor: pointer;
+}
+
+.vjs-rotate-left-btn:before {
+  content: '⟲';
+}
+
+.vjs-rotate-right-btn:before {
+  content: '⟳';
+}

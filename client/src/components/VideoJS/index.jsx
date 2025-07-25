@@ -2,6 +2,7 @@ import React, { useEffect, useRef } from 'react';
 import videojs from "!video.js";
 import '!style-loader!css-loader!video.js/dist/video-js.css';
 import '!videojs-hls-quality-selector';
+import "@/components/VideoJS/index.css";
 
 export const VideoJS = (props) => {
   const {options, onReady, ...otherProps } = props;
@@ -9,6 +10,7 @@ export const VideoJS = (props) => {
   const videoRef = useRef(null);
   const playerRef = useRef(null);
   const volumeChangedByButtonTimeoutRef = useRef(null);
+  const rotationRef = useRef(0);
 
   const showVolumeControl = () => {
     const volumePanel = document.querySelector('div.vjs-volume-panel.vjs-control.vjs-volume-panel-vertical');
@@ -149,6 +151,50 @@ export const VideoJS = (props) => {
 
         // Add keydown event to the video element
         videoElement.addEventListener('keydown', handleKeyDown);
+
+        // Add rotate buttons
+        /*const Button = videojs.getComponent('Button');
+
+        class RotateLeftButton extends Button {
+          constructor(player, options) {
+            super(player, options);
+            this.addClass('vjs-rotate-left-btn');
+            this.controlText('Rotate Left');
+          }
+          handleClick() {
+            rotationRef.current = (rotationRef.current - 90) % 360;
+            const videoTag = videoElement.querySelector('video');
+            if (videoTag) {
+              videoTag.style.transform = `rotate(${rotationRef.current}deg)`;
+              videoTag.style.transformOrigin = 'center center';
+              adjustVideoFit(videoTag);
+            }
+          }
+        }
+
+        class RotateRightButton extends Button {
+          constructor(player, options) {
+            super(player, options);
+            this.addClass('vjs-rotate-right-btn');
+            this.controlText('Rotate Right');
+          }
+          handleClick() {
+            rotationRef.current = (rotationRef.current + 90) % 360;
+            const videoTag = videoElement.querySelector('video');
+            if (videoTag) {
+              videoTag.style.transform = `rotate(${rotationRef.current}deg)`;
+              videoTag.style.transformOrigin = 'center center';
+              adjustVideoFit(videoTag);
+            }
+          }
+        }
+
+        videojs.registerComponent('RotateLeftButton', RotateLeftButton);
+        videojs.registerComponent('RotateRightButton', RotateRightButton);
+
+        player.getChild('controlBar').addChild('RotateLeftButton', {});
+        player.getChild('controlBar').addChild('RotateRightButton', {});
+        */
       });
 
     // You could update an existing player in the `else` block here
@@ -172,7 +218,19 @@ export const VideoJS = (props) => {
       }
     };
   }, [playerRef]);
-
+/*
+  const adjustVideoFit = (videoTag) => {
+    const isRotated = Math.abs(rotationRef.current) % 180 !== 0;
+    if (isRotated) {
+      videoTag.style.width = 'auto';
+      videoTag.style.height = '100%';
+    } else {
+      videoTag.style.width = '100%';
+      videoTag.style.height = 'auto';
+    }
+    videoTag.style.objectFit = 'contain';
+  };
+*/
   return (
     <div data-vjs-player ref={videoRef} {...otherProps} className="video-player" />
   );
