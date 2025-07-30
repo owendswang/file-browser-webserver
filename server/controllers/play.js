@@ -36,9 +36,9 @@ const method = async (req, res) => {
 
   const abortController = new AbortController();
   const { signal } = abortController;
-  req.on('close', () => {
+  /*req.on('close', () => {
     abortController.abort();
-  });
+  });*/
 
   const m3u8Pattern = /\/\w+\.m3u8$/g;
   const tsPattern = /\/\w+\.(ts|aac)$/;
@@ -131,12 +131,39 @@ const method = async (req, res) => {
 
           const playVideoSize = resolutionMap[segmentResolution] || 0;
 
-          // 生成 ts 文件
           const ffmpeg = new FFmpeg(ffmpegPath);
+
+          let isHdr = false;
+          let videoInfo = {};
+          const videoInfoFilePath = path.join(cacheDir, 'info.json');
+          if (fs.existsSync(videoInfoFilePath) && fs.statSync(videoInfoFilePath).isFile()) {
+            const videoInfoStr = fs.readFileSync(videoInfoFilePath);
+            videoInfo = JSON.parse(videoInfoStr);
+          } else {
+            videoInfo = await ffmpeg.getMediaInfoFromFile(filePath, true);
+            fs.writeFileSync(path.join(cacheDir, 'info.json'), JSON.stringify(videoInfo, null, 4));
+          }
+          if (videoInfo.streams) {
+            for (const stream of videoInfo.streams) {
+              if ((stream.codec_type === 'video') && (stream.color_space) && (stream.color_space.includes('bt2020'))) {
+                isHdr = true;
+                break;
+              }
+            }
+          }
 
           // async 的方式生成 ts 文件
           const streams = videoOnly ? ['video'] : audioMatch ? ['audio'] : ['video', 'audio'];
-          const ffmpegRes = await ffmpeg.createSegmentToFile(filePath, cacheDir, segmentIndex, tsFileName, playVideoSize, playVideoSize, playVideoFps, playVideoSegmentTargetDuration, streams, audioTrackIndex, enablePlayVideoHardwareAcceleration, playVideoHardwareAccelerationVendor, playVideoHardwareAccelerationDevice, signal, false);
+          if (enablePlayVideoHardwareAcceleration) {
+            try {
+              await ffmpeg.createSegmentToFile(filePath, cacheDir, segmentIndex, tsFileName, playVideoSize, playVideoSize, playVideoFps, playVideoSegmentTargetDuration, streams, audioTrackIndex, enablePlayVideoHardwareAcceleration, playVideoHardwareAccelerationVendor, playVideoHardwareAccelerationDevice, signal, false, false, isHdr);
+            } catch (e) {
+              console.error(e);
+              await ffmpeg.createSegmentToFile(filePath, cacheDir, segmentIndex, tsFileName, playVideoSize, playVideoSize, playVideoFps, playVideoSegmentTargetDuration, streams, audioTrackIndex, enablePlayVideoHardwareAcceleration, playVideoHardwareAccelerationVendor, playVideoHardwareAccelerationDevice, signal, false, true);
+            }
+          } else {
+            await ffmpeg.createSegmentToFile(filePath, cacheDir, segmentIndex, tsFileName, playVideoSize, playVideoSize, playVideoFps, playVideoSegmentTargetDuration, streams, audioTrackIndex, enablePlayVideoHardwareAcceleration, playVideoHardwareAccelerationVendor, playVideoHardwareAccelerationDevice, signal, false, false, isHdr);
+          }
 
           const m3u8FilePath = path.join(cacheDir, 'index.m3u8');
           if (fs.existsSync(m3u8FilePath) && fs.statSync(m3u8FilePath).size > 0) {
@@ -342,7 +369,9 @@ const method = async (req, res) => {
 
         // 生成 m3u8 文件
         const ffmpeg = new FFmpeg(ffmpegPath);
-        const videoInfo = await ffmpeg.getMediaInfoFromFile(filePath, false, ['width', 'height'], ['duration']);
+        // const videoInfo = await ffmpeg.getMediaInfoFromFile(filePath, false, ['width', 'height'], ['duration']);
+        const videoInfo = await ffmpeg.getMediaInfoFromFile(filePath, true);
+        fs.writeFileSync(path.join(cacheDir, 'info.json'), JSON.stringify(videoInfo, null, 4));
 
         const duration = videoInfo.format.duration ? parseFloat(videoInfo.format.duration) : 0;
         const numSegments = Math.ceil(duration / playVideoSegmentTargetDuration);

@@ -180,8 +180,19 @@ const method = async (req, res) => {
         if (fileType === "Image File") {
           await ffmpeg.convertFileToWebpFile(filePath, webpFilePath, enablePreviewAnimation, previewImageMaxWidth, previewImageMaxHeight, false);
         } else if (fileType === "Video File") {
+          let isHdr = false;
+          const videoInfo = await ffmpeg.getMediaInfoFromFile(filePath, false, ['color_space'], []);
+          if (videoInfo.streams) {
+            for (const stream of videoInfo.streams) {
+              if ((stream.codec_type === 'video') && (stream.color_space) && (stream.color_space.includes('bt2020'))) {
+                isHdr = true;
+                break;
+              }
+            }
+          }
+
           const timeToCapture = '00:00:01'; // 设定时间点为视频的第一秒
-          await ffmpeg.captureFrameFromFileToFile(filePath, webpFilePath, timeToCapture, enablePreviewAnimation, previewImageMaxWidth, previewImageMaxHeight, false);
+          await ffmpeg.captureFrameFromFileToFile(filePath, webpFilePath, timeToCapture, enablePreviewAnimation, previewImageMaxWidth, previewImageMaxHeight, false, isHdr);
         }
 
         if (isInArchive) {

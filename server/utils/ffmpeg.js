@@ -196,13 +196,13 @@ class FFmpeg {
   }
 
   // 从视频中截取一帧，返回输出流
-  captureFrameFromStreamToStream(inputStream, time = 0, animated = false, maxWidth = 512, maxHeight = 512, verbose = this.verbose) {
+  captureFrameFromStreamToStream(inputStream, time = 0, animated = false, maxWidth = 512, maxHeight = 512, verbose = this.verbose, hdr2sdr = false) {
     const args = [
       '-hide_banner',
       '-v', verbose ? 'info' : 'error',
       '-ss', time, // 指定截取的时间点
       '-i', 'pipe:0', // 从标准输入读取数据
-      '-vf', `scale='min(${maxWidth},iw)':'min(${maxHeight},ih)':force_original_aspect_ratio=decrease`
+      '-vf', `fps=12,scale='min(${maxWidth},iw)':'min(${maxHeight},ih)':force_original_aspect_ratio=decrease${hdr2sdr ? ',zscale=t=linear:npl=100:rangein=limited,format=gbrpf32le,zscale=p=bt709,tonemap=tonemap=hable:desat=0,zscale=t=bt709:m=bt709:r=tv' : ''}`
     ];
     if (animated) {
       args = args.concat([
@@ -248,13 +248,13 @@ class FFmpeg {
   }
 
   // 截取视频，返回输出流
-  captureFrameFromFileToStream(filePath, time = 0, animated = false, maxWidth = 512, maxHeight = 512, verbose = this.verbose) {
+  captureFrameFromFileToStream(filePath, time = 0, animated = false, maxWidth = 512, maxHeight = 512, verbose = this.verbose, hdr2sdr = false) {
     let args = [
       '-hide_banner',
       '-v', verbose ? 'info' : 'error',
       '-ss', time, // 指定截取的时间点
       '-i', filePath,
-      '-vf', `scale='min(${maxWidth},iw)':'min(${maxHeight},ih)':force_original_aspect_ratio=decrease,fps=12`
+      '-vf', `fps=12,scale='min(${maxWidth},iw)':'min(${maxHeight},ih)':force_original_aspect_ratio=decrease${hdr2sdr ? ',zscale=t=linear:npl=100,format=gbrpf32le,zscale=p=bt709,tonemap=tonemap=hable:desat=0,zscale=t=bt709:m=bt709:r=tv' : ''}`
     ];
     if (animated) {
       args = args.concat([
@@ -294,13 +294,13 @@ class FFmpeg {
   }
 
   // 截取视频，输出文件
-  captureFrameFromFileToFile(filePath, outputPath, time = 0, animated = false, maxWidth = 512, maxHeight = 512, verbose = this.verbose) {
+  captureFrameFromFileToFile(filePath, outputPath, time = 0, animated = false, maxWidth = 512, maxHeight = 512, verbose = this.verbose, hdr2sdr = false) {
     let args = [
       '-hide_banner',
       '-v', verbose ? 'info' : 'error',
       '-ss', time, // 指定截取的时间点
       '-i', filePath,
-      '-vf', `scale='min(${maxWidth},iw)':'min(${maxHeight},ih)':force_original_aspect_ratio=decrease,fps=12`
+      '-vf', `fps=12,scale='min(${maxWidth},iw)':'min(${maxHeight},ih)':force_original_aspect_ratio=decrease${hdr2sdr ? ',zscale=t=linear:npl=100,format=gbrpf32le,zscale=p=bt709,tonemap=tonemap=hable:desat=0,zscale=t=bt709:m=bt709:r=tv' : ''}`
     ];
     if (animated) {
       args = args.concat([
@@ -436,7 +436,7 @@ class FFmpeg {
     'nvidia': 'h264_nvenc',
   };
 
-  createSegmentToFile(filePath, outputDir, segmentIndex = 0, segmentFileName, maxWidth = 1280, maxHeight = 1280, fps = 24, duration = 6, streams = ['video', 'audio'], trackIndex = 0, enableHwaccel = false, hwaccelVendor = 'intel', hwaccelDevice, signal, verbose = this.verbose) {
+  createSegmentToFile(filePath, outputDir, segmentIndex = 0, segmentFileName, maxWidth = 1280, maxHeight = 1280, fps = 24, duration = 6, streams = ['video', 'audio'], trackIndex = 0, enableHwaccel = false, hwaccelVendor = 'intel', hwaccelDevice, signal, verbose = this.verbose, forceSoftwareDecode = false, hdr2sdr = false) {
     return new Promise((resolve, reject) => {
       const startTime = segmentIndex * duration;
       const outputSegmentPath = path.join(outputDir, segmentFileName);
@@ -461,7 +461,8 @@ class FFmpeg {
           //}
         } else if (hwaccelVendor === 'intel') {
           args = args.concat([
-            '-hwaccel', 'qsv'
+            '-hwaccel', 'qsv',
+            '-hwaccel_output_format', 'qsv',
             // '-async_depth', '4', // (1 ~ INT_MAX. default '4') Internal parallelization depth, the higher the value the higher the latency.
             // '-gpu_copy', 'on' // default - 0, on - 1, off - 2. A GPU-accelerated copy between video and system memory.
           ]);
@@ -484,14 +485,26 @@ class FFmpeg {
       if (streams.includes('subtitle')) {
         args = args.concat(['-map', `0:s:${trackIndex}`]);
       }
+      const stdVideoFilterScale = (maxWidth > 0) && (maxHeight > 0) ? `scale='min(${maxWidth},iw)':'min(${maxHeight},ih)':force_original_aspect_ratio=decrease:force_divisible_by=2,` : '';
+      const stdVideoFilter = `fps=${fps},${stdVideoFilterScale}${hdr2sdr ? 'zscale=t=linear:npl=100,format=gbrpf32le,zscale=p=bt709,tonemap=tonemap=hable:desat=0,zscale=t=bt709:m=bt709:r=tv,' : ''}format=yuv420p`;
+      const stdDecodeArgs = [
+        '-vf', stdVideoFilter
+      ];
       if (streams.includes('video')) {
         if (enableHwaccel && (hwaccelVendor === 'nvidia')) {
-          // use 'ffmpeg -h encoder=h264_nvenc' to list all parameters for this encoder
-          const videoFilterScale = `scale_cuda=${(maxWidth > 0) && (maxHeight > 0) ? `'min(${maxWidth},iw)':'min(${maxHeight},ih)':force_original_aspect_ratio=decrease:force_divisible_by=2:` : ''}format=yuv420p`;
-          // const videoFilterScale = (maxWidth > 0) && (maxHeight > 0) ? `scale='min(${maxWidth},iw)':'min(${maxHeight},ih)':force_original_aspect_ratio=decrease:force_divisible_by=2,format=yuv420p` : 'format=yuv420p';
+          if (forceSoftwareDecode) {
+            args = args.concat(stdDecodeArgs);
+          } else {
+            // use 'ffmpeg -h encoder=h264_nvenc' to list all parameters for this encoder
+            const videoFilterScale = `${hdr2sdr ? 'tonemap_cuda=t=linear:tonemap=hable:param=1.0:param=0.0:param=0.0,' : ''}scale_cuda=${(maxWidth > 0) && (maxHeight > 0) ? `'min(${maxWidth},iw)':'min(${maxHeight},ih) ':force_original_aspect_ratio=decrease:force_divisible_by=2:` : ''}format=yuv420p`;
+            const videoFilter = videoFilterScale;
+            const hardwareDecodeArgs = [
+              // '-init_hw_device', `cuda${hwaccelDevice ? `:${hwaccelDevice}` : ''}`,
+              '-vf', videoFilter
+            ];
+            args = args.concat(hardwareDecodeArgs);
+          }
           args = args.concat([
-            // '-init_hw_device', `cuda${hwaccelDevice ? `:${hwaccelDevice}` : ''}`,
-            '-vf', videoFilterScale,
             '-c:v', 'h264_nvenc',
             '-gpu', hwaccelDevice || '-1', // (-1 ~ INT_MAX) -1: any, -2: list all
             '-preset', 'p4', // default, slow, medium, fast, hp, hq, bd, ll, llhq, llhp, lossless, losslesshp, p1, p2, p3, p4, p5, p6
@@ -502,27 +515,36 @@ class FFmpeg {
             '-profile:v', 'main', // baseline, main, high, high444p
           ]);
         } else if (enableHwaccel && (hwaccelVendor === 'intel')) {
-          // use 'ffmpeg -h encoder=h264_qsv' to list all parameters for this encoder
-          const videoFilterScale = (maxWidth > 0) && (maxHeight > 0) ? `scale='min(${maxWidth},iw)':'min(${maxHeight},ih)':force_original_aspect_ratio=decrease:force_divisible_by=2,` : '';
+          if (forceSoftwareDecode) {
+            args = args.concat(stdDecodeArgs);
+          } else {
+            // use 'ffmpeg -h encoder=h264_qsv' to list all parameters for this encoder
+            const videoFilterScale = (maxWidth > 0) && (maxHeight > 0) ? `scale_qsv=w='if(lt(iw,ih),min(${maxWidth},iw),-1)':h='if(lt(iw, ih),-1,min(${maxHeight},ih))',` : '';
+            const videoFilter = `vpp_qsv=framerate=24,${videoFilterScale}vpp_qsv=${hdr2sdr ? 'tonemap=1:' : ''}format=nv12`;
+            const hardwareDecodeArgs = [
+              '-init_hw_device', `qsv${hwaccelDevice ? `:${hwaccelDevice}` : ''}`,
+              '-vf', videoFilter
+              // https://ffmpeg.org/ffmpeg-filters.html#QSV-Video-Filters
+              // ffmpeg -filters | grep qsv
+              // ffmpeg --help filter=vpp_qsv
+            ];
+            args = args.concat(hardwareDecodeArgs);
+          }
           args = args.concat([
-            '-init_hw_device', `qsv${hwaccelDevice ? `:${hwaccelDevice}` : ''}`,
-            '-vf', `${videoFilterScale}format=yuv420p,fps=${fps}`,
-            '-c:v', 'h264_nvenc',
-            '-gpu', hwaccelDevice || '-1', // (-1 ~ INT_MAX) -1: any, -2: list all
+            '-c:v', 'h264_qsv',
             '-preset', 'fast', // default - 0, veryslow - 1, slower - 2, slow - 3, medium - 4, fast - 5, faster - 6, veryfast - 7
             '-scenario', 'livestreaming', // default unknown - 0, displayremoting - 1, videoconference - 2, archive - 3, livestreaming - 4, cameracapture - 5, videosurveillance - 6, gamestreaming - 7, remotegaming - 8
             '-framerate', fps.toString(),
             '-r:v', fps.toString(),
             '-g', (fps * duration).toString(),
-            '-gop_size', (fps * duration).toString(),
-            '-pix_fmt', 'yuv420p',
+            // '-gop_size', (fps * duration).toString(), // error: unknown option
+            '-pix_fmt', 'nv12',
             '-profile:v', 'main', // default unkown - 0, baseline - 66, main - 77, high - 100
             '-level', '3.1',
           ]);
         } else {
-          const videoFilterScale = (maxWidth > 0) && (maxHeight > 0) ? `scale='min(${maxWidth},iw)':'min(${maxHeight},ih)':force_original_aspect_ratio=decrease:force_divisible_by=2,` : '';
+          args = args.concat(stdDecodeArgs);
           args = args.concat([
-            '-vf', `${videoFilterScale}format=yuv420p,fps=${fps}`, // 添加视频缩放
             //'-r', fps.toString(),
             '-c:v', 'libx264', // av1_nvenc, h264_nvenc, hevc_nvenc, av1_qsv, h264_qsv, hevc_qsv, av1_amf, h264_amf, hevc_amf
             '-preset', 'ultrafast', // ultrafast, superfast, veryfast, faster, fast, medium (default), slower, veryslow, placebo.
