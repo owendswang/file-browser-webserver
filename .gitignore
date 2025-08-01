@@ -6,8 +6,6 @@ yarn-debug.log*
 yarn-error.log*
 lerna-debug.log*
 .pnpm-debug.log*
-nohup.out
-nohup_run_dev.sh
 
 # Diagnostic reports (https://nodejs.org/api/report.html)
 report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
@@ -139,7 +137,7 @@ dist
 
 # Others
 .DS_Store
-cache
+cache/
 server/cache
 */package-lock.json
 .git
@@ -149,3 +147,6 @@ Archive
 server/public
 sample-files
 server/controllers/test7z.js
+nohup.out
+nohup_run_dev.sh
+temp/

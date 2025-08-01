@@ -43,5 +43,12 @@
   "It would take a lot of efforts to create animated thumbnails for videos and GIFs.": "为视频和 GIF 创建可动缩略图会消耗很多资源和时间。",
   "Save successfully!": "保存成功！",
   "Enable recycle bin": "启用回收站",
-  "Deleted items would be kept in the folder called 'FB Recycle Bin' in the root of the path where they were.": "被删除的文件会存在所在路径的根目录下的 “FB Recycle Bin” 文件夹中。"
+  "Deleted items would be kept in the folder called 'FB Recycle Bin' in the root of the path where they were.": "被删除的文件会存在所在路径的根目录下的 “FB Recycle Bin” 文件夹中。",
+  "Clear": "清空",
+  "Cache directory for storing thumbnails and transcoded videos.": "用于存放缩略图和转码后的视频的缓存目录",
+  "Clear cache": "清空缓存",
+  "Are you sure to clear cache?": "您确定要清空缓存吗？",
+  "Clear failed: ": "清空出错：",
+  "Clear temp files": "清空临时文件",
+  "Are you sure to clear temp files?": "您确定要清空临时文件吗？"
 }

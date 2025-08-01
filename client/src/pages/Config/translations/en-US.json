@@ -43,5 +43,12 @@
   "It would take a lot of efforts to create animated thumbnails for videos and GIFs.": "It would take a lot of efforts to create animated thumbnails for videos and GIFs.",
   "Save successfully!": "Save successfully!",
   "Enable recycle bin": "Enable recycle bin",
-  "Deleted items would be kept in the folder called 'FB Recycle Bin' in the root of the path where they were.": "Deleted items would be kept in the folder called 'FB Recycle Bin' in the root of the path where they were."
+  "Deleted items would be kept in the folder called 'FB Recycle Bin' in the root of the path where they were.": "Deleted items would be kept in the folder called 'FB Recycle Bin' in the root of the path where they were.",
+  "Clear": "Clear",
+  "Cache directory for storing thumbnails and transcoded videos.": "Cache directory for storing thumbnails and transcoded videos.",
+  "Clear cache": "Clear cache",
+  "Are you sure to clear cache?": "Are you sure to clear cache?",
+  "Clear failed: ": "Clear failed: ",
+  "Clear temp files": "Clear temp files",
+  "Are you sure to clear temp files?": "Are you sure to clear temp files?"
 }

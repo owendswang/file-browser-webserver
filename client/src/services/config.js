@@ -17,6 +17,20 @@ const ConfigServices = {
     return res.data;
   },
 
+  async clearCache() {
+    const res = await axios.request({
+      url: '/clearcache',
+    });
+    return res.data;
+  },
+
+  async clearTemp() {
+    const res = await axios.request({
+      url: '/cleartemp',
+    });
+    return res.data;
+  },
+
 };
 
 export default ConfigServices;

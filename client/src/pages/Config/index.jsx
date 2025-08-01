@@ -3,8 +3,8 @@ import { useLocation, useNavigate } from "react-router";
 import { Helmet } from "react-helmet";
 import { useTranslation } from 'react-i18next';
 import { PageContainer, ProCard } from '@ant-design/pro-components';
-import { message, Input, InputNumber, Form, Switch, Button, Spin, Select, Divider } from 'antd';
-import { SaveOutlined, PlusOutlined, MinusCircleOutlined, RollbackOutlined } from '@ant-design/icons';
+import { message, Input, InputNumber, Form, Switch, Button, Spin, Select, Divider, Row, Col, Modal } from 'antd';
+import { SaveOutlined, PlusOutlined, MinusCircleOutlined, RollbackOutlined, ClearOutlined } from '@ant-design/icons';
 import handleErrorContent from '@/utils/handleErrorContent';
 import configService from '@/services/config';
 
@@ -13,7 +13,8 @@ const Config = () => {
 
   const navigate = useNavigate();
 
-  const [messageApi, contextHolder] = message.useMessage();
+  const [messageApi, messageContextHolder] = message.useMessage();
+  const [modalApi, modalContextHolder] = Modal.useModal();
 
   const { t } = useTranslation('Config');
 
@@ -23,6 +24,8 @@ const Config = () => {
   const [initialValues, setInitialValues] = useState({});
   const [serverPlatform, setServerPlatform] = useState('');
   const [serverArch, setServerArch] = useState('');
+  const [tempDirSize, setTempDirSize] = useState('');
+  const [cacheDirSize, setCacheDirSize] = useState('');
 
   const fetchData = async () => {
     setLoading(true);
@@ -40,6 +43,8 @@ const Config = () => {
         });
         setServerPlatform(res.platform);
         setServerArch(res.arch);
+        setTempDirSize(res.tempDirSize);
+        setCacheDirSize(res.cacheDirSize);
       }
     } catch(e) {
       console.error(e);
@@ -59,18 +64,50 @@ const Config = () => {
         ...values,
         basePaths
       });
-      const res = await configService.get();
-      if (res) {
-        setInitialValues(res.config);
-        setServerPlatform(res.platform);
-        setServerArch(res.arch);
-      }
+      await fetchData();
       messageApi.success(t('Save successfully!'));
     } catch(e) {
       console.error(e);
       messageApi.error(`${t('Failed to save config data: ')}${handleErrorContent(e)}`);
     }
-    setLoading(false);
+  }
+
+  const handleClearCacheClick = async (e) => {
+    modalApi.confirm({
+      title: t('Clear cache'),
+      content: t('Are you sure to clear cache?'),
+      closable: true,
+      maskClosable: true,
+      onOk: async () => {
+        try {
+          setLoading(true);
+          await configService.clearCache();
+          await fetchData();
+        } catch(e) {
+          console.error(e);
+          messageApi.error(`${t('Clear failed: ')}${handleErrorContent(e)}`);
+        }
+      },
+    });
+  }
+
+  const handleClearTempClick = async (e) => {
+    modalApi.confirm({
+      title: t('Clear temp files'),
+      content: t('Are you sure to clear temp files?'),
+      closable: true,
+      maskClosable: true,
+      onOk: async () => {
+        try {
+          setLoading(true);
+          await configService.clearTemp();
+          await fetchData();
+        } catch(e) {
+          console.error(e);
+          messageApi.error(`${t('Clear failed: ')}${handleErrorContent(e)}`);
+        }
+      },
+    });
   }
 
   useEffect(() => {
@@ -86,7 +123,8 @@ const Config = () => {
       <Helmet>
         <title>{t('Config')} - {t('File Browser')}</title>
       </Helmet>
-      {contextHolder}
+      {messageContextHolder}
+      {modalContextHolder}
       <ProCard>
         <Spin spinning={loading}>
           <Form
@@ -166,12 +204,22 @@ const Config = () => {
             </Form.Item>
             <Form.Item
               label={t("Temp file directory")}
-              name="tempDir"
               tooltip={t("Temp directory for modifying archives and creating thumbnails for files in archives")}
             >
-              <Input
-                placeholder="C:\FileBrowserServer\cache"
-              />
+              <Form.Item
+                name="tempDir"
+                style={{ display: 'inline-block', width: 'calc(100% - 168px)', marginRight: '8px', marginBottom: '0' }}
+              >
+                <Input
+                  placeholder="C:\FileBrowserServer\cache"
+                />
+              </Form.Item>
+              <Button
+                icon={<ClearOutlined />}
+                style={{ width: '160px' }}
+                onClick={handleClearTempClick}
+                loading={loading}
+              >{t('Clear')}{tempDirSize ? ` (${tempDirSize})` : ''}</Button>
             </Form.Item>
             <Form.Item
               label={t("Smartmontools executable file path")}
@@ -245,10 +293,22 @@ const Config = () => {
             <Form.Item
               label={t("Preview thumbnail cache path")}
               name="previewCachePath"
+              tooltip={t("Cache directory for storing thumbnails and transcoded videos.")}
             >
-              <Input
-                placeholder="C:\FileBrowserServer\cache"
-              />
+              <Form.Item
+                name="previewCachePath"
+                style={{ display: 'inline-block', width: 'calc(100% - 168px)', marginRight: '8px', marginBottom: '0' }}
+              >
+                <Input
+                  placeholder="C:\FileBrowserServer\cache"
+                />
+              </Form.Item>
+              <Button
+                icon={<ClearOutlined />}
+                style={{ width: '160px' }}
+                onClick={handleClearCacheClick}
+                loading={loading}
+              >{t('Clear')}{cacheDirSize ? ` (${cacheDirSize})` : ''}</Button>
             </Form.Item>
             <Form.Item
               label={t("Preview thumbnail image width")}
