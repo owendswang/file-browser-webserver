@@ -153,7 +153,7 @@ export const VideoJS = (props) => {
         videoElement.addEventListener('keydown', handleKeyDown);
 
         // Add rotate buttons
-        /*const Button = videojs.getComponent('Button');
+        const Button = videojs.getComponent('Button');
 
         class RotateLeftButton extends Button {
           constructor(player, options) {
@@ -165,7 +165,10 @@ export const VideoJS = (props) => {
             rotationRef.current = (rotationRef.current - 90) % 360;
             const videoTag = videoElement.querySelector('video');
             if (videoTag) {
-              videoTag.style.transform = `rotate(${rotationRef.current}deg)`;
+              const width = videoTag.videoWidth;
+              const height = videoTag.videoHeight;
+              const zoom = rotationRef.current % 180 === 0 ? 1 : (height / width);
+              videoTag.style.transform = `scale(${zoom}) rotate(${rotationRef.current}deg)`;
               videoTag.style.transformOrigin = 'center center';
               adjustVideoFit(videoTag);
             }
@@ -182,7 +185,10 @@ export const VideoJS = (props) => {
             rotationRef.current = (rotationRef.current + 90) % 360;
             const videoTag = videoElement.querySelector('video');
             if (videoTag) {
-              videoTag.style.transform = `rotate(${rotationRef.current}deg)`;
+              const width = videoTag.videoWidth;
+              const height = videoTag.videoHeight;
+              const zoom = rotationRef.current % 180 === 0 ? 1 : (height / width);
+              videoTag.style.transform = `scale(${zoom}) rotate(${rotationRef.current}deg)`;
               videoTag.style.transformOrigin = 'center center';
               adjustVideoFit(videoTag);
             }
@@ -194,7 +200,6 @@ export const VideoJS = (props) => {
 
         player.getChild('controlBar').addChild('RotateLeftButton', {});
         player.getChild('controlBar').addChild('RotateRightButton', {});
-        */
       });
 
     // You could update an existing player in the `else` block here
