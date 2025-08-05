@@ -364,7 +364,7 @@ class FFmpeg {
 
       child.stdout.on('data', (data) => {
         output += data.toString();
-        if (verbose) console.log(data.toString()); // 根据 verbose 控制 stdout 输出
+        if (verbose) console.log(data.toString());
       });
 
       child.on('close', (code) => {
@@ -416,7 +416,48 @@ class FFmpeg {
       child.stdout.on('data', (data) => {
         output += data.toString();
         if (verbose) {
-          console.log(data.toString()); // 根据 verbose 控制 stdout 输出
+          console.log(data.toString());
+        }
+      });
+
+      child.on('close', (code) => {
+        if (code !== 0) {
+          reject(new Error(`ffprobe exited with code ${code}`));
+        } else {
+          const res = JSON.parse(output.trim());
+          resolve(res);
+        }
+      });
+    });
+  }
+
+  getVideoKeyframesFromFile(filePath, verbose = this.verbose) {
+    return new Promise((resolve, reject) => {
+      const args = [
+        '-hide_banner',
+        '-v', verbose ? 'info' : 'error',
+        '-select_streams', 'v:0',
+        '-skip_frame', 'nokey',
+        '-show_frames',
+        '-show_entries', 'frame=pts_time,pict_type',
+        '-of', 'json',
+        filePath
+      ];
+      if (verbose) console.log(this.FFPROBE_PATH, args);
+
+      const child = spawn(this.FFPROBE_PATH, args);
+
+      let output = '';
+      child.stderr.on('data', (data) => {
+        if (verbose) {
+          console.error(data.toString());
+        }
+      });
+
+      child.stdout.on('data', (data) => {
+        output += data.toString();
+        if (verbose) {
+          console.log(data.toString());
         }
       });
 
@@ -436,9 +477,8 @@ class FFmpeg {
     'nvidia': 'h264_nvenc',
   };
 
-  createSegmentToFile(filePath, outputDir, segmentIndex = 0, segmentFileName, maxWidth = 1280, maxHeight = 1280, fps = 24, duration = 6, streams = ['video', 'audio'], trackIndex = 0, enableHwaccel = false, hwaccelVendor = 'intel', hwaccelDevice, signal, verbose = this.verbose, forceSoftwareDecode = false, hdr2sdr = false) {
+  createSegmentToFile(filePath, outputDir, startTime, segmentFileName, maxWidth = 1280, maxHeight = 1280, fps = 24, duration = 6, streams = ['video', 'audio'], trackIndex = 0, enableHwaccel = false, hwaccelVendor = 'intel', hwaccelDevice, signal, verbose = this.verbose, forceSoftwareDecode = false, hdr2sdr = false) {
     return new Promise((resolve, reject) => {
-      const startTime = segmentIndex * duration;
       const outputSegmentPath = path.join(outputDir, segmentFileName);
       const tmpOutputSegmentPath = `${outputSegmentPath}.tmp`;
       // const outputM3u8Path = path.join(outputDir, `segment${segmentIndex.toString().padStart(4, '0')}.m3u8`);
@@ -469,8 +509,8 @@ class FFmpeg {
         }
       }
       args = args.concat([
-        '-i', filePath,
         '-ss', startTime.toString(),
+        '-i', filePath,
         '-t', duration.toString()
       ]);
       if (streams.includes('video') || streams.includes('audio')) {
@@ -513,6 +553,7 @@ class FFmpeg {
             // '-pix_fmt', 'yuv420p',
             '-g', (fps * duration).toString(),
             '-profile:v', 'main', // baseline, main, high, high444p
+            '-level', '3.1',
           ]);
         } else if (enableHwaccel && (hwaccelVendor === 'intel')) {
           if (forceSoftwareDecode) {
@@ -635,17 +676,38 @@ class FFmpeg {
     });
   }
 
-  createSegmentToStream(filePath, segmentIndex = 0, maxWidth = 1280, maxHeight = 1280, fps = 24, duration = 6, streams = ['video', 'audio'], trackIndex = 0, signal, verbose = this.verbose) {
-    const startTime = segmentIndex * duration;
-    const videoFilterScale = (maxWidth > 0) && (maxHeight > 0) ? `scale='min(${maxWidth},iw)':'min(${maxHeight},ih)':force_original_aspect_ratio=decrease:force_divisible_by=2,` : '';
+  createSegmentToStream(filePath, startTime, maxWidth = 1280, maxHeight = 1280, fps = 24, duration = 6, streams = ['video', 'audio'], trackIndex = 0, enableHwaccel = false, hwaccelVendor = 'intel', hwaccelDevice, signal, verbose = this.verbose, forceSoftwareDecode = false, hdr2sdr = false) {
 
     let args = [
       '-hide_banner',
       '-v', verbose ? 'info' : 'error',
-      '-i', filePath,
-      '-ss', startTime.toString(),
-      '-t', duration.toString()
     ];
+    if (streams.includes('video') && enableHwaccel) {
+      if (hwaccelVendor === 'nvidia') {
+        args = args.concat([
+          '-hwaccel', 'cuda',
+          '-hwaccel_output_format', 'cuda',
+          // '-c:v', 'h264_cuvid'
+        ]);
+        //if (hwaccelDevice) {
+        //  args = args.concat([
+        //    '-hwaccel_device', hwaccelDevice
+        //  ]);
+        //}
+      } else if (hwaccelVendor === 'intel') {
+        args = args.concat([
+          '-hwaccel', 'qsv',
+          '-hwaccel_output_format', 'qsv',
+          // '-async_depth', '4', // (1 ~ INT_MAX. default '4') Internal parallelization depth, the higher the value the higher the latency.
+          // '-gpu_copy', 'on' // default - 0, on - 1, off - 2. A GPU-accelerated copy between video and system memory.
+        ]);
+      }
+    }
+    args = args.concat([
+      '-ss', startTime.toString(),
+      '-i', filePath,
+      '-t', duration.toString()
+    ]);
     if (streams.includes('video') || streams.includes('audio')) {
       args = args.concat(['-output_ts_offset', startTime.toString()]);
     }
@@ -658,18 +720,78 @@ class FFmpeg {
     if (streams.includes('subtitle')) {
       args = args.concat(['-map', `0:s:${trackIndex}`]);
     }
+    const stdVideoFilterScale = (maxWidth > 0) && (maxHeight > 0) ? `scale='min(${maxWidth},iw)':'min(${maxHeight},ih)':force_original_aspect_ratio=decrease:force_divisible_by=2,` : '';
+    const stdVideoFilter = `fps=${fps},${stdVideoFilterScale}${hdr2sdr ? 'zscale=t=linear:npl=100,format=gbrpf32le,zscale=p=bt709,tonemap=tonemap=hable:desat=0,zscale=t=bt709:m=bt709:r=tv,' : ''}format=yuv420p`;
+    const stdDecodeArgs = [
+      '-vf', stdVideoFilter
+    ];
     if (streams.includes('video')) {
-      args = args.concat([
-        '-vf', `${videoFilterScale}fps=${fps}`, // 添加视频缩放
-        //'-r', fps.toString(),
-        '-c:v', 'libx264', // av1_nvenc, h264_nvenc, hevc_nvenc, av1_qsv, h264_qsv, hevc_qsv, av1_amf, h264_amf, hevc_amf
-        '-preset', 'ultrafast', // ultrafast, superfast, veryfast, faster, fast, medium (default), slower, veryslow, placebo.
-        '-crf', '23', // 0 - 51, 数值越低质量越高
-        '-g', (fps * duration).toString(),
-        '-pix_fmt', 'yuv420p',
-        '-profile:v', 'main', // baseline, main, high, high10
-        '-level', '3.1'
-      ]);
+      if (enableHwaccel && (hwaccelVendor === 'nvidia')) {
+        if (forceSoftwareDecode) {
+          args = args.concat(stdDecodeArgs);
+        } else {
+          // use 'ffmpeg -h encoder=h264_nvenc' to list all parameters for this encoder
+          const videoFilterScale = `${hdr2sdr ? 'tonemap_cuda=t=linear:tonemap=hable:param=1.0:param=0.0:param=0.0,' : ''}scale_cuda=${(maxWidth > 0) && (maxHeight > 0) ? `'min(${maxWidth},iw)':'min(${maxHeight},ih) ':force_original_aspect_ratio=decrease:force_divisible_by=2:` : ''}format=yuv420p`;
+          const videoFilter = videoFilterScale;
+          const hardwareDecodeArgs = [
+            // '-init_hw_device', `cuda${hwaccelDevice ? `:${hwaccelDevice}` : ''}`,
+            '-vf', videoFilter
+          ];
+          args = args.concat(hardwareDecodeArgs);
+        }
+        args = args.concat([
+          '-c:v', 'h264_nvenc',
+          '-gpu', hwaccelDevice || '-1', // (-1 ~ INT_MAX) -1: any, -2: list all
+          '-preset', 'p4', // default, slow, medium, fast, hp, hq, bd, ll, llhq, llhp, lossless, losslesshp, p1, p2, p3, p4, p5, p6
+          '-tune', 'hq', // hq, ll, ull, lossless
+          '-r:v', fps.toString(),
+          // '-pix_fmt', 'yuv420p',
+          '-g', (fps * duration).toString(),
+          '-profile:v', 'main', // baseline, main, high, high444p
+          '-level', '3.1',
+        ]);
+      } else if (enableHwaccel && (hwaccelVendor === 'intel')) {
+        if (forceSoftwareDecode) {
+          args = args.concat(stdDecodeArgs);
+        } else {
+          // use 'ffmpeg -h encoder=h264_qsv' to list all parameters for this encoder
+          const videoFilterScale = (maxWidth > 0) && (maxHeight > 0) ? `scale_qsv=w='if(lt(iw,ih),min(${maxWidth},iw),-1)':h='if(lt(iw, ih),-1,min(${maxHeight},ih))',` : '';
+          const videoFilter = `vpp_qsv=framerate=24,${videoFilterScale}vpp_qsv=${hdr2sdr ? 'tonemap=1:' : ''}format=nv12`;
+          const hardwareDecodeArgs = [
+            '-init_hw_device', `qsv${hwaccelDevice ? `:${hwaccelDevice}` : ''}`,
+            '-vf', videoFilter
+            // https://ffmpeg.org/ffmpeg-filters.html#QSV-Video-Filters
+            // ffmpeg -filters | grep qsv
+            // ffmpeg --help filter=vpp_qsv
+          ];
+          args = args.concat(hardwareDecodeArgs);
+        }
+        args = args.concat([
+          '-c:v', 'h264_qsv',
+          '-preset', 'fast', // default - 0, veryslow - 1, slower - 2, slow - 3, medium - 4, fast - 5, faster - 6, veryfast - 7
+          '-scenario', 'livestreaming', // default unknown - 0, displayremoting - 1, videoconference - 2, archive - 3, livestreaming - 4, cameracapture - 5, videosurveillance - 6, gamestreaming - 7, remotegaming - 8
+          '-framerate', fps.toString(),
+          '-r:v', fps.toString(),
+          '-g', (fps * duration).toString(),
+          // '-gop_size', (fps * duration).toString(), // error: unknown option
+          '-pix_fmt', 'nv12',
+          '-profile:v', 'main', // default unkown - 0, baseline - 66, main - 77, high - 100
+          '-level', '3.1',
+        ]);
+      } else {
+        args = args.concat(stdDecodeArgs);
+        args = args.concat([
+          //'-r', fps.toString(),
+          '-c:v', 'libx264', // av1_nvenc, h264_nvenc, hevc_nvenc, av1_qsv, h264_qsv, hevc_qsv, av1_amf, h264_amf, hevc_amf
+          '-preset', 'ultrafast', // ultrafast, superfast, veryfast, faster, fast, medium (default), slower, veryslow, placebo.
+          '-crf', '23', // 0 - 51, 数值越低质量越高
+          '-g', (fps * duration).toString(),
+          '-pix_fmt', 'yuv420p',
+          '-r:v', fps.toString(),
+          '-profile:v', 'main', // baseline, main, high, high10
+          '-level', '3.1'
+        ]);
+      }
     } else {
       args.push('-vn');
     }

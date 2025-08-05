@@ -133,21 +133,53 @@ const method = async (req, res) => {
 
           const ffmpeg = new FFmpeg(ffmpegPath);
 
+          // 判断是否是 HDR 视频
           let isHdr = false;
-          let videoInfo = {};
-          const videoInfoFilePath = path.join(cacheDir, 'info.json');
-          if (fs.existsSync(videoInfoFilePath) && fs.statSync(videoInfoFilePath).isFile()) {
-            const videoInfoStr = fs.readFileSync(videoInfoFilePath);
-            videoInfo = JSON.parse(videoInfoStr);
-          } else {
-            videoInfo = await ffmpeg.getMediaInfoFromFile(filePath, true);
-            fs.writeFileSync(path.join(cacheDir, 'info.json'), JSON.stringify(videoInfo, null, 4));
+          if (videoMatch) {
+            let videoInfo = {};
+            const videoInfoFilePath = path.join(cacheDir, 'info.json');
+            if (fs.existsSync(videoInfoFilePath) && fs.statSync(videoInfoFilePath).isFile()) {
+              const videoInfoStr = fs.readFileSync(videoInfoFilePath);
+              videoInfo = JSON.parse(videoInfoStr);
+            } else {
+              videoInfo = await ffmpeg.getMediaInfoFromFile(filePath, true);
+              fs.writeFileSync(path.join(cacheDir, 'info.json'), JSON.stringify(videoInfo, null, 4));
+            }
+            if (videoInfo.streams) {
+              for (const stream of videoInfo.streams) {
+                if ((stream.codec_type === 'video') && (stream.color_space) && (stream.color_space.includes('bt2020'))) {
+                  isHdr = true;
+                  break;
+                }
+              }
+            }
           }
-          if (videoInfo.streams) {
-            for (const stream of videoInfo.streams) {
-              if ((stream.codec_type === 'video') && (stream.color_space) && (stream.color_space.includes('bt2020'))) {
-                isHdr = true;
-                break;
+
+          // 读取 m3u8 ，获取相应的 start 和 duration
+          let start = 0;
+          let duration = playVideoSegmentTargetDuration;
+          const m3u8FilePath = path.join(cacheDir, 'index.m3u8');
+          if (fs.existsSync(m3u8FilePath) && fs.statSync(m3u8FilePath).size > 0) {
+            const m3u8FileContent = fs.readFileSync(m3u8FilePath, 'utf8');
+            const childM3u8Pattern = /^index(_audio|_subtitle)?_\d+p?\.m3u8$/gm;
+            const playlistMatches = m3u8FileContent.match(childM3u8Pattern);
+            if (playlistMatches) {
+              const childM3u8FilePath = path.join(cacheDir, playlistMatches[0]);
+              const childM3u8FileContent = fs.readFileSync(childM3u8FilePath, 'utf8');
+
+              const durationPattern = /^#EXTINF\:(\d+\.\d+\,)$/gm;
+              const durationMatches = childM3u8FileContent.match(durationPattern);
+
+              for (let i = 0; i < durationMatches.length; i += 1) {
+                if (i > 0) {
+                  const secondsMatch = durationMatches[i - 1].match(/\d+\.\d+/);
+                  start += parseFloat(secondsMatch[0]);
+                }
+                if (i === segmentIndex) {
+                  const secondsMatch = durationMatches[i].match(/\d+\.\d+/);
+                  duration = parseFloat(secondsMatch[0]);
+                  break;
+                }
               }
             }
           }
@@ -156,16 +188,15 @@ const method = async (req, res) => {
           const streams = videoOnly ? ['video'] : audioMatch ? ['audio'] : ['video', 'audio'];
           if (enablePlayVideoHardwareAcceleration) {
             try {
-              await ffmpeg.createSegmentToFile(filePath, cacheDir, segmentIndex, tsFileName, playVideoSize, playVideoSize, playVideoFps, playVideoSegmentTargetDuration, streams, audioTrackIndex, enablePlayVideoHardwareAcceleration, playVideoHardwareAccelerationVendor, playVideoHardwareAccelerationDevice, signal, false, false, isHdr);
+              await ffmpeg.createSegmentToFile(filePath, cacheDir, start, tsFileName, playVideoSize, playVideoSize, playVideoFps, duration, streams, audioTrackIndex, enablePlayVideoHardwareAcceleration, playVideoHardwareAccelerationVendor, playVideoHardwareAccelerationDevice, signal, false, false, isHdr);
             } catch (e) {
               console.error(e);
-              await ffmpeg.createSegmentToFile(filePath, cacheDir, segmentIndex, tsFileName, playVideoSize, playVideoSize, playVideoFps, playVideoSegmentTargetDuration, streams, audioTrackIndex, enablePlayVideoHardwareAcceleration, playVideoHardwareAccelerationVendor, playVideoHardwareAccelerationDevice, signal, false, true);
+              await ffmpeg.createSegmentToFile(filePath, cacheDir, start, tsFileName, playVideoSize, playVideoSize, playVideoFps, duration, streams, audioTrackIndex, enablePlayVideoHardwareAcceleration, playVideoHardwareAccelerationVendor, playVideoHardwareAccelerationDevice, signal, false, true);
             }
           } else {
-            await ffmpeg.createSegmentToFile(filePath, cacheDir, segmentIndex, tsFileName, playVideoSize, playVideoSize, playVideoFps, playVideoSegmentTargetDuration, streams, audioTrackIndex, enablePlayVideoHardwareAcceleration, playVideoHardwareAccelerationVendor, playVideoHardwareAccelerationDevice, signal, false, false, isHdr);
+            await ffmpeg.createSegmentToFile(filePath, cacheDir, start, tsFileName, playVideoSize, playVideoSize, playVideoFps, duration, streams, audioTrackIndex, enablePlayVideoHardwareAcceleration, playVideoHardwareAccelerationVendor, playVideoHardwareAccelerationDevice, signal, false, false, isHdr);
           }
 
-          const m3u8FilePath = path.join(cacheDir, 'index.m3u8');
           if (fs.existsSync(m3u8FilePath) && fs.statSync(m3u8FilePath).size > 0) {
             const m3u8FileContent = fs.readFileSync(m3u8FilePath, 'utf8');
             const childM3u8Pattern = /^index(_audio|_subtitle)?_\d+p?\.m3u8$/gm;
@@ -193,6 +224,7 @@ const method = async (req, res) => {
             }
           }
 
+          res.set('Content-Type', 'video/MP2T');
           return res.sendFile(tsFilePath);
 /*
           // stream 的方式生成 ts 文件
@@ -206,7 +238,7 @@ const method = async (req, res) => {
             return res.status(500).send(`Error processing segment:\n${error.message}`);
           });
 
-          const ffmpegStream = ffmpeg.createSegmentToStream(filePath, segmentIndex, playVideoSize, playVideoSize, playVideoFps, playVideoSegmentTargetDuration, videoOnly ? ['video'] : ['video', 'audio'], signal, false);
+          const ffmpegStream = ffmpeg.createSegmentToStream(filePath, start, playVideoSize, playVideoSize, playVideoFps, duration, videoOnly ? ['video'] : ['video', 'audio'], signal, false);
 
           // Check if ffmpegStream is valid before piping
           if (!ffmpegStream) {
@@ -279,13 +311,9 @@ const method = async (req, res) => {
             filePath = path.join(cacheDir, archiveInternalPath);
           }
 
-          // 生成 vtt 文件
-          const ffmpeg = new FFmpeg(ffmpegPath);
-
-          // async 的方式生成 vtt 文件
-          const streams = ['subtitle'];
-          const ffmpegRes = await ffmpeg.createSegmentToFile(filePath, cacheDir, segmentIndex, vttFileName, 0, 0, 0, playVideoSegmentTargetDuration, streams, subtitleTrackIndex, null, null, null, signal, false);
-
+          // 读取 m3u8 ，获取相应的 start 和 duration
+          let start = 0;
+          let duration = 0;
           const m3u8FilePath = path.join(cacheDir, 'index.m3u8');
           if (fs.existsSync(m3u8FilePath) && fs.statSync(m3u8FilePath).size > 0) {
             const m3u8FileContent = fs.readFileSync(m3u8FilePath, 'utf8');
@@ -294,25 +322,30 @@ const method = async (req, res) => {
             if (playlistMatches) {
               const childM3u8FilePath = path.join(cacheDir, playlistMatches[0]);
               const childM3u8FileContent = fs.readFileSync(childM3u8FilePath, 'utf8');
-              const segmentPattern = /^(segment|video|audio|subtitle)_\d+p?_\d+\.(ts|aac|vtt)$/gm;
 
-              const segmentMatches = childM3u8FileContent.match(segmentPattern);
-              const targetSegmentCount = segmentMatches ? (segmentMatches.length * playlistMatches.length) : 0;
+              const durationPattern = /^#EXTINF\:(\d+\.\d+\,)$/gm;
+              const durationMatches = childM3u8FileContent.match(durationPattern);
 
-              const files = fs.readdirSync(cacheDir);
-              const actualSegmentCount = files.filter(file => segmentPattern.test(file) && fs.statSync(path.join(cacheDir, file)).isFile()).length;
-
-              if (targetSegmentCount === actualSegmentCount) {
-                if (isInArchive) {
-                  const extractedFilePath = path.join(cacheDir, archiveInternalPath.split(path.sep)[0]);
-                  if (fs.existsSync(extractedFilePath)) {
-                    await rm(extractedFilePath);
-                  }
+              for (let i = 0; i < durationMatches.length; i += 1) {
+                if (i > 0) {
+                  const secondsMatch = durationMatches[i - 1].match(/\d+\.\d+/);
+                  start += parseFloat(secondsMatch[0]);
                 }
-                thumbnails.updateM3u8Info(originalFileName, modifiedTime, thumbnailId, size, 1);
+                if (i === segmentIndex) {
+                  const secondsMatch = durationMatches[i].match(/\d+\.\d+/);
+                  duration = parseFloat(secondsMatch[0]);
+                  break;
+                }
               }
             }
           }
+
+          // 生成 vtt 文件
+          const ffmpeg = new FFmpeg(ffmpegPath);
+
+          // async 的方式生成 vtt 文件
+          const streams = ['subtitle'];
+          await ffmpeg.createSegmentToFile(filePath, cacheDir, start, vttFileName, 0, 0, 0, duration, streams, subtitleTrackIndex, null, null, null, signal, false);
 
           return res.sendFile(vttFilePath);
         }
@@ -373,8 +406,22 @@ const method = async (req, res) => {
         const videoInfo = await ffmpeg.getMediaInfoFromFile(filePath, true);
         fs.writeFileSync(path.join(cacheDir, 'info.json'), JSON.stringify(videoInfo, null, 4));
 
-        const duration = videoInfo.format.duration ? parseFloat(videoInfo.format.duration) : 0;
-        const numSegments = Math.ceil(duration / playVideoSegmentTargetDuration);
+        const videoKeyframes = await ffmpeg.getVideoKeyframesFromFile(filePath);
+        const iFrameTimes = videoKeyframes.frames.filter(f => f.pict_type === 'I').map(f => parseFloat(f.pts_time));
+
+        const totalDuration = videoInfo.format.duration ? parseFloat(videoInfo.format.duration) : 0;
+        // 计算每段的 duration（秒）
+        const durations = [];
+        for (let i = 0; i < iFrameTimes.length; i++) {
+          const start = iFrameTimes[i];
+          const end = ((i + 1) < iFrameTimes.length) ? iFrameTimes[i + 1] : totalDuration;
+          durations.push(end - start);
+        }
+
+        // 动态计算 target duration
+        const targetDuration = Math.ceil(Math.max(...durations));
+
+        const numSegments = durations.length;
         const padStartLength = (numSegments - 1).toString().length;
 
         // 生成多分辨率视频流的 Master m3u8 文件
@@ -462,7 +509,7 @@ const method = async (req, res) => {
           playlist += os.EOL;
         }
         for (const resolution of resolutions) {
-          playlist += `#EXT-X-STREAM-INF:BANDWIDTH=${resolution.width * resolution.height},RESOLUTION=${resolution.width}x${resolution.height},FRAME-RATE=${playVideoFps.toFixed(3)},CODECS="avc1.42c015,mp4a.40.2"${audioStreams.length > 1 ? ',AUDIO="audio"' : ''}${subtitleStreams.length ? ',SUBTITLES="subtitle"' : ''}${os.EOL}`;
+          playlist += `#EXT-X-STREAM-INF:BANDWIDTH=${resolution.width * resolution.height},RESOLUTION=${resolution.width}x${resolution.height},FRAME-RATE=${playVideoFps.toFixed(3)},CODECS="avc1.42c01f,mp4a.40.2"${audioStreams.length > 1 ? ',AUDIO="audio"' : ''}${subtitleStreams.length ? ',SUBTITLES="subtitle"' : ''}${os.EOL}`;
           playlist += `index_${resolution.name}.m3u8${os.EOL}${os.EOL}`;
         }
         if (audioStreams.length > 1) {
@@ -476,27 +523,28 @@ const method = async (req, res) => {
         // 逐个生成不同分辨率的 m3u8 文件
         for (const resolution of resolutions) {
           let childPlaylist = `#EXTM3U${os.EOL}#EXT-X-VERSION:6${os.EOL}`;
-          childPlaylist += `#EXT-X-TARGETDURATION:${playVideoSegmentTargetDuration}${os.EOL}`;
+          childPlaylist += `#EXT-X-TARGETDURATION:${targetDuration}${os.EOL}`;
           childPlaylist += `#EXT-X-MEDIA-SEQUENCE:0${os.EOL}`;
           childPlaylist += `#EXT-X-PLAYLIST-TYPE:VOD${os.EOL}`;
           childPlaylist += `#EXT-X-INDEPENDENT-SEGMENTS${os.EOL}`;
           for (let i = 0; i < numSegments; i++) {
-            childPlaylist += `#EXTINF:${Math.min(playVideoSegmentTargetDuration, duration - i * playVideoSegmentTargetDuration).toFixed(6)},${os.EOL}`;
+            childPlaylist += `#EXTINF:${durations[i].toFixed(6)},${os.EOL}`;
             childPlaylist += `${audioStreams.length > 1 ? 'video' : 'segment'}_${resolution.name}_${i.toString().padStart(padStartLength, '0')}.ts${os.EOL}`;
           }
           childPlaylist += `#EXT-X-ENDLIST${os.EOL}`;
           const childM3u8FilePath = path.join(previewCachePath, thumbnailIdToUse, `index_${resolution.name}.m3u8`);
           fs.writeFileSync(childM3u8FilePath, childPlaylist, { encoding: 'utf8' });
         }
+        // 生成音频 m3u8 文件
         if (audioStreams.length > 1) {
           for (let i = 0; i < audioStreams.length; i += 1) {
             let audioPlaylist = `#EXTM3U${os.EOL}#EXT-X-VERSION:6${os.EOL}`;
-            audioPlaylist += `#EXT-X-TARGETDURATION:${playVideoSegmentTargetDuration}${os.EOL}`;
+            audioPlaylist += `#EXT-X-TARGETDURATION:${targetDuration}${os.EOL}`;
             audioPlaylist += `#EXT-X-MEDIA-SEQUENCE:0${os.EOL}`;
             audioPlaylist += `#EXT-X-PLAYLIST-TYPE:VOD${os.EOL}`;
             audioPlaylist += `#EXT-X-INDEPENDENT-SEGMENTS${os.EOL}`;
             for (let j = 0; j < numSegments; j++) {
-              audioPlaylist += `#EXTINF:${Math.min(playVideoSegmentTargetDuration, duration - j * playVideoSegmentTargetDuration).toFixed(6)},${os.EOL}`;
+              audioPlaylist += `#EXTINF:${durations[j].toFixed(6)},${os.EOL}`;
               audioPlaylist += `audio_${i}_${j.toString().padStart(padStartLength, '0')}.aac${os.EOL}`;
             }
             audioPlaylist += `#EXT-X-ENDLIST${os.EOL}`;
@@ -504,14 +552,15 @@ const method = async (req, res) => {
             fs.writeFileSync(audioM3u8FilePath, audioPlaylist, { encoding: 'utf8' });
           }
         }
+        // 生成字幕 m3u8 文件
         for (let i = 0; i < subtitleStreams.length; i += 1) {
           let subtitlePlaylist = `#EXTM3U${os.EOL}#EXT-X-VERSION:6${os.EOL}`;
-          subtitlePlaylist += `#EXT-X-TARGETDURATION:${playVideoSegmentTargetDuration}${os.EOL}`;
+          subtitlePlaylist += `#EXT-X-TARGETDURATION:${targetDuration}${os.EOL}`;
           subtitlePlaylist += `#EXT-X-MEDIA-SEQUENCE:0${os.EOL}`;
           subtitlePlaylist += `#EXT-X-PLAYLIST-TYPE:VOD${os.EOL}`;
           subtitlePlaylist += `#EXT-X-INDEPENDENT-SEGMENTS${os.EOL}`;
           for (let j = 0; j < numSegments; j++) {
-            subtitlePlaylist += `#EXTINF:${Math.min(playVideoSegmentTargetDuration, duration - j * playVideoSegmentTargetDuration).toFixed(6)},${os.EOL}`;
+            subtitlePlaylist += `#EXTINF:${durations[j].toFixed(6)},${os.EOL}`;
             subtitlePlaylist += `subtitle_${i}_${j.toString().padStart(padStartLength, '0')}.vtt${os.EOL}`;
           }
           subtitlePlaylist += `#EXT-X-ENDLIST${os.EOL}`;
