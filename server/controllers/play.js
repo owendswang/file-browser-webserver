@@ -345,7 +345,7 @@ const method = async (req, res) => {
 
           // async 的方式生成 vtt 文件
           const streams = ['subtitle'];
-          await ffmpeg.createSegmentToFile(filePath, cacheDir, start, vttFileName, 0, 0, 0, duration, streams, subtitleTrackIndex, null, null, null, signal, false);
+          await ffmpeg.createSegmentToFile(filePath, cacheDir, start, vttFileName, 0, 0, 0, duration, streams, subtitleTrackIndex, null, null, null, signal, true);
 
           return res.sendFile(vttFilePath);
         }
@@ -403,19 +403,41 @@ const method = async (req, res) => {
         // 生成 m3u8 文件
         const ffmpeg = new FFmpeg(ffmpegPath);
         // const videoInfo = await ffmpeg.getMediaInfoFromFile(filePath, false, ['width', 'height'], ['duration']);
-        const videoInfo = await ffmpeg.getMediaInfoFromFile(filePath, true);
-        fs.writeFileSync(path.join(cacheDir, 'info.json'), JSON.stringify(videoInfo, null, 4));
+        const videoInfoFilePath = path.join(cacheDir, 'info.json');
+        if (!(fs.existsSync(videoInfoFilePath) && fs.statSync(videoInfoFilePath).size > 0)) {
+          // const videoInfo = await ffmpeg.getMediaInfoFromFile(filePath, true); // 不是太慢，但也不如写文件快
+          // fs.writeFileSync(videoInfoFilePath, JSON.stringify(videoInfo, null, 4));
+          await ffmpeg.getMediaInfoFromFileToFile(filePath, videoInfoFilePath);
+        }
+        const videoInfoFileContent = fs.readFileSync(videoInfoFilePath, { encoding: 'utf8' });
+        const videoInfo = JSON.parse(videoInfoFileContent);
 
-        const videoKeyframes = await ffmpeg.getVideoKeyframesFromFile(filePath);
-        const iFrameTimes = videoKeyframes.frames.filter(f => f.pict_type === 'I').map(f => parseFloat(f.pts_time));
+        // const videoKeyframes = await ffmpeg.getVideoKeyframesFromFile(filePath); // 这个输出到 console 再抓取字符串的方式太慢了
+        const videoKeyframesFilePath = path.join(cacheDir, 'keyframes.csv');
+        if (!(fs.existsSync(videoKeyframesFilePath) && fs.statSync(videoKeyframesFilePath).size > 0)) {
+          await ffmpeg.getVideoKeyframesFromFileToFile(filePath, videoKeyframesFilePath);
+        }
+        const videoKeyframesFileContent = fs.readFileSync(videoKeyframesFilePath, { encoding: 'utf8' });
+        const videoKeyframes = videoKeyframesFileContent.split('\n').map(line => [line.split(',')[0], line.split(',')[1]]);
+        const iFrameTimes = videoKeyframes.filter(f => f[1] === 'I').map(f => parseFloat(f[0]));
 
         const totalDuration = videoInfo.format.duration ? parseFloat(videoInfo.format.duration) : 0;
         // 计算每段的 duration（秒）
         const durations = [];
+        let start = 0;
         for (let i = 0; i < iFrameTimes.length; i++) {
-          const start = iFrameTimes[i];
-          const end = ((i + 1) < iFrameTimes.length) ? iFrameTimes[i + 1] : totalDuration;
-          durations.push(end - start);
+          if ((i + 1) < iFrameTimes.length) {
+            const end = iFrameTimes[i + 1];
+            if ((end - start) > playVideoSegmentTargetDuration) {
+              durations.push(end - start);
+              start = iFrameTimes[i + 1];
+            }
+          } else {
+            const end = totalDuration;
+            if (start < end) {
+              durations.push(end - start);
+            }
+          }
         }
 
         // 动态计算 target duration

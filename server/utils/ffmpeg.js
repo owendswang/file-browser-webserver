@@ -431,6 +431,63 @@ class FFmpeg {
     });
   }
 
+  // 获取视频信息，直接保存到文件
+  getMediaInfoFromFileToFile(filePath, outputFilePath, all = false, streams = [], formats = [], verbose = this.verbose) {
+    return new Promise((resolve, reject) => {
+      const args = [
+        '-hide_banner',
+        '-v', verbose ? 'info' : 'error'
+      ];
+      if (all) {
+        args.push('-show_format');
+        args.push('-show_streams');
+      } else {
+        args.push('-show_entries');
+        const entries = [];
+        if (streams.length > 0) {
+          entries.push(`stream_tags:stream=codec_type,${streams.filter(v => v !== 'codec_type').join(',')}`); // codec_name, codec_type, width, height, stream_tags
+        }
+        if (formats.length > 0) {
+          entries.push(`format=${formats.join(',')}`); // format_name, duration
+        }
+        args.push(entries.join(':'));
+      }
+      args.push('-of');
+      args.push('json');
+      args.push('-i');
+      args.push(filePath);
+      args.push('-o');
+      args.push(outputFilePath);
+      if (verbose) console.log(this.FFPROBE_PATH, args);
+
+      const child = spawn(this.FFPROBE_PATH, args);
+
+      let output = '';
+      child.stderr.on('data', (data) => {
+        if (verbose) {
+          console.error(data.toString());
+        }
+      });
+
+      child.stdout.on('data', (data) => {
+        output += data.toString();
+        if (verbose) {
+          console.log(data.toString());
+        }
+      });
+
+      child.on('close', (code) => {
+        if (code !== 0) {
+          reject(new Error(`ffprobe exited with code ${code}`));
+        } else {
+          const res = JSON.parse(output.trim());
+          resolve(res);
+        }
+      });
+    });
+  }
+
+  // 获取视频关键帧
   getVideoKeyframesFromFile(filePath, verbose = this.verbose) {
     return new Promise((resolve, reject) => {
       const args = [
@@ -440,7 +497,7 @@ class FFmpeg {
         '-skip_frame', 'nokey',
         '-show_frames',
         '-show_entries', 'frame=pts_time,pict_type',
-        '-of', 'json',
+        '-of', 'csv=p=0',
         filePath
       ];
       if (verbose) console.log(this.FFPROBE_PATH, args);
@@ -467,6 +524,48 @@ class FFmpeg {
         } else {
           const res = JSON.parse(output.trim());
           resolve(res);
+        }
+      });
+    });
+  }
+
+  // 获取视频关键帧，直接保存到文件
+  getVideoKeyframesFromFileToFile(filePath, outputFilePath, verbose = this.verbose) {
+    return new Promise((resolve, reject) => {
+      const args = [
+        '-hide_banner',
+        '-v', verbose ? 'info' : 'error',
+        '-select_streams', 'v:0',
+        '-skip_frame', 'nokey',
+        '-show_frames',
+        '-show_entries', 'frame=pts_time,pict_type',
+        '-of', 'csv=p=0',
+        '-i', filePath,
+        '-o', outputFilePath
+      ];
+      if (verbose) console.log(this.FFPROBE_PATH, args);
+
+      const child = spawn(this.FFPROBE_PATH, args);
+
+      let output = '';
+      child.stderr.on('data', (data) => {
+        if (verbose) {
+          console.error(data.toString());
+        }
+      });
+
+      child.stdout.on('data', (data) => {
+        output += data.toString();
+        if (verbose) {
+          console.log(data.toString());
+        }
+      });
+
+      child.on('close', (code) => {
+        if (code !== 0) {
+          reject(new Error(`ffprobe exited with code ${code}`));
+        } else {
+          resolve(output);
         }
       });
     });
