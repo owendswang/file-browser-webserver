@@ -407,13 +407,17 @@ const method = async (req, res) => {
         if (!(fs.existsSync(videoInfoFilePath) && fs.statSync(videoInfoFilePath).size > 0)) {
           // const videoInfo = await ffmpeg.getMediaInfoFromFile(filePath, true); // 不是太慢，但也不如写文件快
           // fs.writeFileSync(videoInfoFilePath, JSON.stringify(videoInfo, null, 4));
-          await ffmpeg.getMediaInfoFromFileToFile(filePath, videoInfoFilePath);
+          await ffmpeg.getMediaInfoFromFileToFile(filePath, videoInfoFilePath, true);
         }
         const videoInfoFileContent = fs.readFileSync(videoInfoFilePath, { encoding: 'utf8' });
         const videoInfo = JSON.parse(videoInfoFileContent);
 
+        const totalDuration = videoInfo.format.duration ? parseFloat(videoInfo.format.duration) : 0;
+
+        // 找关键帧很慢，而且关键帧作为时间偏移生成的片段，时间也不太对
+        /*
         // const videoKeyframes = await ffmpeg.getVideoKeyframesFromFile(filePath); // 这个输出到 console 再抓取字符串的方式太慢了
-        const videoKeyframesFilePath = path.join(cacheDir, 'keyframes.csv');
+        const videoKeyframesFilePath = path.join(cacheDir, 'keyframes.csv'); // 写成文件一样慢，看来不是输出 console 慢，是找关键帧就很慢
         if (!(fs.existsSync(videoKeyframesFilePath) && fs.statSync(videoKeyframesFilePath).size > 0)) {
           await ffmpeg.getVideoKeyframesFromFileToFile(filePath, videoKeyframesFilePath);
         }
@@ -421,7 +425,6 @@ const method = async (req, res) => {
         const videoKeyframes = videoKeyframesFileContent.split('\n').map(line => [line.split(',')[0], line.split(',')[1]]);
         const iFrameTimes = videoKeyframes.filter(f => f[1] === 'I').map(f => parseFloat(f[0]));
 
-        const totalDuration = videoInfo.format.duration ? parseFloat(videoInfo.format.duration) : 0;
         // 计算每段的 duration（秒）
         const durations = [];
         let start = 0;
@@ -444,6 +447,12 @@ const method = async (req, res) => {
         const targetDuration = Math.ceil(Math.max(...durations));
 
         const numSegments = durations.length;
+        */
+
+        const targetDuration = playVideoSegmentTargetDuration;
+
+        const numSegments = Math.ceil(totalDuration / playVideoSegmentTargetDuration);
+
         const padStartLength = (numSegments - 1).toString().length;
 
         // 生成多分辨率视频流的 Master m3u8 文件
@@ -550,7 +559,8 @@ const method = async (req, res) => {
           childPlaylist += `#EXT-X-PLAYLIST-TYPE:VOD${os.EOL}`;
           childPlaylist += `#EXT-X-INDEPENDENT-SEGMENTS${os.EOL}`;
           for (let i = 0; i < numSegments; i++) {
-            childPlaylist += `#EXTINF:${durations[i].toFixed(6)},${os.EOL}`;
+            // childPlaylist += `#EXTINF:${durations[i].toFixed(6)},${os.EOL}`;
+            childPlaylist += `#EXTINF:${Math.min(playVideoSegmentTargetDuration, totalDuration - i * playVideoSegmentTargetDuration).toFixed(6)},${os.EOL}`;
             childPlaylist += `${audioStreams.length > 1 ? 'video' : 'segment'}_${resolution.name}_${i.toString().padStart(padStartLength, '0')}.ts${os.EOL}`;
           }
           childPlaylist += `#EXT-X-ENDLIST${os.EOL}`;
@@ -566,7 +576,8 @@ const method = async (req, res) => {
             audioPlaylist += `#EXT-X-PLAYLIST-TYPE:VOD${os.EOL}`;
             audioPlaylist += `#EXT-X-INDEPENDENT-SEGMENTS${os.EOL}`;
             for (let j = 0; j < numSegments; j++) {
-              audioPlaylist += `#EXTINF:${durations[j].toFixed(6)},${os.EOL}`;
+              // audioPlaylist += `#EXTINF:${durations[j].toFixed(6)},${os.EOL}`;
+              audioPlaylist += `#EXTINF:${Math.min(playVideoSegmentTargetDuration, totalDuration - j * playVideoSegmentTargetDuration).toFixed(6)},${os.EOL}`;
               audioPlaylist += `audio_${i}_${j.toString().padStart(padStartLength, '0')}.aac${os.EOL}`;
             }
             audioPlaylist += `#EXT-X-ENDLIST${os.EOL}`;
@@ -582,7 +593,8 @@ const method = async (req, res) => {
           subtitlePlaylist += `#EXT-X-PLAYLIST-TYPE:VOD${os.EOL}`;
           subtitlePlaylist += `#EXT-X-INDEPENDENT-SEGMENTS${os.EOL}`;
           for (let j = 0; j < numSegments; j++) {
-            subtitlePlaylist += `#EXTINF:${durations[j].toFixed(6)},${os.EOL}`;
+            // subtitlePlaylist += `#EXTINF:${durations[j].toFixed(6)},${os.EOL}`;
+            subtitlePlaylist += `#EXTINF:${Math.min(playVideoSegmentTargetDuration, totalDuration - j * playVideoSegmentTargetDuration).toFixed(6)},${os.EOL}`;
             subtitlePlaylist += `subtitle_${i}_${j.toString().padStart(padStartLength, '0')}.vtt${os.EOL}`;
           }
           subtitlePlaylist += `#EXT-X-ENDLIST${os.EOL}`;

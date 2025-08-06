@@ -480,8 +480,7 @@ class FFmpeg {
         if (code !== 0) {
           reject(new Error(`ffprobe exited with code ${code}`));
         } else {
-          const res = JSON.parse(output.trim());
-          resolve(res);
+          resolve(output);
         }
       });
     });

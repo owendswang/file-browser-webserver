@@ -100,7 +100,6 @@ const method = async (req, res) => {
           throw new Error('File read stream is not valid');
         }*/
 
-
         let filePath = originalFilePath;
         if (isInArchive) {
           // 系统临时目录 + 随机文件夹名
@@ -121,6 +120,10 @@ const method = async (req, res) => {
           }
 
           filePath = extractedFilePath;
+        }
+
+        if (fs.statSync(filePath).size === 0) {
+          return res.status(204).send('Empty file');
         }
 
         const ffmpeg = new FFmpeg(ffmpegPath);
