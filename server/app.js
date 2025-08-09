@@ -2,10 +2,16 @@ require('module-alias/register');
 const path = require('path');
 // const { styleText } = require('util');
 const express = require('express');
+const { WebSocketServer } = require('ws');
+const { createServer } = require('http');
+const url = require('url');
 const router = require('./router');
+const wsRoutes = require('./wsRoutes');
 
 const app = express();
 const PORT = 3000;
+
+const wss = new WebSocketServer({ noServer: true });
 
 // logger middleware
 app.use((req, res, next) => {
@@ -31,6 +37,20 @@ app.get('*', (req, res) => {
   return res.sendFile(path.resolve(__dirname, 'public', 'index.html'));
 })
 
-app.listen(PORT, () => {
+const server = createServer(app);
+
+server.on('upgrade', (req, socket, head) => {
+  const pathname = url.parse(req.url).pathname;
+  const start = Date.now(); // 记录开始时间
+  console.log(`[${req.method}] - ${req.hostname} - ${decodeURIComponent(req.path)} - (${new Date(start).toLocaleString()})`);
+  const handler = wsRoutes[pathname];
+  if (handler) {
+    wss.handleUpgrade(req, socket, head, ws => handler(ws, req));
+  } else {
+    socket.destroy();
+  }
+})
+
+server.listen(PORT, () => {
   console.log(`Server running on http://0.0.0.0:${PORT}`);
 });

@@ -47,6 +47,7 @@ const Play = () => {
   const [data, setData] = useState({});
   const [loading, setLoading] = useState(true);
   const [playlist, setPlaylist] = useState([]);
+  const [ws, setWs] = useState(null);
 
   const videoJsOptions = useMemo(() => ({
     autoplay: true,
@@ -63,16 +64,53 @@ const Play = () => {
     sources: [{
       src: `/download/${pathname}${searchParams.get('archivePassword') ? ('?archivePassword=' + searchParams.get('archivePassword')) : ''}`,
       type: data.mediaType,
-    }, {
+    }/*, {
       src: `/play/${pathname}/index.m3u8${searchParams.get('archivePassword') ? ('?archivePassword=' + searchParams.get('archivePassword')) : ''}`,
       type: 'application/x-mpegURL',
-    }]
+    }*/]
   }), [pathname, searchParams.get('archivePassword'), data.mediaType]);
 
   const handlePlayerReady = (player) => {
     playerRef.current = player;
 
-    // You can handle player events here, for example:
+    const error = player.error();
+    if (error.code === 4) {
+      if (!ws) {
+        const wsUrl = `ws://${window.location.host}/play`;
+        const socket = new WebSocket(wsUrl);
+        socket.onopen = () => {
+          console.log('WS open');
+          socket.send(JSON.stringify({ pathname }, null, 4));
+        };
+        socket.onmessage = (event) => {
+          console.log(event.data);
+          const data = JSON.parse(event.data);
+          if (data.srcUrl) {
+            player.src({
+              src: data.srcUrl,
+              type: 'application/x-mpegURL',
+            })
+          }
+          if (data.duration) {
+            player.duration(data.duration);
+          }
+          if (data.currentTime) {
+            player.currentTime(data.currentTime);
+          }
+          if (data.debug) {
+            console.debug(data.debug);
+          }
+        };
+        socket.onclose = () => {
+          console.log('WS close');
+        };
+        socket.onerror = (e) => {
+          console.error(e);
+        }
+        setWs(socket);
+      }
+    }
+
     player.on('waiting', () => {
       // console.log('player is waiting');
     });
@@ -171,8 +209,18 @@ const Play = () => {
   }
 
   useEffect(() => {
+    return () => {
+      if (ws) {
+        ws.close();
+        setWs(null);
+      }
+    }
+  }, [location.pathname, ws]);
+
+  useEffect(() => {
     const abortController = new AbortController();
     fetchData(abortController.signal);
+
     return () => {
       abortController.abort();
       if (playNextCountDownRef.current) {

@@ -650,6 +650,8 @@ class FFmpeg {
             '-r:v', fps.toString(),
             // '-pix_fmt', 'yuv420p',
             '-g', (fps * duration).toString(),
+            '-keyint_min', (fps * duration).toString(),
+            '-sc_threshold', '0',
             '-profile:v', 'main', // baseline, main, high, high444p
             '-level', '3.1',
           ]);
@@ -677,6 +679,8 @@ class FFmpeg {
             '-r:v', fps.toString(),
             '-g', (fps * duration).toString(),
             // '-gop_size', (fps * duration).toString(), // error: unknown option
+            '-keyint_min', (fps * duration).toString(),
+            '-sc_threshold', '0',
             '-pix_fmt', 'nv12',
             '-profile:v', 'main', // default unkown - 0, baseline - 66, main - 77, high - 100
             '-level', '3.1',
@@ -689,6 +693,8 @@ class FFmpeg {
             '-preset', 'ultrafast', // ultrafast, superfast, veryfast, faster, fast, medium (default), slower, veryslow, placebo.
             '-crf', '23', // 0 - 51, 数值越低质量越高
             '-g', (fps * duration).toString(),
+            '-keyint_min', (fps * duration).toString(),
+            '-sc_threshold', '0',
             '-pix_fmt', 'yuv420p',
             '-r:v', fps.toString(),
             '-profile:v', 'main', // baseline, main, high, high10

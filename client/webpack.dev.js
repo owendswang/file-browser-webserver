@@ -24,7 +24,30 @@ module.exports = merge(common, {
       {
         context: ['/api', '/download', '/preview', '/play'],
         target: 'http://localhost:3000',
-      },
+        ws: true,
+        changeOrigin: true,
+      }
     ],
+    watchFiles: {
+      paths: ['src/**/*'],
+      options: {
+        ignored: [
+          '**/node_modules/**',
+          'C:/pagefile.sys',
+          'C:/swapfile.sys',
+          'C:/System Volume Information',
+          'C:/DumpStack.log.tmp'
+        ]
+      }
+    }
   },
+  watchOptions: {
+    ignored: [
+      '**/node_modules/**',
+      'C:/pagefile.sys',
+      'C:/swapfile.sys',
+      'C:/System Volume Information',
+      'C:/DumpStack.log.tmp'
+    ]
+  }
 });

@@ -28,12 +28,16 @@
     "jpeg-exif": "^1.1.4",
     "mime": "^4.0.6",
     "module-alias": "^2.2.3",
-    "move-file": "^3.1.0"
+    "move-file": "^3.1.0",
+    "ws": "^8.18.3"
   },
   "devDependencies": {
     "nodemon": "^3.1.7"
   },
   "_moduleAliases": {
     "@": "."
+  },
+  "optionalDependencies": {
+    "bufferutil": "^4.0.9"
   }
 }

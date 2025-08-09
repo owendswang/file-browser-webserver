@@ -131,11 +131,10 @@ export const VideoJS = (props) => {
             displayCurrentQuality: true,
           });
         //}
-
-        player.volume(window.localStorage.getItem('volume') ? parseFloat(window.localStorage.getItem('volume')) : 50);
-
-        player.muted(window.localStorage.getItem('muted') ? window.localStorage.getItem('muted') === 'true' : true);
-
+        if (!player.error()) {
+          player.volume(window.localStorage.getItem('volume') ? parseFloat(window.localStorage.getItem('volume')) : 50);
+          player.muted(window.localStorage.getItem('muted') ? window.localStorage.getItem('muted') === 'true' : true);
+        }
         player.on('volumechange', function(e) {
           window.localStorage.setItem('volume', this.volume().toString());
           window.localStorage.setItem('muted', this.muted().toString());
