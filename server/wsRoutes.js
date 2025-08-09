@@ -1,7 +1,7 @@
 const playHander = require('./wsHandlers/play.js');
 
 const wsRoutes = {
-  '/wsplay': playHander
+  '/play': playHander
 };
 
 module.exports = wsRoutes;

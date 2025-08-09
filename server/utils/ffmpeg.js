@@ -781,7 +781,6 @@ class FFmpeg {
   }
 
   createSegmentToStream(filePath, startTime, maxWidth = 1280, maxHeight = 1280, fps = 24, duration = 6, streams = ['video', 'audio'], trackIndex = 0, enableHwaccel = false, hwaccelVendor = 'intel', hwaccelDevice, signal, verbose = this.verbose, forceSoftwareDecode = false, hdr2sdr = false) {
-
     let args = [
       '-hide_banner',
       '-v', verbose ? 'info' : 'error',
@@ -851,6 +850,8 @@ class FFmpeg {
           '-r:v', fps.toString(),
           // '-pix_fmt', 'yuv420p',
           '-g', (fps * duration).toString(),
+          '-keyint_min', (fps * duration).toString(),
+          '-sc_threshold', '0',
           '-profile:v', 'main', // baseline, main, high, high444p
           '-level', '3.1',
         ]);
@@ -878,6 +879,8 @@ class FFmpeg {
           '-r:v', fps.toString(),
           '-g', (fps * duration).toString(),
           // '-gop_size', (fps * duration).toString(), // error: unknown option
+          '-keyint_min', (fps * duration).toString(),
+          '-sc_threshold', '0',
           '-pix_fmt', 'nv12',
           '-profile:v', 'main', // default unkown - 0, baseline - 66, main - 77, high - 100
           '-level', '3.1',
@@ -890,6 +893,8 @@ class FFmpeg {
           '-preset', 'ultrafast', // ultrafast, superfast, veryfast, faster, fast, medium (default), slower, veryslow, placebo.
           '-crf', '23', // 0 - 51, 数值越低质量越高
           '-g', (fps * duration).toString(),
+          '-keyint_min', (fps * duration).toString(),
+          '-sc_threshold', '0',
           '-pix_fmt', 'yuv420p',
           '-r:v', fps.toString(),
           '-profile:v', 'main', // baseline, main, high, high10
@@ -952,6 +957,214 @@ class FFmpeg {
     });
   
     return child.stdout; // 返回输出流
+
+  }
+
+  createFileToHls(filePath, outputDir, startTime, maxWidth = 1280, maxHeight = 1280, fps = 24, segmentDuration = 6, streams = ['video', 'audio'], trackIndex = 0, enableHwaccel = false, hwaccelVendor = 'intel', hwaccelDevice, signal, verbose = this.verbose, forceSoftwareDecode = false, hdr2sdr = false) {
+    let args = [
+      '-hide_banner',
+      '-v', verbose ? 'info' : 'error',
+    ];
+    if (streams.includes('video') && enableHwaccel) {
+      if (hwaccelVendor === 'nvidia') {
+        args = args.concat([
+          '-hwaccel', 'cuda',
+          '-hwaccel_output_format', 'cuda',
+          // '-c:v', 'h264_cuvid'
+        ]);
+        //if (hwaccelDevice) {
+        //  args = args.concat([
+        //    '-hwaccel_device', hwaccelDevice
+        //  ]);
+        //}
+      } else if (hwaccelVendor === 'intel') {
+        args = args.concat([
+          '-hwaccel', 'qsv',
+          '-hwaccel_output_format', 'qsv',
+          // '-async_depth', '4', // (1 ~ INT_MAX. default '4') Internal parallelization depth, the higher the value the higher the latency.
+          // '-gpu_copy', 'on' // default - 0, on - 1, off - 2. A GPU-accelerated copy between video and system memory.
+        ]);
+      }
+    }
+    args = args.concat([
+      '-ss', startTime.toString(),
+      '-re',
+      '-i', filePath,
+    ]);
+    if (streams.includes('video')) {
+      args = args.concat(['-map', '0:v']);
+    }
+    if (streams.includes('audio')) {
+      args = args.concat(['-map', `0:a:${trackIndex}`]);
+    }
+    if (streams.includes('subtitle')) {
+      args = args.concat(['-map', `0:s:${trackIndex}`]);
+    }
+    const stdVideoFilterScale = (maxWidth > 0) && (maxHeight > 0) ? `scale='min(${maxWidth},iw)':'min(${maxHeight},ih)':force_original_aspect_ratio=decrease:force_divisible_by=2,` : '';
+    const stdVideoFilter = `fps=${fps},${stdVideoFilterScale}${hdr2sdr ? 'zscale=t=linear:npl=100,format=gbrpf32le,zscale=p=bt709,tonemap=tonemap=hable:desat=0,zscale=t=bt709:m=bt709:r=tv,' : ''}format=yuv420p`;
+    const stdDecodeArgs = [
+      '-vf', stdVideoFilter
+    ];
+    if (streams.includes('video')) {
+      if (enableHwaccel && (hwaccelVendor === 'nvidia')) {
+        if (forceSoftwareDecode) {
+          args = args.concat(stdDecodeArgs);
+        } else {
+          // use 'ffmpeg -h encoder=h264_nvenc' to list all parameters for this encoder
+          const videoFilterScale = `${hdr2sdr ? 'tonemap_cuda=t=linear:tonemap=hable:param=1.0:param=0.0:param=0.0,' : ''}scale_cuda=${(maxWidth > 0) && (maxHeight > 0) ? `'min(${maxWidth},iw)':'min(${maxHeight},ih) ':force_original_aspect_ratio=decrease:force_divisible_by=2:` : ''}format=yuv420p`;
+          const videoFilter = videoFilterScale;
+          const hardwareDecodeArgs = [
+            // '-init_hw_device', `cuda${hwaccelDevice ? `:${hwaccelDevice}` : ''}`,
+            '-vf', videoFilter
+          ];
+          args = args.concat(hardwareDecodeArgs);
+        }
+        args = args.concat([
+          '-c:v', 'h264_nvenc',
+          '-gpu', hwaccelDevice || '-1', // (-1 ~ INT_MAX) -1: any, -2: list all
+          '-preset', 'p4', // default, slow, medium, fast, hp, hq, bd, ll, llhq, llhp, lossless, losslesshp, p1, p2, p3, p4, p5, p6
+          '-tune', 'hq', // hq, ll, ull, lossless
+          '-r:v', fps.toString(),
+          // '-pix_fmt', 'yuv420p',
+          '-g', (fps * duration).toString(),
+          '-keyint_min', (fps * duration).toString(),
+          '-sc_threshold', '0',
+          '-profile:v', 'main', // baseline, main, high, high444p
+          '-level', '3.1',
+        ]);
+      } else if (enableHwaccel && (hwaccelVendor === 'intel')) {
+        if (forceSoftwareDecode) {
+          args = args.concat(stdDecodeArgs);
+        } else {
+          // use 'ffmpeg -h encoder=h264_qsv' to list all parameters for this encoder
+          const videoFilterScale = (maxWidth > 0) && (maxHeight > 0) ? `scale_qsv=w='if(lt(iw,ih),min(${maxWidth},iw),-1)':h='if(lt(iw, ih),-1,min(${maxHeight},ih))',` : '';
+          const videoFilter = `vpp_qsv=framerate=24,${videoFilterScale}vpp_qsv=${hdr2sdr ? 'tonemap=1:' : ''}format=nv12`;
+          const hardwareDecodeArgs = [
+            '-init_hw_device', `qsv${hwaccelDevice ? `:${hwaccelDevice}` : ''}`,
+            '-vf', videoFilter
+            // https://ffmpeg.org/ffmpeg-filters.html#QSV-Video-Filters
+            // ffmpeg -filters | grep qsv
+            // ffmpeg --help filter=vpp_qsv
+          ];
+          args = args.concat(hardwareDecodeArgs);
+        }
+        args = args.concat([
+          '-c:v', 'h264_qsv',
+          '-preset', 'fast', // default - 0, veryslow - 1, slower - 2, slow - 3, medium - 4, fast - 5, faster - 6, veryfast - 7
+          '-scenario', 'livestreaming', // default unknown - 0, displayremoting - 1, videoconference - 2, archive - 3, livestreaming - 4, cameracapture - 5, videosurveillance - 6, gamestreaming - 7, remotegaming - 8
+          '-framerate', fps.toString(),
+          '-r:v', fps.toString(),
+          '-g', (fps * duration).toString(),
+          // '-gop_size', (fps * duration).toString(), // error: unknown option
+          '-keyint_min', (fps * duration).toString(),
+          '-sc_threshold', '0',
+          '-pix_fmt', 'nv12',
+          '-profile:v', 'main', // default unkown - 0, baseline - 66, main - 77, high - 100
+          '-level', '3.1',
+        ]);
+      } else {
+        args = args.concat(stdDecodeArgs);
+        args = args.concat([
+          //'-r', fps.toString(),
+          '-c:v', 'libx264', // av1_nvenc, h264_nvenc, hevc_nvenc, av1_qsv, h264_qsv, hevc_qsv, av1_amf, h264_amf, hevc_amf
+          '-preset', 'ultrafast', // ultrafast, superfast, veryfast, faster, fast, medium (default), slower, veryslow, placebo.
+          '-crf', '23', // 0 - 51, 数值越低质量越高
+          '-g', (fps * duration).toString(),
+          '-keyint_min', (fps * duration).toString(),
+          '-sc_threshold', '0',
+          '-pix_fmt', 'yuv420p',
+          '-r:v', fps.toString(),
+          '-profile:v', 'main', // baseline, main, high, high10
+          '-level', '3.1'
+        ]);
+      }
+    } else {
+      args.push('-vn');
+    }
+    if (streams.includes('audio')) {
+      args = args.concat([
+        '-c:a', 'aac', // 指定音频编码格式为 AAC
+        '-ac', '2', // 设置音频输出为双声道
+        '-ar', '44100', // 设置音频采样率为 44100 Hz
+        '-b:a', '128k', // 设置音频码率为 128 kbps
+        '-profile:a', 'aac_low' // Low Complexity Profile (AAC-LC)
+      ]);
+    } else {
+      args.push('-an');
+    }
+    if (streams.includes('subtitle')) {
+      args = args.concat([
+        '-c:s', 'webvtt'
+      ]);
+    }
+
+    let segmentFileName, outputFileName;
+    if (streams.includes('video')) {
+      const resolation = Math.round(maxWidth * 16 / 9);
+      if (streams.includes('audio')) {
+        segmentFileName = `segment_${resolation}p_%04d.m4s`;
+      } else {
+        segmentFileName = `video_${resolation}p_%04d.m4s`;
+      }
+      outputFileName = `index_${resolation}p.m3u8`
+    } else if (streams.includes('audio')) {
+      segmentFileName = 'audio_%04d.aac';
+      outputFileName = `index_audio_${trackIndex}.m3u8`;
+    } else if (streams.includes('subtitle')) {
+      segmentFileName = 'subtitle_%04d.vtt';
+      outputFileName = `index_subtitle_${trackIndex}.m3u8`;
+    }
+
+    args = args.concat([
+      '-f', 'hls',
+      '-hls_time', segmentDuration.toString(),
+      '-hls_playlist_type', 'event',
+      '-hls_list_size', '6',
+      '-hls_flags', 'independent_segments'
+    ]);
+    if (streams.includes('video')) {
+      args = args.concat([
+        '-hls_segment_type', 'fmp4',
+      ]);
+    } else if (streams.includes('audio')) {
+      args = args.concat([
+        '-hls_segment_type', 'aac',
+      ]);
+    } else if (streams.includes('subtitle')) {
+      args = args.concat([
+        '-hls_segment_type', 'webvtt',
+      ]);
+    }
+    args = args.concat([
+      '-hls_segment_filename', path.join(outDir, segmentFileName),
+      path.join(outputDir, outputFileName)
+    ]);
+
+    if (verbose) console.log(this.FFMPEG_PATH, args.map(arg => arg.includes('=') ? `"${arg}"` : arg).join(' '));
+
+    const child = spawn(this.FFMPEG_PATH, args, {
+      stdio: ['pipe', 'pipe', 'pipe'] // 确保使用 pipe 处理输入
+    });
+
+    // 监听 FFmpeg 的 stdout 输出，用于获取转码进度
+    child.stdout.on('data', (data) => {
+      if (verbose) console.log(data.toString());
+    });
+
+    child.stderr.on('data', (data) => {
+      console.error(data.toString());
+    });
+
+    // 监听中断
+    signal.addEventListener('abort', () => {
+      /*if (child.stdin) {
+        child.stdin.write('q' + os.EOL); // 发送 'q' 指令以优雅终止 FFmpeg
+        child.stdin.end(); // 关闭输入流
+      }*/
+      child.kill();
+    });
+  
+    return child; // 返回输出流
 
   }
 }

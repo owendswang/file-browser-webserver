@@ -366,7 +366,7 @@ const method = async (req, res) => {
 
         const thumbnailIdToUse = thumbnailId || randomBytes(16).toString('hex');
         const cacheDir = path.join(previewCachePath, thumbnailIdToUse);
-        const m3u8FilePath = path.join(previewCachePath, thumbnailIdToUse, m3u8FileName);
+        const m3u8FilePath = path.join(cacheDir, m3u8FileName);
 
         if (fs.existsSync(m3u8FilePath) && fs.statSync(m3u8FilePath).size > 0) {
           return res.sendFile(m3u8FilePath);
@@ -407,7 +407,7 @@ const method = async (req, res) => {
         if (!(fs.existsSync(videoInfoFilePath) && fs.statSync(videoInfoFilePath).size > 0)) {
           // const videoInfo = await ffmpeg.getMediaInfoFromFile(filePath, true); // 不是太慢，但也不如写文件快
           // fs.writeFileSync(videoInfoFilePath, JSON.stringify(videoInfo, null, 4));
-          await ffmpeg.getMediaInfoFromFileToFile(filePath, videoInfoFilePath, true);
+          await ffmpeg.getMediaInfoFromFileToFile(filePath, videoInfoFilePath, true, [], [], false);
         }
         const videoInfoFileContent = fs.readFileSync(videoInfoFilePath, { encoding: 'utf8' });
         const videoInfo = JSON.parse(videoInfoFileContent);

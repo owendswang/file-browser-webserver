@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const bodyParser = require('body-parser');
 const cookieParser = require('cookie-parser');
-const cors = require('cors');
+// const cors = require('cors');
 const compression = require('compression')
 const Thumbnails = require('./utils/thumbnails');
 const homeRouter = require('./controllers/home');
@@ -12,7 +12,7 @@ const downloadRouter = require('./controllers/download');
 const viewRouter = require('./controllers/view');
 const diskRouter = require('./controllers/disk');
 const previewRouter = require('./controllers/preview');
-const playRouter = require('./controllers/play');
+// const playRouter = require('./controllers/play');
 const uploadRouter = require('./controllers/upload');
 const deleteRouter = require('./controllers/delete');
 const moveRouter = require('./controllers/move');
@@ -43,6 +43,7 @@ const clearTempRouter = require('./controllers/clearTemp');
 const db = require('./db');
 const OAuth2Server = require('./oauth2');
 const getConfig = require('./utils/getConfig');
+const thumbnails = require('./utils/thumbnails');
 
 const config = getConfig();
 
@@ -62,7 +63,6 @@ const dbMiddleWare = (req, res, next) => {
 }
 
 // create one single Thumbnail object for all methods
-const thumbnails = new Thumbnails(db, config.previewCachePath);
 const thumbnailMiddleWare = (req, res, next) => {
   res.locals.thumbnails = thumbnails;
   return next();
@@ -141,7 +141,7 @@ router.get('/api/disk/*', nocacheMiddleware, oauth.authenticate({ scope: ['view'
 router.get('/preview/*', thumbnailMiddleWare, previewRouter);
 
 // Video transcode to m3u8
-router.get('/play/*', cors(), thumbnailMiddleWare, playRouter);
+// router.get('/play/*', cors(), thumbnailMiddleWare, playRouter);
 
 // Get config data
 router.get('/api/config', nocacheMiddleware, oauth.authenticate({ scope: ['admin'] }), getConfigRouter);

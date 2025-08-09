@@ -1,5 +1,9 @@
 const fs = require('fs');
 const path = require('path');
+const db = require('../db');
+const getConfig = require('./getConfig');
+
+const config = getConfig();
 
 class Thumbnails {
   constructor(db, cachePath = path.join(__dirname, 'cache')) {
@@ -85,4 +89,6 @@ class Thumbnails {
   }
 }
 
-module.exports = Thumbnails;
+const thumbnails = new Thumbnails(db, config.previewCachePath);
+
+module.exports = thumbnails;

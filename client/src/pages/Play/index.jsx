@@ -80,7 +80,7 @@ const Play = () => {
         const socket = new WebSocket(wsUrl);
         socket.onopen = () => {
           console.log('WS open');
-          socket.send(JSON.stringify({ pathname }, null, 4));
+          socket.send(JSON.stringify({ urlPath: pathname, archivePassword: searchParams.get('archivePassword') }, null, 4));
         };
         socket.onmessage = (event) => {
           console.log(event.data);
@@ -90,6 +90,7 @@ const Play = () => {
               src: data.srcUrl,
               type: 'application/x-mpegURL',
             })
+            player.play();
           }
           if (data.duration) {
             player.duration(data.duration);
@@ -101,8 +102,8 @@ const Play = () => {
             console.debug(data.debug);
           }
         };
-        socket.onclose = () => {
-          console.log('WS close');
+        socket.onclose = (e) => {
+          console.log(`WS close: [${e.code}] ${e.reason}`);
         };
         socket.onerror = (e) => {
           console.error(e);

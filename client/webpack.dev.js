@@ -22,7 +22,12 @@ module.exports = merge(common, {
     },
     proxy: [
       {
-        context: ['/api', '/download', '/preview', '/play'],
+        context: ['/api', '/download', '/preview'],
+        target: 'http://localhost:3000',
+        changeOrigin: true,
+      },
+      {
+        context: ['/play'],
         target: 'http://localhost:3000',
         ws: true,
         changeOrigin: true,

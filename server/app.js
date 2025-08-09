@@ -42,7 +42,7 @@ const server = createServer(app);
 server.on('upgrade', (req, socket, head) => {
   const pathname = url.parse(req.url).pathname;
   const start = Date.now(); // 记录开始时间
-  console.log(`[${req.method}] - ${req.hostname} - ${decodeURIComponent(req.path)} - (${new Date(start).toLocaleString()})`);
+  console.log(`[${req.method}] - ${req.hostname || 'Unknown'} - ${pathname} - (${new Date(start).toLocaleString()})`);
   const handler = wsRoutes[pathname];
   if (handler) {
     wss.handleUpgrade(req, socket, head, ws => handler(ws, req));
