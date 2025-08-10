@@ -1,3 +1,4 @@
+const os = require('os');
 const fs = require('fs');
 const path = require('path');
 const { randomBytes } = require('crypto');
@@ -6,8 +7,8 @@ const FFmpeg = require('@/utils/ffmpeg');
 const { isArchive } = require('@/utils/fileUtils');
 const getConfig = require('@/utils/getConfig');
 const thumbnails = require('@/utils/thumbnails');
-
-const sessionMap = {};
+const sessionMap = require('@/transcodeSessionMap');
+const { reset } = require('module-alias');
 
 const resolutionMap = {
   144: 256,
@@ -35,8 +36,8 @@ const play = (ws, req) => {
   const sessionId = randomBytes(16).toString('hex');
   const playDir = path.join(tempDir, sessionId);
   fs.mkdirSync(playDir, { recursive: true });
-  const m3u8FilePath = path.join(playDir, 'index.m3u8');
   const m3u8PlayUrl = `/play/${sessionId}/index.m3u8`;
+  sessionMap[sessionId] = {};
 
   ws.on('error', console.error);
 
@@ -115,6 +116,7 @@ const play = (ws, req) => {
 
           filePath = extractedFilePath;
         }
+        sessionMap[sessionId]['filePath'] = filePath;
 
         // 更新数据库
         thumbnails.updateM3u8Info(originalFileName, modifiedTime, thumbnailIdToUse, size, 0);
@@ -210,30 +212,15 @@ const play = (ws, req) => {
           });
         }
 
-        let playlist = `#EXTM3U${os.EOL}#EXT-X-VERSION:6${os.EOL}`;
         if (audioStreams.length > 1) {
-          for (let i = 0; i < audioStreams.length; i += 1) {
-            playlist += `#EXT-X-MEDIA:TYPE=AUDIO,GROUP-ID="audio",NAME="${typeof(audioStreams[i]) === 'object' ? Object.entries(audioStreams[i]).map(([key, val]) => val).join(' ') : `audio-${i}`}",AUTOSELECT=YES,DEFAULT=${i === 0 ? 'YES' : 'NO'},CHANNELS="2",URI="index_audio_${i}.m3u8"${os.EOL}`;
-          }
-          playlist += os.EOL;
+          ws.send(JSON.stringify({ audios: audioStreams }, null, 4));
         }
         if (subtitleStreams.length) {
-          for (let i = 0; i < subtitleStreams.length; i += 1) {
-            playlist += `#EXT-X-MEDIA:TYPE=SUBTITLES,GROUP-ID="subtitle",${subtitleStreams[i]?.language ? `LANGUAGE="${subtitleStreams[i].language}",` : ''}NAME="${subtitleStreams[i]?.title || subtitleStreams[i]?.language || `subtitle-${i}`}",AUTOSELECT=YES,DEFAULT=${i === 0 ? 'YES' : 'NO'},FORCED=NO,CHARACTERISTICS="public.accessibility.transcribes-spoken-dialog",URI="index_subtitle_${i}.m3u8"${os.EOL}`;
-          }
-          playlist += os.EOL;
+          ws.send(JSON.stringify({ subtitles: subtitleStreams }, null, 4));
         }
-        for (const resolution of resolutions) {
-          playlist += `#EXT-X-STREAM-INF:BANDWIDTH=${resolution.width * resolution.height},RESOLUTION=${resolution.width}x${resolution.height},FRAME-RATE=${playVideoFps.toFixed(3)},CODECS="avc1.42c01f,mp4a.40.2"${audioStreams.length > 1 ? ',AUDIO="audio"' : ''}${subtitleStreams.length ? ',SUBTITLES="subtitle"' : ''}${os.EOL}`;
-          playlist += `index_${resolution.name}.m3u8${os.EOL}${os.EOL}`;
+        if (resolutions.length > 1) {
+          ws.send(JSON.stringify({ videos: resolutions.map(res => res.name) }, null, 4));
         }
-        if (audioStreams.length > 1) {
-          for (let i = 0; i < audioStreams.length; i += 1) {
-            playlist += `#EXT-X-STREAM-INF:BANDWIDTH=128000,CODECS="mp4a.40.2"${os.EOL}`;
-            playlist += `index_audio_${i}.m3u8${os.EOL}${os.EOL}`;
-          }
-        }
-        fs.writeFileSync(m3u8FilePath, playlist, { encoding: 'utf8' });
 
         ws.send(JSON.stringify({ srcUrl: m3u8PlayUrl }));
       };
@@ -292,7 +279,13 @@ const play = (ws, req) => {
   ws.on('close', function close() {
     console.log('WS close');
     abortController.abort();
-    fs.rmSync(playDir, { recursive: true, force: true });
+    if (sessionMap[sessionId]['process'] && !sessionMap[sessionId]['process']['closed']) {
+      const process = sessionMap[sessionId]['process'];
+      process.on('close', () => {
+        fs.rmSync(playDir, { recursive: true, force: true });
+      });
+      process.kill('SIGTERM');
+    }
   })
 }
 
