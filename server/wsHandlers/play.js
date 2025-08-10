@@ -32,6 +32,12 @@ const play = (ws, req) => {
   const abortController = new AbortController();
   const { signal } = abortController;
 
+  const sessionId = randomBytes(16).toString('hex');
+  const playDir = path.join(tempDir, sessionId);
+  fs.mkdirSync(playDir, { recursive: true });
+  const m3u8FilePath = path.join(playDir, 'index.m3u8');
+  const m3u8PlayUrl = `/play/${sessionId}/index.m3u8`;
+
   ws.on('error', console.error);
 
   ws.send(JSON.stringify({ debug: '欢迎来到 play WS' }, null, 4));
@@ -86,11 +92,6 @@ const play = (ws, req) => {
         if (!fs.existsSync(cacheDir) || !fs.statSync(cacheDir).isDirectory()) {
           fs.mkdirSync(cacheDir, { recursive: true });
         }
-        
-        const sessionId = randomBytes(16).toString('hex');
-        const playDir = path.join(tempDir, sessionId);
-        fs.mkdirSync(playDir, { recursive: true });
-        const m3u8FilePath = path.join(playDir, 'index.m3u8');
 
         let filePath = originalFilePath;
         if (isInArchive) {
@@ -102,11 +103,13 @@ const play = (ws, req) => {
             const extractResult = await sevenZip.extract(archiveFullPath, cacheDir, options, archivePassword, true, signal);
 
             if (!extractResult.isOK) {
-              return res.status(500).send(`Failed to extract file from archive:\n${extractResult.error}`);
+              ws.close(1000, `Failed to extract file from archive:\n${extractResult.error}`);
+              return;
             }
 
             if (!fs.existsSync(extractedFilePath)) {
-              return res.status(404).send('Extracted file not found');
+              ws.close(1000, 'Extracted file not found');
+              return;
             }
           }
 
@@ -152,6 +155,7 @@ const play = (ws, req) => {
         }
         if (videoHeight === 0 || videoWidth === 0) {
           ws.close(1000, `No video stream found`);
+          return;
         }
 
         const resolutions = [];
@@ -231,6 +235,7 @@ const play = (ws, req) => {
         }
         fs.writeFileSync(m3u8FilePath, playlist, { encoding: 'utf8' });
 
+        ws.send(JSON.stringify({ srcUrl: m3u8PlayUrl }));
       };
 
       if (isInArchive) {
@@ -241,13 +246,15 @@ const play = (ws, req) => {
           const result = await sevenZip.list(archiveFullPath, true, options, archivePassword, signal);
         
           if (!result.isOK) {
-            return res.status(500).send(`Failed to read archive content:\n${result.error}`);
+            ws.close(1000, `Failed to read archive content:\n${result.error}`);
+            return;
           }
         
           // 找到目标文件的信息
           const targetFile = result.files.find((f) => f.Path === archiveInternalPath);
           if (!targetFile) {
-            return res.status(404).send('File not found in archive');
+            ws.close(1000, 'File not found in archive');
+            return;
           }
         
           // 获取文件的最后修改时间
@@ -261,9 +268,11 @@ const play = (ws, req) => {
         } catch (error) {
           console.error('Error processing archive file preview:', error);
           if (error.message === 'AbortError') {
-            return res.status(499).send('Client Closed Request');
+            ws.close(1000, 'Client Closed Request');
+            return;
           }
-          return res.status(500).send('Error processing file preview');
+          ws.close(1000, 'Error processing file preview');
+          return;
         }
       } else if (fs.existsSync(originalFilePath)) {
         // 获取文件的最后修改时间
@@ -274,7 +283,8 @@ const play = (ws, req) => {
       
         await handlePlayFile(currentModifiedTime, fileSize);
       } else {
-        return res.status(404).send(`${originalFileName} not found`);
+        ws.close(1000, `${originalFileName} not found`);
+        return;
       }
     }
   });
@@ -282,6 +292,7 @@ const play = (ws, req) => {
   ws.on('close', function close() {
     console.log('WS close');
     abortController.abort();
+    fs.rmSync(playDir, { recursive: true, force: true });
   })
 }
 
