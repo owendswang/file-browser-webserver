@@ -27,7 +27,11 @@ const play = (ws, req) => {
     ffmpegPath,
     basePaths,
     previewCachePath,
-    tempDir
+    tempDir,
+    playVideoSegmentTargetDuration,
+    enablePlayVideoHardwareAcceleration,
+    playVideoHardwareAccelerationVendor,
+    playVideoHardwareAccelerationDevice
   } = getConfig();
 
   const abortController = new AbortController();
@@ -36,8 +40,13 @@ const play = (ws, req) => {
   const sessionId = randomBytes(16).toString('hex');
   const playDir = path.join(tempDir, sessionId);
   fs.mkdirSync(playDir, { recursive: true });
-  const m3u8PlayUrl = `/play/${sessionId}/index.m3u8`;
-  sessionMap[sessionId] = {};
+  let m3u8PlayUrl = `/play/${sessionId}/index.m3u8`;
+  sessionMap[sessionId] = {
+    srcUrl: m3u8PlayUrl
+  };
+  const audioStreams = [];
+  const subtitleStreams = [];
+  const resolutions = [];
 
   ws.on('error', console.error);
 
@@ -46,6 +55,8 @@ const play = (ws, req) => {
   ws.on('message', async function message(msg) {
     console.log(`received: \n${msg}`);
     const data = JSON.parse(msg);
+
+    const ffmpeg = new FFmpeg(ffmpegPath);
 
     if (data.urlPath) {
       const urlPath = decodeURIComponent(data.urlPath);
@@ -121,9 +132,6 @@ const play = (ws, req) => {
         // 更新数据库
         thumbnails.updateM3u8Info(originalFileName, modifiedTime, thumbnailIdToUse, size, 0);
 
-        // 生成 m3u8 文件
-        const ffmpeg = new FFmpeg(ffmpegPath);
-
         // 获取视频信息
         // const videoInfo = await ffmpeg.getMediaInfoFromFile(filePath, false, ['width', 'height'], ['duration']);
         const videoInfoFilePath = path.join(cacheDir, 'info.json');
@@ -140,11 +148,19 @@ const play = (ws, req) => {
           ws.send(JSON.stringify({ duration: totalDuration }, null, 4));
         }
 
+        let isHdr = false;
+        if (videoInfo.streams) {
+          for (const stream of videoInfo.streams) {
+            if ((stream.codec_type === 'video') && (stream.color_space) && (stream.color_space.includes('bt2020'))) {
+              isHdr = true;
+              break;
+            }
+          }
+        }
+
         // 生成多分辨率视频流的 Master m3u8 文件
         let videoWidth = 0;
         let videoHeight = 0;
-        let audioStreams = [];
-        let subtitleStreams = [];
         for (const stream of videoInfo.streams) {
           if (stream.codec_type === 'video' && videoHeight === 0 && videoWidth === 0) {
             videoWidth = parseInt(stream.width, 10);
@@ -160,7 +176,6 @@ const play = (ws, req) => {
           return;
         }
 
-        const resolutions = [];
         const videoMinSize = Math.min(videoHeight, videoWidth);
         const videoMaxSize = Math.max(videoHeight, videoWidth);
 
@@ -212,15 +227,21 @@ const play = (ws, req) => {
           });
         }
 
+        sessionMap[sessionId]['audios'] = audioStreams;
         if (audioStreams.length > 1) {
           ws.send(JSON.stringify({ audios: audioStreams }, null, 4));
         }
+        sessionMap[sessionId]['subtitles'] = subtitleStreams;
         if (subtitleStreams.length) {
           ws.send(JSON.stringify({ subtitles: subtitleStreams }, null, 4));
         }
+        sessionMap[sessionId]['videos'] = resolutions;
         if (resolutions.length > 1) {
           ws.send(JSON.stringify({ videos: resolutions.map(res => res.name) }, null, 4));
         }
+
+        const process = ffmpeg.createFileToHls(filePath, playDir, 0, Math.max([resolutions[resolutions.length - 1]['width'], resolutions[resolutions.length - 1]['height']]), 24, playVideoSegmentTargetDuration, ['video', 'audio'], 0, enablePlayVideoHardwareAcceleration, playVideoHardwareAccelerationVendor, playVideoHardwareAccelerationDevice, signal, false, false, isHdr);
+        sessionMap[sessionId]['process'] = process;
 
         ws.send(JSON.stringify({ srcUrl: m3u8PlayUrl }));
       };
@@ -274,6 +295,25 @@ const play = (ws, req) => {
         return;
       }
     }
+
+    if (data.seek) {
+      const session = sessionMap[sessionId];
+      const process = session['process'];
+      process.kill();
+
+      const startTime = data.seek;
+      session['startTime'] = startTime;
+      process = ffmpeg.createFileToHls(filePath, playDir, startTime, Math.max([resolutions[resolutions.length - 1]['width'], resolutions[resolutions.length - 1]['height']]), 24, playVideoSegmentTargetDuration, ['video', 'audio'], 0, enablePlayVideoHardwareAcceleration, playVideoHardwareAccelerationVendor, playVideoHardwareAccelerationDevice, signal, false, false, isHdr);
+
+    }
+
+    if (data.audio) {
+
+    }
+
+    if (data.subtitle) {
+
+    }
   });
 
   ws.on('close', function close() {
@@ -284,7 +324,8 @@ const play = (ws, req) => {
       process.on('close', () => {
         fs.rmSync(playDir, { recursive: true, force: true });
       });
-      process.kill('SIGTERM');
+      process.kill();
+      process = null;
     }
   })
 }

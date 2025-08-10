@@ -1,10 +1,12 @@
 const fs = require('fs');
 const path = require('path');
+const sleep = require('@/utils/sleep');
 const getConfig = require('@/utils/getConfig');
 
 const method = async (req, res) => {
   const {
-    tempDir
+    tempDir,
+    playVideoSegmentTargetDuration
   } = getConfig();
 
   const urlPath = req.params[0];
@@ -14,11 +16,13 @@ const method = async (req, res) => {
   const playDir = path.resolve(tempDir, sessionId);
   const filePath = path.join(playDir, fileName);
 
-  if (fs.existsSync(filePath) && fs.statSync(filePath).isFile()) {
-    return res.sendFile(filePath);
-  } else {
-    return res.status(404).send('File not found.');
+  for (let i = 0; i < playVideoSegmentTargetDuration; i += 1) {
+    await sleep(1000);
+    if (fs.existsSync(filePath) && fs.statSync(filePath).isFile()) {
+      return res.sendFile(filePath);
+    }
   }
+  return res.status(404).send('File not found.');
 }
 
 module.exports = method;

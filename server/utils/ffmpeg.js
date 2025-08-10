@@ -960,7 +960,7 @@ class FFmpeg {
 
   }
 
-  createFileToHls(filePath, outputDir, startTime, maxWidth = 1280, maxHeight = 1280, fps = 24, segmentDuration = 6, streams = ['video', 'audio'], trackIndex = 0, enableHwaccel = false, hwaccelVendor = 'intel', hwaccelDevice, signal, verbose = this.verbose, forceSoftwareDecode = false, hdr2sdr = false) {
+  createFileToHls(filePath, outputDir, startTime, maxSize = 1280, fps = 24, segmentDuration = 6, streams = ['video', 'audio'], trackIndex = 0, enableHwaccel = false, hwaccelVendor = 'intel', hwaccelDevice, signal, verbose = this.verbose, forceSoftwareDecode = false, hdr2sdr = false) {
     let args = [
       '-hide_banner',
       '-v', verbose ? 'info' : 'error',
@@ -1000,7 +1000,7 @@ class FFmpeg {
     if (streams.includes('subtitle')) {
       args = args.concat(['-map', `0:s:${trackIndex}`]);
     }
-    const stdVideoFilterScale = (maxWidth > 0) && (maxHeight > 0) ? `scale='min(${maxWidth},iw)':'min(${maxHeight},ih)':force_original_aspect_ratio=decrease:force_divisible_by=2,` : '';
+    const stdVideoFilterScale = (maxSize > 0) ? `scale='min(${maxSize},iw)':'min(${maxSize},ih)':force_original_aspect_ratio=decrease:force_divisible_by=2,` : '';
     const stdVideoFilter = `fps=${fps},${stdVideoFilterScale}${hdr2sdr ? 'zscale=t=linear:npl=100,format=gbrpf32le,zscale=p=bt709,tonemap=tonemap=hable:desat=0,zscale=t=bt709:m=bt709:r=tv,' : ''}format=yuv420p`;
     const stdDecodeArgs = [
       '-vf', stdVideoFilter
@@ -1011,7 +1011,7 @@ class FFmpeg {
           args = args.concat(stdDecodeArgs);
         } else {
           // use 'ffmpeg -h encoder=h264_nvenc' to list all parameters for this encoder
-          const videoFilterScale = `${hdr2sdr ? 'tonemap_cuda=t=linear:tonemap=hable:param=1.0:param=0.0:param=0.0,' : ''}scale_cuda=${(maxWidth > 0) && (maxHeight > 0) ? `'min(${maxWidth},iw)':'min(${maxHeight},ih) ':force_original_aspect_ratio=decrease:force_divisible_by=2:` : ''}format=yuv420p`;
+          const videoFilterScale = `${hdr2sdr ? 'tonemap_cuda=t=linear:tonemap=hable:param=1.0:param=0.0:param=0.0,' : ''}scale_cuda=${(maxSize > 0) ? `'min(${maxSize},iw)':'min(${maxSize},ih) ':force_original_aspect_ratio=decrease:force_divisible_by=2:` : ''}format=yuv420p`;
           const videoFilter = videoFilterScale;
           const hardwareDecodeArgs = [
             // '-init_hw_device', `cuda${hwaccelDevice ? `:${hwaccelDevice}` : ''}`,
@@ -1037,7 +1037,7 @@ class FFmpeg {
           args = args.concat(stdDecodeArgs);
         } else {
           // use 'ffmpeg -h encoder=h264_qsv' to list all parameters for this encoder
-          const videoFilterScale = (maxWidth > 0) && (maxHeight > 0) ? `scale_qsv=w='if(lt(iw,ih),min(${maxWidth},iw),-1)':h='if(lt(iw, ih),-1,min(${maxHeight},ih))',` : '';
+          const videoFilterScale = (maxSize > 0) ? `scale_qsv=w='if(lt(iw,ih),min(${maxSize},iw),-1)':h='if(lt(iw, ih),-1,min(${maxSize},ih))',` : '';
           const videoFilter = `vpp_qsv=framerate=24,${videoFilterScale}vpp_qsv=${hdr2sdr ? 'tonemap=1:' : ''}format=nv12`;
           const hardwareDecodeArgs = [
             '-init_hw_device', `qsv${hwaccelDevice ? `:${hwaccelDevice}` : ''}`,
@@ -1100,7 +1100,7 @@ class FFmpeg {
 
     let segmentFileName, outputFileName;
     if (streams.includes('video')) {
-      const resolation = Math.round(maxWidth * 16 / 9);
+      const resolation = Math.round(maxSize * 16 / 9);
       if (streams.includes('audio')) {
         segmentFileName = `segment_${resolation}p_%04d.m4s`;
       } else {
