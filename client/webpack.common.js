@@ -78,4 +78,13 @@ module.exports = {
       'APP_VERSION': JSON.stringify(getVersion()),
     }),
   ],
+  watchOptions: {
+    ignored: [
+      '**/node_modules/**',
+      'C:/pagefile.sys',
+      'C:/swapfile.sys',
+      'C:/System Volume Information',
+      'C:/DumpStack.log.tmp'
+    ]
+  }
 };

@@ -960,7 +960,7 @@ class FFmpeg {
 
   }
 
-  createFileToHls(filePath, outputDir, startTime, maxSize = 1280, fps = 24, segmentDuration = 6, streams = ['video', 'audio'], trackIndex = 0, enableHwaccel = false, hwaccelVendor = 'intel', hwaccelDevice, signal, verbose = this.verbose, forceSoftwareDecode = false, hdr2sdr = false) {
+  createFileToHls(filePath, outputPath, startTime, maxSize = 1280, fps = 24, segmentDuration = 6, streams = ['video', 'audio'], audioTrackIndex = 0, subtitleTrackIndex = 0, enableHwaccel = false, hwaccelVendor = 'intel', hwaccelDevice, signal, verbose = this.verbose, forceSoftwareDecode = false, hdr2sdr = false) {
     let args = [
       '-hide_banner',
       '-v', verbose ? 'info' : 'error',
@@ -995,10 +995,10 @@ class FFmpeg {
       args = args.concat(['-map', '0:v']);
     }
     if (streams.includes('audio')) {
-      args = args.concat(['-map', `0:a:${trackIndex}`]);
+      args = args.concat(['-map', `0:a:${audioTrackIndex}`]);
     }
     if (streams.includes('subtitle')) {
-      args = args.concat(['-map', `0:s:${trackIndex}`]);
+      args = args.concat(['-map', `0:s:${subtitleTrackIndex}`]);
     }
     const stdVideoFilterScale = (maxSize > 0) ? `scale='min(${maxSize},iw)':'min(${maxSize},ih)':force_original_aspect_ratio=decrease:force_divisible_by=2,` : '';
     const stdVideoFilter = `fps=${fps},${stdVideoFilterScale}${hdr2sdr ? 'zscale=t=linear:npl=100,format=gbrpf32le,zscale=p=bt709,tonemap=tonemap=hable:desat=0,zscale=t=bt709:m=bt709:r=tv,' : ''}format=yuv420p`;
@@ -1026,8 +1026,8 @@ class FFmpeg {
           '-tune', 'hq', // hq, ll, ull, lossless
           '-r:v', fps.toString(),
           // '-pix_fmt', 'yuv420p',
-          '-g', (fps * duration).toString(),
-          '-keyint_min', (fps * duration).toString(),
+          '-g', (fps * segmentDuration).toString(),
+          '-keyint_min', (fps * segmentDuration).toString(),
           '-sc_threshold', '0',
           '-profile:v', 'main', // baseline, main, high, high444p
           '-level', '3.1',
@@ -1054,9 +1054,9 @@ class FFmpeg {
           '-scenario', 'livestreaming', // default unknown - 0, displayremoting - 1, videoconference - 2, archive - 3, livestreaming - 4, cameracapture - 5, videosurveillance - 6, gamestreaming - 7, remotegaming - 8
           '-framerate', fps.toString(),
           '-r:v', fps.toString(),
-          '-g', (fps * duration).toString(),
-          // '-gop_size', (fps * duration).toString(), // error: unknown option
-          '-keyint_min', (fps * duration).toString(),
+          '-g', (fps * segmentDuration).toString(),
+          // '-gop_size', (fps * segmentDuration).toString(), // error: unknown option
+          '-keyint_min', (fps * segmentDuration).toString(),
           '-sc_threshold', '0',
           '-pix_fmt', 'nv12',
           '-profile:v', 'main', // default unkown - 0, baseline - 66, main - 77, high - 100
@@ -1069,8 +1069,8 @@ class FFmpeg {
           '-c:v', 'libx264', // av1_nvenc, h264_nvenc, hevc_nvenc, av1_qsv, h264_qsv, hevc_qsv, av1_amf, h264_amf, hevc_amf
           '-preset', 'ultrafast', // ultrafast, superfast, veryfast, faster, fast, medium (default), slower, veryslow, placebo.
           '-crf', '23', // 0 - 51, 数值越低质量越高
-          '-g', (fps * duration).toString(),
-          '-keyint_min', (fps * duration).toString(),
+          '-g', (fps * segmentDuration).toString(),
+          '-keyint_min', (fps * segmentDuration).toString(),
           '-sc_threshold', '0',
           '-pix_fmt', 'yuv420p',
           '-r:v', fps.toString(),
@@ -1098,21 +1098,18 @@ class FFmpeg {
       ]);
     }
 
-    let segmentFileName, outputFileName;
+    let segmentFileName;
     if (streams.includes('video')) {
       const resolation = Math.round(maxSize * 16 / 9);
       if (streams.includes('audio')) {
-        segmentFileName = `segment_${resolation}p_%04d.m4s`;
+        segmentFileName = `segment${resolation ? `_${resolation}p` : ''}_%04d.m4s`;
       } else {
-        segmentFileName = `video_${resolation}p_%04d.m4s`;
+        segmentFileName = `video${resolation ? `_${resolation}p` : ''}_%04d.m4s`;
       }
-      outputFileName = `index_${resolation}p.m3u8`
     } else if (streams.includes('audio')) {
       segmentFileName = 'audio_%04d.aac';
-      outputFileName = `index_audio_${trackIndex}.m3u8`;
     } else if (streams.includes('subtitle')) {
       segmentFileName = 'subtitle_%04d.vtt';
-      outputFileName = `index_subtitle_${trackIndex}.m3u8`;
     }
 
     args = args.concat([
@@ -1136,8 +1133,9 @@ class FFmpeg {
       ]);
     }
     args = args.concat([
-      '-hls_segment_filename', path.join(outDir, segmentFileName),
-      path.join(outputDir, outputFileName)
+      '-hls_fmp4_init_filename', path.join(path.dirname(outputPath), 'init.mp4'),
+      '-hls_segment_filename', path.join(path.dirname(outputPath), segmentFileName),
+      outputPath
     ]);
 
     if (verbose) console.log(this.FFMPEG_PATH, args.map(arg => arg.includes('=') ? `"${arg}"` : arg).join(' '));

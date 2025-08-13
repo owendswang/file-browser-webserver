@@ -8,7 +8,6 @@ const { isArchive } = require('@/utils/fileUtils');
 const getConfig = require('@/utils/getConfig');
 const thumbnails = require('@/utils/thumbnails');
 const sessionMap = require('@/transcodeSessionMap');
-const { reset } = require('module-alias');
 
 const resolutionMap = {
   144: 256,
@@ -40,13 +39,16 @@ const play = (ws, req) => {
   const sessionId = randomBytes(16).toString('hex');
   const playDir = path.join(tempDir, sessionId);
   fs.mkdirSync(playDir, { recursive: true });
-  let m3u8PlayUrl = `/play/${sessionId}/index.m3u8`;
   sessionMap[sessionId] = {
-    srcUrl: m3u8PlayUrl
+    srcUrl: `/play/${sessionId}/index.m3u8`,
+    audioStreams: [],
+    subtitleStreams: [],
+    resolutions: []
   };
-  const audioStreams = [];
-  const subtitleStreams = [];
-  const resolutions = [];
+  const session = sessionMap[sessionId];
+  const audioStreams = session['audioStreams'];
+  const subtitleStreams = session['subtitleStreams'];
+  const resolutions = session['resolutions'];
 
   ws.on('error', console.error);
 
@@ -72,9 +74,11 @@ const play = (ws, req) => {
       const originalFilePath = path.join(basePaths[folderName], urlPath.replace(new RegExp(`^${folderName}`, 'g'), ""));
       const originalFileName = path.basename(originalFilePath);
       const pathParts = originalFilePath.split(path.sep);
- 
+
+      let filePath = originalFilePath;
       let isInArchive = false;
       let archivePath, archiveFileName, archiveFullPath, archiveInternalPath = '';
+      let isHdr = false;
 
       // 判断是否为压缩包内部文件
       for (const [index, pathPart] of pathParts.entries()) {
@@ -105,7 +109,6 @@ const play = (ws, req) => {
           fs.mkdirSync(cacheDir, { recursive: true });
         }
 
-        let filePath = originalFilePath;
         if (isInArchive) {
           // 解压后的文件路径
           const extractedFilePath = path.join(cacheDir, archiveInternalPath);
@@ -127,7 +130,7 @@ const play = (ws, req) => {
 
           filePath = extractedFilePath;
         }
-        sessionMap[sessionId]['filePath'] = filePath;
+        session['filePath'] = filePath;
 
         // 更新数据库
         thumbnails.updateM3u8Info(originalFileName, modifiedTime, thumbnailIdToUse, size, 0);
@@ -148,11 +151,11 @@ const play = (ws, req) => {
           ws.send(JSON.stringify({ duration: totalDuration }, null, 4));
         }
 
-        let isHdr = false;
         if (videoInfo.streams) {
           for (const stream of videoInfo.streams) {
             if ((stream.codec_type === 'video') && (stream.color_space) && (stream.color_space.includes('bt2020'))) {
               isHdr = true;
+              session['isHdr'] = true;
               break;
             }
           }
@@ -226,24 +229,26 @@ const play = (ws, req) => {
             height
           });
         }
+        console.log(resolutions);
 
-        sessionMap[sessionId]['audios'] = audioStreams;
         if (audioStreams.length > 1) {
           ws.send(JSON.stringify({ audios: audioStreams }, null, 4));
         }
-        sessionMap[sessionId]['subtitles'] = subtitleStreams;
+        session['audioTrackIndex'] = 0;
+
         if (subtitleStreams.length) {
           ws.send(JSON.stringify({ subtitles: subtitleStreams }, null, 4));
+          session['subtitleTrackIndex'] = 0;
         }
-        sessionMap[sessionId]['videos'] = resolutions;
+
         if (resolutions.length > 1) {
           ws.send(JSON.stringify({ videos: resolutions.map(res => res.name) }, null, 4));
         }
+        session['resolutionIndex'] = resolutions.length - 1;
 
-        const process = ffmpeg.createFileToHls(filePath, playDir, 0, Math.max([resolutions[resolutions.length - 1]['width'], resolutions[resolutions.length - 1]['height']]), 24, playVideoSegmentTargetDuration, ['video', 'audio'], 0, enablePlayVideoHardwareAcceleration, playVideoHardwareAccelerationVendor, playVideoHardwareAccelerationDevice, signal, false, false, isHdr);
-        sessionMap[sessionId]['process'] = process;
+        session['process'] = ffmpeg.createFileToHls(filePath, path.join(playDir, 'index.m3u8'), 0, Math.max(resolutions[session['resolutionIndex']]['width'], resolutions[session['resolutionIndex']]['height']), 24, playVideoSegmentTargetDuration, ['video', 'audio'], 0, 0, enablePlayVideoHardwareAcceleration, playVideoHardwareAccelerationVendor, playVideoHardwareAccelerationDevice, signal, false, false, isHdr);
 
-        ws.send(JSON.stringify({ srcUrl: m3u8PlayUrl }));
+        ws.send(JSON.stringify({ srcUrl: session['srcUrl'] }));
       };
 
       if (isInArchive) {
@@ -296,36 +301,76 @@ const play = (ws, req) => {
       }
     }
 
-    if (data.seek) {
-      const session = sessionMap[sessionId];
-      const process = session['process'];
-      process.kill();
+    if (data.seek >= 0) {
+      session['process'].kill();
 
       const startTime = data.seek;
       session['startTime'] = startTime;
-      process = ffmpeg.createFileToHls(filePath, playDir, startTime, Math.max([resolutions[resolutions.length - 1]['width'], resolutions[resolutions.length - 1]['height']]), 24, playVideoSegmentTargetDuration, ['video', 'audio'], 0, enablePlayVideoHardwareAcceleration, playVideoHardwareAccelerationVendor, playVideoHardwareAccelerationDevice, signal, false, false, isHdr);
 
+      const playFileName = `index${(session['resolutionIndex'] === (resolutions.length - 1) ? '' : `_${resolutions[session['resolutionIndex']]['name']}`)}${session['audioTrackIndex'] ? `_a${session['audioTrackIndex']}` : ''}${session['subtitleTrackIndex'] ? `_s${session['subtitleTrackIndex']}` : ''}.m3u8?${session['startTime'] ? `seek=${session['startTime']}` : ''}`;
+      const srcUrl = `/play/${sessionId}/${playFileName}`;
+      session['srcUrl'] = srcUrl;
+
+      session['process'] = ffmpeg.createFileToHls(filePath, path.join(playDir, playFileName), startTime, Math.max(resolutions[session['resolutionIndex']]['width'], resolutions[session['resolutionIndex']]['height']), 24, playVideoSegmentTargetDuration, ['video', 'audio'], session['audioTrackIndex'], session['subtitleTrackIndex'], enablePlayVideoHardwareAcceleration, playVideoHardwareAccelerationVendor, playVideoHardwareAccelerationDevice, signal, false, false, isHdr);
+
+      ws.send(JSON.stringify({ srcUrl }, null, 4));
     }
 
-    if (data.audio) {
+    if (data.resolution >= 0) {
+      session['process'].kill();
 
+      const resolutionIndex = data.resolution;
+      session['resolutionIndex'] = resolutionIndex;
+
+      const playFileName = `index${(resolutionIndex === (resolutions.length - 1) ? '' : `_${resolutions[resolutionIndex]['name']}`)}${session['audioTrackIndex'] ? `_a${session['audioTrackIndex']}` : ''}${session['subtitleTrackIndex'] ? `_s${session['subtitleTrackIndex']}` : ''}.m3u8?${session['startTime'] ? `seek=${session['startTime']}` : ''}`;
+      const srcUrl = `/play/${sessionId}/${playFileName}`;
+      session['srcUrl'] = srcUrl;
+
+      session['process'] = ffmpeg.createFileToHls(filePath, path.join(playDir, playFileName), session['startTime'], Math.max(resolutions[resolutionIndex]['width'], resolutions[resolutionIndex]['height']), 24, playVideoSegmentTargetDuration, ['video', 'audio'], session['audioTrackIndex'], session['subtitleTrackIndex'], enablePlayVideoHardwareAcceleration, playVideoHardwareAccelerationVendor, playVideoHardwareAccelerationDevice, signal, false, false, isHdr);
+
+      ws.send(JSON.stringify({ srcUrl }, null, 4));
     }
 
-    if (data.subtitle) {
+    if (data.audio >= 0) {
+      session['process'].kill();
 
+      const audioTrackIndex = data.audio;
+      session['audioTrackIndex'] = audioTrackIndex;
+
+      const playFileName = `index${(session['resolutionIndex'] === (resolutions.length - 1) ? '' : `_${resolutions[session['resolutionIndex']]['name']}`)}${audioTrackIndex ? `_a${audioTrackIndex}` : ''}${session['subtitleTrackIndex'] ? `_s${session['subtitleTrackIndex']}` : ''}.m3u8?${session['startTime'] ? `seek=${session['startTime']}` : ''}`;
+      const srcUrl = `/play/${sessionId}/${playFileName}`;
+      session['srcUrl'] = srcUrl;
+
+      session['process'] = ffmpeg.createFileToHls(filePath, path.join(playDir, playFileName), session['startTime'], Math.max(resolutions[session['resolutionIndex']]['width'], resolutions[session['resolutionIndex']]['height']), 24, playVideoSegmentTargetDuration, ['video', 'audio'], audioTrackIndex, session['subtitleTrackIndex'], enablePlayVideoHardwareAcceleration, playVideoHardwareAccelerationVendor, playVideoHardwareAccelerationDevice, signal, false, false, isHdr);
+
+      ws.send(JSON.stringify({ srcUrl }, null, 4));
+    }
+
+    if (data.subtitle >= 0) {
+      session['process'].kill();
+
+      const subtitleTrackIndex = data.subtitle;
+      session['subtitleTrackIndex'] = subtitleTrackIndex;
+
+      const playFileName = `index${(session['resolutionIndex'] === (resolutions.length - 1) ? '' : `_${resolutions[session['resolutionIndex']]['name']}`)}${session['audioTrackIndex'] ? `_a${session['audioTrackIndex']}` : ''}${subtitleTrackIndex ? `_s${subtitleTrackIndex}` : ''}.m3u8?${session['startTime'] ? `seek=${session['startTime']}` : ''}`;
+      const srcUrl = `/play/${sessionId}/${playFileName}`;
+      session['srcUrl'] = srcUrl;
+
+      session['process'] = ffmpeg.createFileToHls(filePath, path.join(playDir, playFileName), session['startTime'], Math.max(resolutions[session['resolutionIndex']]['width'], resolutions[session['resolutionIndex']]['height']), 24, playVideoSegmentTargetDuration, ['video', 'audio'], session['audioTrackIndex'], subtitleTrackIndex, enablePlayVideoHardwareAcceleration, playVideoHardwareAccelerationVendor, playVideoHardwareAccelerationDevice, signal, false, false, isHdr);
+
+      ws.send(JSON.stringify({ srcUrl }, null, 4));
     }
   });
 
   ws.on('close', function close() {
     console.log('WS close');
     abortController.abort();
-    if (sessionMap[sessionId]['process'] && !sessionMap[sessionId]['process']['closed']) {
-      const process = sessionMap[sessionId]['process'];
-      process.on('close', () => {
+    if (session['process'] && !session['process']['closed']) {
+      session['process'].on('close', () => {
         fs.rmSync(playDir, { recursive: true, force: true });
       });
-      process.kill();
-      process = null;
+      session['process'].kill();
+      session['process'] = null;
     }
   })
 }

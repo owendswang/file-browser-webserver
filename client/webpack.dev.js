@@ -45,14 +45,5 @@ module.exports = merge(common, {
         ]
       }
     }
-  },
-  watchOptions: {
-    ignored: [
-      '**/node_modules/**',
-      'C:/pagefile.sys',
-      'C:/swapfile.sys',
-      'C:/System Volume Information',
-      'C:/DumpStack.log.tmp'
-    ]
   }
 });
