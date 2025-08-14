@@ -1,4 +1,3 @@
-const os = require('os');
 const fs = require('fs');
 const path = require('path');
 const { randomBytes } = require('crypto');
@@ -59,6 +58,23 @@ const play = (ws, req) => {
     const data = JSON.parse(msg);
 
     const ffmpeg = new FFmpeg(ffmpegPath);
+
+    const ffmpegProgressCallback = (ffmpegOutput) => {
+      const progressRegex = /frame=\s*(\d+)\s+fps=\s*([\d.]+)\s+q=([\d.]+)\s+size=.*?time=([\d:.]+)\s+bitrate=.*?speed=([\d.]+)x/;
+      let match = ffmpegOutput.match(progressRegex);
+      if (match) {
+        const progress = {
+          frame: Number(match[1]),
+          fps: Number(match[2]),
+          q: Number(match[3]),
+          time: match[4],
+          speed: Number(match[5])
+        };
+        const [hh, mm, ss] = progress.time.split(':');
+        const currentTime = parseInt(hh) * 3600 + parseInt(mm) * 60 + parseFloat(ss);
+        ws.send(JSON.stringify({ currentTime }, null, 4));
+      }
+    }
 
     if (data.urlPath) {
       const urlPath = decodeURIComponent(data.urlPath);
@@ -246,7 +262,7 @@ const play = (ws, req) => {
         }
         session['resolutionIndex'] = resolutions.length - 1;
 
-        session['process'] = ffmpeg.createFileToHls(filePath, path.join(playDir, 'index.m3u8'), 0, Math.max(resolutions[session['resolutionIndex']]['width'], resolutions[session['resolutionIndex']]['height']), 24, playVideoSegmentTargetDuration, ['video', 'audio'], 0, 0, enablePlayVideoHardwareAcceleration, playVideoHardwareAccelerationVendor, playVideoHardwareAccelerationDevice, signal, false, false, isHdr);
+        session['process'] = ffmpeg.createFileToHls(filePath, path.join(playDir, 'index.m3u8'), 0, Math.max(resolutions[session['resolutionIndex']]['width'], resolutions[session['resolutionIndex']]['height']), 24, playVideoSegmentTargetDuration, ['video', 'audio'], 0, 0, enablePlayVideoHardwareAcceleration, playVideoHardwareAccelerationVendor, playVideoHardwareAccelerationDevice, signal, false, false, isHdr, ffmpegProgressCallback);
 
         ws.send(JSON.stringify({ srcUrl: session['srcUrl'] }));
       };
@@ -311,7 +327,7 @@ const play = (ws, req) => {
       const srcUrl = `/play/${sessionId}/${playFileName}`;
       session['srcUrl'] = srcUrl;
 
-      session['process'] = ffmpeg.createFileToHls(filePath, path.join(playDir, playFileName), startTime, Math.max(resolutions[session['resolutionIndex']]['width'], resolutions[session['resolutionIndex']]['height']), 24, playVideoSegmentTargetDuration, ['video', 'audio'], session['audioTrackIndex'], session['subtitleTrackIndex'], enablePlayVideoHardwareAcceleration, playVideoHardwareAccelerationVendor, playVideoHardwareAccelerationDevice, signal, false, false, isHdr);
+      session['process'] = ffmpeg.createFileToHls(filePath, path.join(playDir, playFileName), startTime, Math.max(resolutions[session['resolutionIndex']]['width'], resolutions[session['resolutionIndex']]['height']), 24, playVideoSegmentTargetDuration, ['video', 'audio'], session['audioTrackIndex'], session['subtitleTrackIndex'], enablePlayVideoHardwareAcceleration, playVideoHardwareAccelerationVendor, playVideoHardwareAccelerationDevice, signal, false, false, isHdr, ffmpegProgressCallback);
 
       ws.send(JSON.stringify({ srcUrl }, null, 4));
     }
@@ -326,7 +342,7 @@ const play = (ws, req) => {
       const srcUrl = `/play/${sessionId}/${playFileName}`;
       session['srcUrl'] = srcUrl;
 
-      session['process'] = ffmpeg.createFileToHls(filePath, path.join(playDir, playFileName), session['startTime'], Math.max(resolutions[resolutionIndex]['width'], resolutions[resolutionIndex]['height']), 24, playVideoSegmentTargetDuration, ['video', 'audio'], session['audioTrackIndex'], session['subtitleTrackIndex'], enablePlayVideoHardwareAcceleration, playVideoHardwareAccelerationVendor, playVideoHardwareAccelerationDevice, signal, false, false, isHdr);
+      session['process'] = ffmpeg.createFileToHls(filePath, path.join(playDir, playFileName), session['startTime'], Math.max(resolutions[resolutionIndex]['width'], resolutions[resolutionIndex]['height']), 24, playVideoSegmentTargetDuration, ['video', 'audio'], session['audioTrackIndex'], session['subtitleTrackIndex'], enablePlayVideoHardwareAcceleration, playVideoHardwareAccelerationVendor, playVideoHardwareAccelerationDevice, signal, false, false, isHdr, ffmpegProgressCallback);
 
       ws.send(JSON.stringify({ srcUrl }, null, 4));
     }
@@ -341,7 +357,7 @@ const play = (ws, req) => {
       const srcUrl = `/play/${sessionId}/${playFileName}`;
       session['srcUrl'] = srcUrl;
 
-      session['process'] = ffmpeg.createFileToHls(filePath, path.join(playDir, playFileName), session['startTime'], Math.max(resolutions[session['resolutionIndex']]['width'], resolutions[session['resolutionIndex']]['height']), 24, playVideoSegmentTargetDuration, ['video', 'audio'], audioTrackIndex, session['subtitleTrackIndex'], enablePlayVideoHardwareAcceleration, playVideoHardwareAccelerationVendor, playVideoHardwareAccelerationDevice, signal, false, false, isHdr);
+      session['process'] = ffmpeg.createFileToHls(filePath, path.join(playDir, playFileName), session['startTime'], Math.max(resolutions[session['resolutionIndex']]['width'], resolutions[session['resolutionIndex']]['height']), 24, playVideoSegmentTargetDuration, ['video', 'audio'], audioTrackIndex, session['subtitleTrackIndex'], enablePlayVideoHardwareAcceleration, playVideoHardwareAccelerationVendor, playVideoHardwareAccelerationDevice, signal, false, false, isHdr, ffmpegProgressCallback);
 
       ws.send(JSON.stringify({ srcUrl }, null, 4));
     }
@@ -356,7 +372,7 @@ const play = (ws, req) => {
       const srcUrl = `/play/${sessionId}/${playFileName}`;
       session['srcUrl'] = srcUrl;
 
-      session['process'] = ffmpeg.createFileToHls(filePath, path.join(playDir, playFileName), session['startTime'], Math.max(resolutions[session['resolutionIndex']]['width'], resolutions[session['resolutionIndex']]['height']), 24, playVideoSegmentTargetDuration, ['video', 'audio'], session['audioTrackIndex'], subtitleTrackIndex, enablePlayVideoHardwareAcceleration, playVideoHardwareAccelerationVendor, playVideoHardwareAccelerationDevice, signal, false, false, isHdr);
+      session['process'] = ffmpeg.createFileToHls(filePath, path.join(playDir, playFileName), session['startTime'], Math.max(resolutions[session['resolutionIndex']]['width'], resolutions[session['resolutionIndex']]['height']), 24, playVideoSegmentTargetDuration, ['video', 'audio'], session['audioTrackIndex'], subtitleTrackIndex, enablePlayVideoHardwareAcceleration, playVideoHardwareAccelerationVendor, playVideoHardwareAccelerationDevice, signal, false, false, isHdr, ffmpegProgressCallback);
 
       ws.send(JSON.stringify({ srcUrl }, null, 4));
     }

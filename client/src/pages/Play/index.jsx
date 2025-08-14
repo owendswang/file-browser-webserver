@@ -94,6 +94,9 @@ const Play = () => {
           }
           if (data.duration) {
             player.duration(data.duration);
+            player.on('loadedmetadata', () => {
+              player.duration(data.duration);
+            });
           }
           if (data.currentTime) {
             player.currentTime(data.currentTime);

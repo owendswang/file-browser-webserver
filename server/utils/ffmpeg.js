@@ -960,10 +960,11 @@ class FFmpeg {
 
   }
 
-  createFileToHls(filePath, outputPath, startTime, maxSize = 1280, fps = 24, segmentDuration = 6, streams = ['video', 'audio'], audioTrackIndex = 0, subtitleTrackIndex = 0, enableHwaccel = false, hwaccelVendor = 'intel', hwaccelDevice, signal, verbose = this.verbose, forceSoftwareDecode = false, hdr2sdr = false) {
+  createFileToHls(filePath, outputPath, startTime, maxSize = 1280, fps = 24, segmentDuration = 6, streams = ['video', 'audio'], audioTrackIndex = 0, subtitleTrackIndex = 0, enableHwaccel = false, hwaccelVendor = 'intel', hwaccelDevice, signal, verbose = this.verbose, forceSoftwareDecode = false, hdr2sdr = false, progressCallback) {
     let args = [
       '-hide_banner',
-      '-v', verbose ? 'info' : 'error',
+      // '-v', verbose ? 'info' : 'error',
+      '-v', 'info'
     ];
     if (streams.includes('video') && enableHwaccel) {
       if (hwaccelVendor === 'nvidia') {
@@ -1100,7 +1101,7 @@ class FFmpeg {
 
     let segmentFileName;
     if (streams.includes('video')) {
-      const resolation = Math.round(maxSize * 16 / 9);
+      const resolation = Math.round(maxSize * 9 / 16);
       if (streams.includes('audio')) {
         segmentFileName = `segment${resolation ? `_${resolation}p` : ''}_%04d.m4s`;
       } else {
@@ -1117,7 +1118,7 @@ class FFmpeg {
       '-hls_time', segmentDuration.toString(),
       '-hls_playlist_type', 'event',
       '-hls_list_size', '6',
-      '-hls_flags', 'independent_segments'
+      '-hls_flags', 'independent_segments+delete_segments'
     ]);
     if (streams.includes('video')) {
       args = args.concat([
@@ -1133,7 +1134,7 @@ class FFmpeg {
       ]);
     }
     args = args.concat([
-      '-hls_fmp4_init_filename', path.join(path.dirname(outputPath), 'init.mp4'),
+      '-hls_fmp4_init_filename', 'init.mp4',
       '-hls_segment_filename', path.join(path.dirname(outputPath), segmentFileName),
       outputPath
     ]);
@@ -1141,16 +1142,21 @@ class FFmpeg {
     if (verbose) console.log(this.FFMPEG_PATH, args.map(arg => arg.includes('=') ? `"${arg}"` : arg).join(' '));
 
     const child = spawn(this.FFMPEG_PATH, args, {
+      cwd: path.dirname(outputPath),
       stdio: ['pipe', 'pipe', 'pipe'] // 确保使用 pipe 处理输入
     });
 
     // 监听 FFmpeg 的 stdout 输出，用于获取转码进度
     child.stdout.on('data', (data) => {
-      if (verbose) console.log(data.toString());
+      const text = data.toString();
+      if (verbose) console.log(text);
+      if (progressCallback) progressCallback(text);
     });
 
     child.stderr.on('data', (data) => {
-      console.error(data.toString());
+      const text = data.toString();
+      if (!text.startsWith('frame=')) console.error(text);
+      if (progressCallback) progressCallback(text);
     });
 
     // 监听中断

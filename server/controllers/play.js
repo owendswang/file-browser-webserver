@@ -15,12 +15,13 @@ const method = async (req, res) => {
 
   const playDir = path.resolve(tempDir, sessionId);
   const filePath = path.join(playDir, fileName);
+  console.log(filePath);
 
   for (let i = 0; i < playVideoSegmentTargetDuration; i += 1) {
-    await sleep(1000);
     if (fs.existsSync(filePath) && fs.statSync(filePath).isFile()) {
       return res.sendFile(filePath);
     }
+    await sleep(1000);
   }
   return res.status(404).send('File not found.');
 }

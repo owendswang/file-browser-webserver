@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const bodyParser = require('body-parser');
 const cookieParser = require('cookie-parser');
-// const cors = require('cors');
+const cors = require('cors');
 const compression = require('compression')
 const Thumbnails = require('./utils/thumbnails');
 const homeRouter = require('./controllers/home');
@@ -141,7 +141,7 @@ router.get('/api/disk/*', nocacheMiddleware, oauth.authenticate({ scope: ['view'
 router.get('/preview/*', thumbnailMiddleWare, previewRouter);
 
 // Video transcode to m3u8
-router.get('/play/*', /*cors(), thumbnailMiddleWare,*/ playRouter);
+router.get('/play/*', cors(), /*thumbnailMiddleWare,*/ playRouter);
 
 // Get config data
 router.get('/api/config', nocacheMiddleware, oauth.authenticate({ scope: ['admin'] }), getConfigRouter);
